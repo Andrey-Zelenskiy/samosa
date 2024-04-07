@@ -25,4 +25,3 @@ specified point groups,
 to its neighbours, using the information about object's symmetry  and the
 crystal space group;
 - Write a Blender 3D plugin which allows to color (groups of) faces of an obect;
-
