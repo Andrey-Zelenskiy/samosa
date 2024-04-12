@@ -1,0 +1,9 @@
+*.sh
+*.o
+*.swp
+*.json
+
+/build*/
+/test*/
+/input*/
+
