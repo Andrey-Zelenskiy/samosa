@@ -1,5 +1,6 @@
 # `frusa_symmetry` module
 
+<<<<<<< HEAD
 The goal of this module is to provide a toolset for symmetry analysis relevant
 to the studies of anisotropic/frustrated lattice particles. 
 The desired features of the module would include
@@ -25,3 +26,11 @@ specified point groups,
 to its neighbours, using the information about object's symmetry  and the
 crystal space group;
 - Write a Blender 3D plugin which allows to color (groups of) faces of an obect;
+=======
+## Functionality
+
+Generates interaction matrices for patchy particles on a lattice.
+
+
+## 
+>>>>>>> 4592549 (Updated README and added symmetry operations file)
