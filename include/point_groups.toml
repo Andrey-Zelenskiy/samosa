@@ -2,109 +2,109 @@
 
 ## Triclinic
 [C1]
-elements = ["E"]
+generators = ["E"]
 
 [Ci]
-elements = ["I"]
+generators = ["I"]
 
 
 ## Monoclinic
 [C2]
-elements = ["C2_001"]
+generators = ["C2,001"]
 
-[C1h]
-elements = ["m_001"]
+[Cs]
+generators = ["m,001"]
 
 [C2h]
-elements = ["C2_001","I"]
+generators = ["C2,001","I"]
 
 
 ## Orthorhombic
 [D2]
-elements = ["C2_010","C2_001"]
+generators = ["C2,010","C2,001"]
 
 [C2v]
-elements = ["C2_001","m_010"]
+generators = ["C2,001","m,010"]
 
 [D2h]
-elements = ["C2_010","C2_001","I"]
+generators = ["C2,010","C2,001","I"]
 
 
 ## Tetragonal
 [C4]
-elements = ["C4p_001"]
+generators = ["C4p,001"]
 
 [S4]
-elements = ["S4p_001"]
+generators = ["S4p,001"]
 
 [C4h]
-elements = ["C4p_001","I"]
+generators = ["C4p,001","I"]
 
 [D4]
-elements = ["C4p_001","C2_010","C2_001"]
+generators = ["C4p,001","C2,010","C2,001"]
 
 [C4v]
-elements = ["C4p_001","C2_001","m_010"]
+generators = ["C4p,001","C2,001","m,010"]
 
 [D2d]
-elements = ["S4p_001","C2_010","C2_001"]
+generators = ["S4p,001","C2,010","C2,001"]
 
 [D4h]
-elements = ["C4p_001","C2_010","C2_001","I"]
+generators = ["C4p,001","C2,010","C2,001","I"]
 
 
 ## Trigonal
 [C3]
-elements = ["C3p_001"]
+generators = ["C3p,001"]
 
 [C3i]
-elements = ["S3p_001"]
+generators = ["S3p,001"]
 
 [D3]
-elements = ["C3p_001","C2_1-10"]
+generators = ["C3p,001","C2,1-10"]
 
 [C3v]
-elements = ["C3p_001","m_110"]
+generators = ["C3p,001","m,110"]
 
 [D3d]
-elements = ["S6p_001","C2_1-10","I"]
+generators = ["S6p,001","C2,1-10","I"]
 
 
 ## Hexagonal
 [C6]
-elements = ["C6p_001"]
+generators = ["C6p_H,001"]
 
 [C3h]
-elements = ["C3p_001","I"]
+generators = ["C3p_H,001","I"]
 
 [C6h]
-elements = ["C6p_001","I"]
+generators = ["C6p_H,001","I"]
 
 [D6]
-elements = ["C3p_001","C2_001","C2_110"]
+generators = ["C3p_H,001","C2_H,001","C2_H,110"]
 
 [C6v]
-elements = ["C3p_001","C2_001","m_110"]
+generators = ["C3p_H,001","C2_H,001","m_H,110"]
 
 [D3h]
-elements = ["C3p_001","C2_1-10","m_001"]
+generators = ["C3p_H,001","C2_H,1-10","m_H,001"]
 
 [D6h]
-elements = ["C3p_001","C2_001","C2_110","I"]
+generators = ["C3p_H,001","C2_H,001","C2_H,110","I"]
 
 
 ## Cubic
 [T]
-elements = ["C3p_111","C2_010","C2_001"]
+generators = ["C3p,111","C2,010","C2,001"]
 
 [Th]
-elements = ["C3p_111","C2_010","C2_001","I"]
+generators = ["C3p,111","C2,010","C2,001","I"]
 
 [O]
-elements = ["C3p_111","C2_010","C2_110","C2_001"]
+generators = ["C3p,111","C2,010","C2,110","C2,001"]
 
 [Td]
-elements = ["C3p_111","C2_010","C2_001","m_1-10"]
+generators = ["C3p,111","C2,010","C2,001","m,1-10"]
 
 [Oh]
-elements = ["C3p_111","C2_010","C2_110","C2_001","I"]
+generators = ["C3p,111","C2,010","C2,110","C2,001","I"]

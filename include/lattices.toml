@@ -1,62 +1,80 @@
+# 1D lattice
+
+[chain]
+
+dimension = 1
+
 # 5 2D lattices and the corresponding possible point groups
 
 [oblique_p]
 
+dimension = 2
+
 [oblique_p.C1]
-space_groups = [1]
+space_groups = [-1]
 
 [oblique_p.C2]
-space_groups = [2]
+space_groups = [-2]
 
 
 
 [rectangular_p]
 
+dimension = 2
+
 [rectangular_p.Cs]
-space_groups = [3,4]
+space_groups = [-3,-4]
 
 [rectangular_p.C2v]
-space_groups = [6,7,8]
+space_groups = [-6,-7,-8]
 
 
-[rectandular_c]
+[rectangular_c]
+
+dimension = 2
 
 [rectangular_c.Cs]
-space_groups = [5]
+space_groups = [-5]
 
 [rectangular_c.C2v]
-space_groups = [9]
+space_groups = [-9]
 
 
 
 [square_p]
 
+dimension = 2
+
 [square_p.C4]
-space_groups = [10]
+space_groups = [-10]
 
 [square_p.C4v]
-space_groups = [11,12]
+space_groups = [-11,-12]
 
 
 
 [hexagonal_p]
 
+dimension = 2
+
 [hexagonal_p.C3]
-space_groups = [13]
+space_groups = [-13]
 
 [hexagonal_p.C3v]
-space_groups = [14,15]
+space_groups = [-14,-15]
 
 [hexagonal_p.C6]
-space_groups = [16]
+space_groups = [-16]
 
 [hexagonal_p.C6v]
-space_groups = [17]
+space_groups = [-17]
 
 
 # 14 Bravais lattices and corresponding possible point groups
 
 [Triclinic_P]
+
+dimension = 3
 
 [Triclinic_P.C1]
 space_groups = [1]
@@ -67,6 +85,8 @@ space_groups = [2]
 
 
 [Monoclinic_P]
+
+dimension = 3
 
 [Monoclinic_P.C2]
 space_groups = [3,4]
@@ -79,6 +99,8 @@ space_groups = [10,11,13,14]
 
 
 [Monoclinic_B]
+
+dimension = 3
 
 [Monoclinic_B.C2]
 space_groups = [5]
@@ -93,6 +115,8 @@ space_groups = [12,15]
 
 [Orthorombic_P]
 
+dimension = 3
+
 [Orthorombic_P.D2]
 space_groups = [16,17,18,19]
 
@@ -104,6 +128,8 @@ space_groups = [47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62]
 
 
 [Orthorombic_C]
+
+dimension = 3
 
 [Orthorombic_C.D2]
 space_groups = [20,21]
@@ -117,6 +143,8 @@ space_groups = [63,64,65,66,67,68]
 
 [Orthorombic_F]
 
+dimension = 3
+
 [Orthorombic_F.D2]
 space_groups = [22]
 
@@ -128,6 +156,8 @@ space_groups = [69,70]
 
 
 [Orthorombic_I]
+
+dimension = 3
 
 [Orthorombic_I.D2]
 space_groups = [23,24]
@@ -141,12 +171,16 @@ space_groups = [71,72,73,74]
 
 [Orthorombic_A]
 
+dimension = 3
+
 [Orthorombic_A.C2v]
 space_groups = [38,39,40,41]
 
 
 
 [Tetragonal_P]
+
+dimension = 3
 
 [Tetragonal_P.C4]
 space_groups = [75,76,77,78]
@@ -171,6 +205,8 @@ space_groups = [123,124,125,126,127,128,129,130,131,132,133,134,135,136,137,138]
 
 
 [Tetragonal_I]
+
+dimension = 3
 
 [Tetragonal_I.C4]
 space_groups = [79,80]
@@ -197,6 +233,8 @@ space_groups = [139,140,141,142]
 
 [Trigonal_P]
 
+dimension = 3
+
 [Trigonal_P.C3]
 space_groups = [143,144,145]
 
@@ -214,6 +252,8 @@ space_groups = [162,163,164,165]
 
 
 [Trigonal_R]
+
+dimension = 3
 
 [Trigonal_R.C3]
 space_groups = [146]
@@ -233,6 +273,8 @@ space_groups = [166,167]
 
 
 [Hexagonal_P]
+
+dimension = 3
 
 [Hexagonal_P.C6]
 
@@ -266,6 +308,8 @@ space_groups = [191,192,193,194]
 
 [Cubic_P]
 
+dimension = 3
+
 [Cubic_P.T]
 space_groups = [195,198]
 
@@ -284,6 +328,8 @@ space_groups = [221,222,223,224]
 
 [Cubic_F]
 
+dimension = 3
+
 [Cubic_F.T]
 space_groups = [196]
 
@@ -301,6 +347,8 @@ space_groups = [225,226,227,228]
 
 
 [Cubic_I]
+
+dimension = 3
 
 [Cubic_I.T]
 space_groups = [197,199]
