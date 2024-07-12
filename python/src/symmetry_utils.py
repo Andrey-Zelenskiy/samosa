@@ -194,8 +194,8 @@ def permutation_representation(a_list, matrix_operator):
     Arguments:
     a_list          - list of np.1darray, a set of points, which defines the
                       space of permutations;
-    matrix_operator - np.2darray, a symmetry operator acting on 3D space 
-                      spanned by some set of lattice basis vectors.
+    matrix_operator - np.2darray, a symmetry operator acting on the points in 
+                      the a_list.
 
     Returns:
     permutation_operator - tuple of size len(a_list), permutation 
