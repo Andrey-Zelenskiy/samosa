@@ -2,10 +2,10 @@
 
 ## Triclinic
 [C1]
-generators = ["E"]
+generators = ["E,000"]
 
 [Ci]
-generators = ["I"]
+generators = ["I,000"]
 
 
 ## Monoclinic
@@ -16,7 +16,7 @@ generators = ["C2,001"]
 generators = ["m,001"]
 
 [C2h]
-generators = ["C2,001","I"]
+generators = ["C2,001","I,000"]
 
 
 ## Orthorhombic
@@ -27,7 +27,7 @@ generators = ["C2,010","C2,001"]
 generators = ["C2,001","m,010"]
 
 [D2h]
-generators = ["C2,010","C2,001","I"]
+generators = ["C2,010","C2,001","I,000"]
 
 
 ## Tetragonal
@@ -38,7 +38,7 @@ generators = ["C4p,001"]
 generators = ["S4p,001"]
 
 [C4h]
-generators = ["C4p,001","I"]
+generators = ["C4p,001","I,000"]
 
 [D4]
 generators = ["C4p,001","C2,010","C2,001"]
@@ -50,7 +50,7 @@ generators = ["C4p,001","C2,001","m,010"]
 generators = ["S4p,001","C2,010","C2,001"]
 
 [D4h]
-generators = ["C4p,001","C2,010","C2,001","I"]
+generators = ["C4p,001","C2,010","C2,001","I,000"]
 
 
 ## Trigonal
@@ -67,7 +67,7 @@ generators = ["C3p,001","C2,1-10"]
 generators = ["C3p,001","m,110"]
 
 [D3d]
-generators = ["S6p,001","C2,1-10","I"]
+generators = ["S6p,001","C2,1-10","I,000"]
 
 
 ## Hexagonal
@@ -75,22 +75,22 @@ generators = ["S6p,001","C2,1-10","I"]
 generators = ["C6p_H,001"]
 
 [C3h]
-generators = ["C3p_H,001","I"]
+generators = ["C3p_H,001","I,000"]
 
 [C6h]
-generators = ["C6p_H,001","I"]
+generators = ["C6p_H,001","I,000"]
 
 [D6]
-generators = ["C3p_H,001","C2_H,001","C2_H,110"]
+generators = ["C3p_H,001","C2,001","C2,110"]
 
 [C6v]
-generators = ["C3p_H,001","C2_H,001","m_H,110"]
+generators = ["C3p_H,001","C2,001","m,110"]
 
 [D3h]
-generators = ["C3p_H,001","C2_H,1-10","m_H,001"]
+generators = ["C3p_H,001","C2,1-10","m,001"]
 
 [D6h]
-generators = ["C3p_H,001","C2_H,001","C2_H,110","I"]
+generators = ["C3p_H,001","C2,001","C2,110","I,000"]
 
 
 ## Cubic
@@ -98,7 +98,7 @@ generators = ["C3p_H,001","C2_H,001","C2_H,110","I"]
 generators = ["C3p,111","C2,010","C2,001"]
 
 [Th]
-generators = ["C3p,111","C2,010","C2,001","I"]
+generators = ["C3p,111","C2,010","C2,001","I,000"]
 
 [O]
 generators = ["C3p,111","C2,010","C2,110","C2,001"]
@@ -107,4 +107,4 @@ generators = ["C3p,111","C2,010","C2,110","C2,001"]
 generators = ["C3p,111","C2,010","C2,001","m,1-10"]
 
 [Oh]
-generators = ["C3p,111","C2,010","C2,110","C2,001","I"]
+generators = ["C3p,111","C2,010","C2,110","C2,001","I,000"]
