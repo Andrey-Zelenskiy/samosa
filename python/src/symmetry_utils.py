@@ -186,7 +186,7 @@ def point_transform(point_0, generators):
     
     return orbit, transporter_dict, stabilizer_list
 
-def permutation_representation(a_list, matrix_operator):
+def as_permutation(a_list, matrix_operator):
     """
     Transforms a matrix operator into a cycle/permutation basis using a closed
     set of points.
