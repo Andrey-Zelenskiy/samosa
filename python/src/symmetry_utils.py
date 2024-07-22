@@ -4,7 +4,6 @@
 import numpy as np
 import toml
 import warnings
-import pandas as pd
 
 def custom_formatwarning(msg, *args, **kwargs):
     """
@@ -15,8 +14,8 @@ def custom_formatwarning(msg, *args, **kwargs):
 warnings.formatwarning = custom_formatwarning
 
 # Define lookup libraries
-point_group_lib = toml.load('../../include/point_groups.toml')
-symmetry_operators = toml.load('../../include/symmetry_operations.toml')
+point_group_lib = toml.load('../../database/point_groups.toml')
+symmetry_operators = toml.load('../../database/symmetry_operations.toml')
 
 symbol_to_operator = {}
 operator_to_symbol = {}
