@@ -16,8 +16,34 @@ data;
 
 ## Tasks
 
+### Symmetry database
+
+Databases to add:
+
+- Space group generators;
+- Space group Wyckoff positions;
+- Generic 2D and 3D point groups;
+
+There should be a separate module for extracting information from the databases
+in `frusa_symmetry/database/`.
+
+- Given the name of the group in the database, define a group object;
+- Convert between operator symbols and matrix representations (currently in 
+`symmetry_utils`);
+
+
 ### Symmetry utils
 
+Currently, the module consists of separate functions.
+It may be useful to define a `group` class, which would reduce the number of 
+operations required to perform symmetry analysis.
+The `group` class is defined as a set of group generators in a chosen
+representation.
+Some useful features involve:
+
+- Given a point, define an orbit and a stabilizer chain;
+- From an orbit/stabilizer chain, define a permutation representation for group
+generators;
 - Given a permutation group, identify the generators;
 
 ### Particle utils
