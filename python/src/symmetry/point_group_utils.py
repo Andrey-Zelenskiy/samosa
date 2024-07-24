@@ -2,24 +2,15 @@
 # Andrey Zelenskiy, 2024
 
 """
-=================
-symmetry_utils.py
-=================
+====================
+point_group_utils.py
+====================
 
-
+This program defines methods for defining and manipulating 3D point groups.
 """
 
 import numpy as np
-import toml
-import warnings
-
-def custom_formatwarning(msg, *args, **kwargs):
-    """
-    When throwing a warning, only throw the message
-    """
-    return str(msg) + '\n'
-
-warnings.formatwarning = custom_formatwarning
+from symmetry_utils import group_element
 
 # Frequently used functions
 
@@ -48,14 +39,6 @@ def normalize_vector(v):
         v /= v_norm
 
     return v
-
-
-def array_in_list(a, a_list):
-    """
-    Determines if a np.ndarray is included in a list of np.ndarrays. 
-    """
-    return any((a == p).all() for p in a_list)
-
 
 
 # Definitions of symmetry elements
@@ -270,138 +253,141 @@ def symbol_to_operator(symbol):
 
     return operator
 
+# Definition of a group element object in matrix representation
 
-
-# Routines for orbit/stabilizers calculations
-
-def stabilizer_generator_filter(stabilizer, stabilizer_list, blacklist):
+class matrix_group_element(group_element):
     """
-    Determines whether a stabilizing operation qualifies as a new generator
-    of the stabilizer group. 
+    Converts a matrix operator to a group elment object with strict
+    multiplication and inversion rules. 
+    """
 
-    Arguments:
-    stabilizer      - np.2darray, stabilizer matrix;
-    stabilizer_list - list of np.2darray, list of known generators of the
-                      stabilizer group;
-    blacklist       - list of np.2darray, list of operators related to the known
-                      generators of the stabilizer group.
+    def __init__(self, operator, store_inverse = True, operator_inv = None):
+        """
+        Defines the matrix operator and, optionally, its inverse.
+
+        Arguments:
+        operator - 2darray_type, matrix operator, defining the group element;
+        store_inverse - bool, (optional, default = True) if True, instructs the
+                        class to explicitly store the matrix inverse of
+                        self.operator;
+        operator_inv - 2darray_type, (optional, default = None) if not None, 
+                       proposes an inverse of self.operator.
+        """
+
+        self.operator = np.array(operator)
+        self.rank = len(self.operator)
+        self.operator_inv = None
+        self.store_inverse = store_inverse
+
+        if operator_inv is not None:
+
+            # Test that the proposed inverse yields identity when multiplied by
+            # self.operator
+            operator_inv = np.array(operator_inv)
+            identity_test = operator_inv.dot(self.operator) - np.eye(rank)
+            
+            eps = 1e-10
+
+            if np.max(np.abs(identity_test)) > eps:
+                raise ValueError("Proposed inverse does not produce identity "\
+                                 "under multiplication with the operator!")
+
+            self.operator_inv = operator_inv
+            self.store_inverse = True
+
+        else:
+            if store_inverse == True:
+                self.operator_inv = self.inv()
+
     
-    Returns:
-    Either the original, or the updated stabilizer_list, blacklist.
-    """
+    def __mul__(self, element):
+        """
+        Shortcut for calculating (left) group element action.
+        """
 
-    # Check if the stabilizer is already in the stabilizer list
-    if not array_in_list(stabilizer, stabilizer_list):
+        # Multiplication of two group elements
+        if isinstance(element, matrix_group_element):
+            
+            if element.rank != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.rank))
+            
+            product = self.operator.dot(element.operator)
+
+            return matrix_group_element(product,False)
+
+
+        elif isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[0] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.shape[0]))
+            
+            return self.operator.dot(element)
+
+        else:
+            raise TypeError("Cannot multiply " + self.__name__ + " and "\
+                          + type(element).__name__ + "!") 
+
+    
+    def __rmul__(self, element):
+        """
+        Shortcut for calculating (right) group element action.
+        """
+
+        if isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[-1] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             element.shape[-1], 
+                                                             self.rank))
+            
+            return element.dot(self.operator)
+
+        else:
+            raise TypeError("Cannot multiply " + type(element).__name__ + " and "\
+                          + self.__name__ + "!") 
+
+    
+    def inv(self, store_inverse = False):
+        """
+        Returns matrix inverse of self.operator.
+
+        Arguments:
+        store_inverse - bool, (optional, default = False), if True, also stores
+                        the original operator as the inverse of operator_inv. 
         
-        # Check if the stabilizer is related to the known generators
-        if not array_in_list(stabilizer, blacklist):  
+        Returns:
+        operator_inv - matrix_group_element, inverse of the self.operator.
+        """
 
-            # Both tests are passed, update stabilizer_list and blacklist  
-            extended_stabilizer = [np.eye(3,dtype=int)] + stabilizer_list
-            
-            for s in extended_stabilizer:
-                g_head = s.dot(stabilizer)
-                g_chain = g_head
-                while not array_in_list(g_chain, blacklist):
-                    blacklist += [g_chain]
-                    g_chain = g_chain.dot(g_head)
-            
-            stabilizer_list += [stabilizer]
-    
-    return stabilizer_list, blacklist         
+        if self.operator_inv is not None:
+            return self.operator_inv
 
-def point_transform(point_0, generators):
-    """
-    Applies generators of the group to a single point. 
-    Operations assume generators to be matrices of type np.2darray, and point
-    of type np.1darray.
+        else:
+            operator_inverse = np.linalg.inv(self.operator)
 
-    Arguments:
-    point_0          - np.1darray, 'seed' point for the transformation;
-    generators       - array of np.2darray, generators of the group.
-
-    Returns:
-    orbit            - list, a set of partners generated from the seed point;
-    transporter_dict - dict tuple:np.2darray, a set of group operators (values)
-                       that transform the seed to the other points in the 
-                       orbit (keys);
-    stabilizer_list  - list of np.2darray, operators that leave the seed point
-                       unchanged.
-    """
-
-    orbit = [point_0]
-    transporter_dict = {tuple(point_0):np.eye(len(generators[0]),dtype=int)}
-    stabilizer_list = []
-    blacklist = [np.eye(len(generators[0]),dtype=int)]
-    
-    for p in orbit:
-        for g in generators:
-            q = g.dot(p)
-            
-            if not array_in_list(q, orbit):
-                orbit += [q]
-                transporter_dict[tuple(q)] = g.dot(transporter_dict[tuple(p)])
+            if store_inverse == True:
+                return matrix_group_element(operator_inverse,True,operator)
 
             else:
-                """
-                We assume that some group generator g satisfies
+                return matrix_group_element(operator_inverse,False)
 
-                g_21 p_1 = p_2
+    def __str__(self):
+        """
+        User-friendly output of the group element.
+        """
 
-                where p and q are points in the orbit of a known seed point
-                p_0. Assuming that
+        # Define float precision for output
+        log_eps = 4
 
-                p_1 = g_10 p_0
-                p_2 = g_20 p_0
-
-                where operators g_10 and g_20 are known, we can obtain two
-                stabilizer operations as
-
-                s_1 = g_20^-1 g_21 g_10
-                s_2 = g_10^-1 g_21^-1 g_20 = s_1^-1
-
-                Since we are interested in generators, we only need s_1.
-                """
-                
-                g_10 = transporter_dict[tuple(p)]
-                g_20 = transporter_dict[tuple(q)]
-                g_20_inv = np.linalg.inv(g_20).astype(int)
-                s_1 = g_20_inv.dot(g.dot(g_10))
-
-                stabilizer_list,blacklist = stabilizer_generator_filter(s_1,
-                                                            stabilizer_list,
-                                                            blacklist)
-    
-    return orbit, transporter_dict, stabilizer_list
-
-def as_permutation(a_list, matrix_operator):
-    """
-    Transforms a matrix operator into a cycle/permutation basis using a closed
-    set of points.
-
-    Arguments:
-    a_list          - list of np.1darray, a set of points, which defines the
-                      space of permutations;
-    matrix_operator - np.2darray, a symmetry operator acting on the points in 
-                      the a_list.
-
-    Returns:
-    permutation_operator - tuple of size len(a_list), permutation 
-                           representation of the matrix_operator.
-    """
-
-    # Construct a hash map for the points in the a_list  
-    dict_keys = [tuple(p) for p in a_list]
-    dict_vals = [i for i in range(len(a_list))]
-    index = dict(zip(dict_keys,dict_vals))
-
-    try:
-        permutation_operator = [index[tuple(matrix_operator.dot(p))] \
-                                for p in a_list]
-
-    except KeyError:
-        raise ValueError("Cannot determine the permutation representation: "\
-                       + "list of points is not a closed set")
-
-
-    return permutation_operator
+        return str(np.round(self.operator, log_eps))
