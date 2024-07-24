@@ -31,21 +31,6 @@ in `frusa_symmetry/database/`.
 - Convert between operator symbols and matrix representations (currently in 
 `symmetry_utils`);
 
-
-### Symmetry utils
-
-Currently, the module consists of separate functions.
-It may be useful to define a `group` class, which would reduce the number of 
-operations required to perform symmetry analysis.
-The `group` class is defined as a set of group generators in a chosen
-representation.
-Some useful features involve:
-
-- Given a point, define an orbit and a stabilizer chain;
-- From an orbit/stabilizer chain, define a permutation representation for group
-generators;
-- Given a permutation group, identify the generators;
-
 ### Particle utils
 
 The structure of an anisotropic particle is fully determined by the type of

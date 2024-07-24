@@ -348,14 +348,14 @@ class matrix_group_element(group_element):
             if element.shape[-1] != self.rank:
                 raise TypeError("Cannot perform multiplication between "\
                                 "matrices of rank {} and {}!".format(
-                                                             element.shape[-1], 
+                                                             element.shape[-1],
                                                              self.rank))
             
             return element.dot(self.operator)
 
         else:
-            raise TypeError("Cannot multiply " + type(element).__name__ + " and "\
-                          + self.__name__ + "!") 
+            raise TypeError("Cannot multiply " + type(element).__name__\
+                          + " and " + self.__name__ + "!") 
 
     
     def inv(self, store_inverse = False):
@@ -381,6 +381,25 @@ class matrix_group_element(group_element):
 
             else:
                 return matrix_group_element(operator_inverse,False)
+
+    def __eq__(self, element):
+        """
+        Determines if two matrix group elements are the same up to numerical
+        precision.
+        """
+        
+        if isinstance(element, matrix_group_element):
+            
+            # Define numerical tolerance
+            eps = 1e-10
+            
+            return np.isclose(self.operator,element.operator).all()
+
+        else:
+            warnings.warn("Comparison of " + self.__name__\
+                        + " with " + type(element).__name__\
+                        + " yields False by default.")
+            return False
 
     def __str__(self):
         """
