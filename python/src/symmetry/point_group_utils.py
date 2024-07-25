@@ -10,38 +10,235 @@ This program defines methods for defining and manipulating 3D point groups.
 """
 
 import numpy as np
-from symmetry_utils import matrix_group_element
+from symmetry_utils import group, matrix_group_element
 
-# Frequently used functions
-
-def normalize_vector(v):
+def point_group(pg_symbol, store_inverse = True, axis = None):
     """
-    Shortcut normalization function with checks for unit and zero vectors.
+    Returns the 3D point group given its Schoenflies symbol.   
+    
+    Arguments:
+    pg_symbol     - str, Schoenflies symbol of the point group;
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    axis          - array_type, (optional, default = None), for axial groups 
+                    defines the primary rotation axis. 
+
+    Returns: 
+    group, point group object.
+    """
+
+    symbol_error = ValueError("Incorrect Schoenflies symbol: " + pg_symbol) 
+
+    pg_type = pg_symbol[0]
+
+    # Test if the point group is polyhedral
+    if pg_type == 'T':
+        # Tetrahedral point group
+        if len(pg_type) == 1:
+            return T_group(store_inverse)
+        
+        elif len(pg_type) == 2 and pg_type[1] == 'd':
+            return Td_group(store_inverse)
+        
+        elif len(pg_type) == 2 and pg_type[1] == 'h':
+            return Th_group(store_inverse)
+        
+        else:
+            raise symbol_error
+
+    elif pg_type == 'O':
+        # Octahedral point group
+        if len(pg_type) == 1:
+            return O_group(store_inverse)
+        
+        elif len(pg_type) == 2 and pg_type[1] == 'h':
+            return Oh_group(store_inverse)
+        
+        else:
+            raise symbol_error
+
+    elif pg_type == 'I':
+        # Icosahedral point group
+        if len(pg_type) == 1:
+            return I_group(store_inverse)
+        
+        elif len(pg_type) == 2 and pg_type[1] == 'h':
+            return Ih_group(store_inverse)
+        
+        else:
+            raise symbol_error
+
+
+    # Test if the point group is axial
+    else:        
+        try:
+            n = int(pg_symbol[1])
+        
+        except:
+            raise symbol_error   
+
+        if pg_type == 'C':
+            if len(pg_symbol) == 2:
+                return Cn_group(n,store_inverse,axis)
+            
+            elif len(pg_type) == 3 and pg_symbol[2] == 'v':
+                return Cnv_group(n,store_inverse,axis)
+
+            elif len(pg_type) == 3 and pg_symbol[2] == 'h':
+                return Cnh_group(n,store_inverse,axis)
+
+            else:
+                raise symbol_error
+            
+        elif pg_type == 'S':
+
+            if len(pg_symbol) != 2:
+                raise symbol_error
+
+            return Sn_group(n,store_inverse,axis)
+
+        elif pg_type == 'D':
+            if len(pg_symbol) == 2:
+                return Dn_group(n,store_inverse,axis)
+            
+            elif len(pg_type) == 3 and pg_symbol[2] == 'd':
+                return Dnd_group(n,store_inverse,axis)
+            
+            elif len(pg_type) == 3 and pg_symbol[2] == 'h':
+                return Dnh_group(n,store_inverse,axis)
+            
+            else:
+                raise symbol_error
+
+        else:
+            raise symbol_error
+
+"""
+-------------------------------------------------------------------------------
+3D point groups
+-------------------------------------------------------------------------------
+"""
+
+# Polyhedral point groups
+
+def T_group(store_inverse = True):
+    pass
+
+def Td_group(store_inverse = True):
+    pass
+
+def Th_group(store_inverse = True):
+    pass
+
+def O_group(store_inverse = True):
+    pass
+
+def Oh_group(store_inverse = True):
+    pass
+
+def I_group(store_inverse = True):
+    pass
+
+def Ih_group(store_inverse = True):
+    pass
+
+# Axial point groups
+
+def Cn_group(n, store_inverse = True, axis = None):
+    """
+    Cyclic group of n-fold rotations.
 
     Arguments:
-    v - np.1darray, vector to normalize.
+    n             - int, cycle order of the rotations; 
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    axis          - array_type, (optional, default = None), defines the primary
+                    rotation axis. 
 
-    Returns:
-    v - if |v| > 0, np.1darray, v = v/|v| normalized vector;
-        if |v| = 0, Value Error.
+    Returns: 
+    group, point group object.
     """
     
-    v_norm = np.linalg.norm(v)
+    # By default, choose z-axis as the primary rotation axis
+    if isinstance(axis,type(None)):
+        axis = [0,0,1]
+
+    Cn = matrix_group_element(operator_C(axis,n),
+                              operator_inv = operator_C(axis,-n),
+                              cycle_order = n,
+                              store_inverse = store_inverse)
+
+    generators = [Cn]
+
+    return group(generators) 
+
+
+def Cnv_group(n, store_inverse = True, axis = None):
+    """
+    Cyclic group of n-fold rotations with reflections (plane parallel to the 
+    n-fold rotation axis).
+
+    Arguments:
+    n             - int, cycle order of the rotations; 
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    axis          - array_type, (optional, default = None), defines the primary
+                    rotation axis. 
+
+    Returns: 
+    group, point group object.
+    """
     
-    # Define numerical precision for the norm
-    eps = 1e-10
+    # By default, choose z-axis as the primary rotation axis
+    if isinstance(axis,type(None)):
+        axis_1 = [0,0,1]
+        axis_2 = [1,0,0]
+
+    else:
+        axis_1 = axis
+
+    Cn = matrix_group_element(operator_C(axis_1,n),
+                              operator_inv = operator_C(axis_1,-n),
+                              cycle_order = n,
+                              store_inverse = store_inverse)
+
+    # TODO axis of the mirror plane is arbitrarily defined, so one must choose
+    # a convention. One idea is to require two axes on input. This means that
+    # axis = None should be replaced by *axes
+    Mv = matrix_group_element(operator_M(axis_2),
+                              operator_inv = operator_M(axis_2),
+                              cycle_order = 2,
+                              store_inverse = store_inverse)
+
+    generators = [Cn, Mv]
+
+    return group(generators) 
 
 
-    if v_norm < eps:
-        raise ValueError("Cannot normalize a vector with zero norm!")
-
-    elif v_norm - 1.0 > eps:
-        v /= v_norm
-
-    return v
+def Cnh_group(n, store_inverse = True, axis = None):
+    pass
 
 
-# Definitions of symmetry elements
+def Sn_group(n, store_inverse = True, axis = None):
+    pass
+
+
+def Dn_group(n, store_inverse = True, axis = None):
+    pass
+
+
+def Dnd_group(n, store_inverse = True, axis = None):
+    pass
+
+
+def Dnh_group(n, store_inverse = True, axis = None):
+    pass
+
+"""
+-------------------------------------------------------------------------------
+Symmetry operators in 3D
+-------------------------------------------------------------------------------
+"""
 
 def operator_C(axis, n):
     """
@@ -253,81 +450,35 @@ def symbol_to_operator(symbol):
 
     return operator
 
-# Routines that construct a point group from its Schoenflies symbol 
 
-def point_group(pg_symbol, store_inverse = True):
+"""
+-------------------------------------------------------------------------------
+Frequently used supplementary functions
+-------------------------------------------------------------------------------
+"""
+
+def normalize_vector(v):
     """
-    Creates a group object from the Schoenflies symbol of the point group.
+    Shortcut normalization function with checks for unit and zero vectors.
 
     Arguments:
-    pg_symbol     - str, Schoenflies symbol of the point group;
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses.
+    v - np.1darray, vector to normalize.
 
-    Returns: group object with the correct point group generator set.
+    Returns:
+    v - if |v| > 0, np.1darray, v = v/|v| normalized vector;
+        if |v| = 0, Value Error.
     """
-
-    generators = point_group_generators(pg_symbol,store_inverse)
-
-    return group(generators)
-
-def point_group_generators(pg_symbol, store_inverse = True):
-    """
-    Calculates the generators of a 3D point group given its Schoenflies symbol.   
     
-    Arguments:
-    pg_symbol     - str, Schoenflies symbol of the point group;
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses.
-
-    Returns: 
-    generator_list - list of matrix_group_element, point group generator set.
-    """
-
-    symbol_error = ValueError("Incorrect Schoenflies symbol: " + pg_symbol) 
-
-    pg_type = pg_symbol[0]
+    v_norm = np.linalg.norm(v)
     
-    try:
-        n = int(pg_symbol[1])
-    
-    except:
-        raise symbol_error
-        
-
-    if pg_type == 'C':
-        if len(pg_symbol) == 2:
-            return Cn_generators(n, store_inverse)
-        
-        elif pg_symbol[2] == 'v':
-            return Cnv_generators(n, store_inverse)
-
-        elif pg_symbol[2] == 'h':
-            return Cnh_generators(n, store_inverse)
-
-        else:
-            raise symbol_error
-        
-    elif pg_type == 'S':
-        if len(pg_symbol) != 2:
-            raise symbol_error
-
-        return Sn_generators(n, store_inverse)
-
-    elif pg_type == 'D':
-        if len(pg_symbol) == 2:
-            return Dn_generators(n, store_inverse)
-        
-        elif pg_symbol[2] == 'd':
-            return Dnd_generators(n, store_inverse)
-        
-        elif pg_symbol[2] == 'h':
-            return Dnh_generators(n, store_inverse)
-        
-        else:
-            raise symbol_error
+    # Define numerical precision for the norm
+    eps = 1e-10
 
 
+    if v_norm < eps:
+        raise ValueError("Cannot normalize a vector with zero norm!")
 
-    else:
-        raise symbol_error
+    elif v_norm - 1.0 > eps:
+        v /= v_norm
+
+    return v

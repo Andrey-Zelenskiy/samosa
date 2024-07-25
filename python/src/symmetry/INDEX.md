@@ -33,7 +33,8 @@ focused on symmetric groups of permutations.
 - [x] method for element product;
 - [x] method for element inverse;
 - [x] method for group action; 
-- [x] `__str__` magic function for user-friendly output.
+- [x] `__str__` magic function for user-friendly output;
+- [] cycle order calculation.
 
 * Implement `group_element` objects for pointer representation 
 

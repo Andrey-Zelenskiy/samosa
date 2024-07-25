@@ -39,15 +39,21 @@ def element_in_list(g, g_list):
     return any(g == p for p in g_list)
 
 
+def not_None(a):
+    """
+    Checks if a is of NoneType, returns True if it isn't.
+    """
+    return not isinstance(a,type(None))
+
+
 def mod(a,n):
     """
     If n is not None, return a % n, otherwise return a.
     """
-    if n is not None:
+    if not_None(n):
         return a % n
     else:
         return a
-
 # Group element interface
 
 # Pointer group element
@@ -359,12 +365,12 @@ class pointer_group_element(group_element):
 
         """
 
-        if generator_list is not None:
+        if not_None(generator_list):
             self.n_generators = len(generator_list)
             self.order = [g.order for g in generator_list]
 
         else:
-            if generator_data is not None:
+            if not_None(generator_data):
                 self.order = generator_order
                 self.n_generators = len(self.order)
 
@@ -470,50 +476,59 @@ class pointer_group_element(group_element):
 
 
 ## Matrix representation
-
+## TODO in the future, should implement cycle order calculation
 class matrix_group_element(group_element):
     """
     Converts a matrix operator to a group elment object with strict
     multiplication and inversion rules. 
     """
 
-    def __init__(self, operator, store_inverse = True, operator_inv = None):
+    def __init__(self, operator, operator_inv = None, cycle_order = None,
+                                 store_inverse = True):
         """
         Defines the matrix operator and, optionally, its inverse.
 
         Arguments:
-        operator - 2darray_type, matrix operator, defining the group element;
-        store_inverse - bool, (optional, default = True) if True, instructs the
-                        class to explicitly store the matrix inverse of
-                        self.operator;
-        operator_inv - 2darray_type, (optional, default = None) if not None, 
-                       proposes an inverse of self.operator.
+        operator      - 2darray_type, matrix operator, defining the group 
+                        element;
+        operator_inv  - 2darray_type, (optional, default = None), if not None, 
+                        proposes an inverse of operator;
+        cycle_order   - int, (optional, default = None), if not None, gives the
+                        cycle order of the operator, i.e. n for which 
+                        operator^n = identity.
+        store_inverse - bool, (optional, default = True) if True, explicitly 
+                        stores the matrix inverse of the operator.
         """
 
         self.operator = np.array(operator)
         self.rank = len(self.operator)
-        self.operator_inv = None
         self.store_inverse = store_inverse
+        self.order = cycle_order
 
-        if operator_inv is not None:
+        if self.store_inverse == True:
+            if not_None(operator_inv):
 
-            # Test that the proposed inverse yields identity when multiplied by
-            # self.operator
-            operator_inv = np.array(operator_inv)
-            identity_test = operator_inv.dot(self.operator) - np.eye(rank)
-            
-            eps = 1e-10
+                # Test that the proposed inverse yields identity when multiplied 
+                # by self.operator
+                operator_inv = np.array(operator_inv)
+                identity_test = operator_inv.dot(self.operator) - np.eye(rank)
+                
+                eps = 1e-10
 
-            if np.max(np.abs(identity_test)) > eps:
-                raise ValueError("Proposed inverse does not produce identity "\
-                                 "under multiplication with the operator!")
+                if np.max(np.abs(identity_test)) > eps:
+                    raise ValueError("Proposed inverse does not produce "\
+                                     "identity under multiplication with the "\
+                                     "operator!")
 
-            self.operator_inv = operator_inv
-            self.store_inverse = True
+                self.operator_inv = operator_inv
+                self.store_inverse = True
+
+            else:
+                self.operator_inv = self.inv()
 
         else:
-            if store_inverse == True:
-                self.operator_inv = self.inv()
+            self.operator_inv = None
+
 
     
     def __mul__(self, element):
@@ -587,7 +602,7 @@ class matrix_group_element(group_element):
         operator_inv - matrix_group_element, inverse of the self.operator.
         """
 
-        if self.operator_inv is not None:
+        if not_None(self.operator_inv):
             return self.operator_inv
 
         else:
