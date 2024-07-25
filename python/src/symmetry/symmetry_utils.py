@@ -39,36 +39,20 @@ def element_in_list(g, g_list):
     return any(g == p for p in g_list)
 
 
-# Definition of the group element interface
-
-class group_element:
+def mod(a,n):
     """
-    Interface for an object representing an element of a symmetry group.  
+    If n is not None, return a % n, otherwise return a.
     """
+    if n is not None:
+        return a % n
+    else:
+        return a
 
-    def __mul__(self, element):
-        """
-        Left group action.
-        """
-        pass
+# Group element interface
 
-    def __rmul__(self, element):
-        """
-        Right group action.
-        """
-        pass
+# Pointer group element
 
-    def inv(self):
-        """
-        Group element inverse.
-        """
-        pass
 
-    def __eq__(self, element):
-        """
-        Group element comparison
-        """
-        pass
 
 # Definition of the group object
 
@@ -289,3 +273,357 @@ def as_permutation(a_list, matrix_operator):
 
 
         return permutation_operator
+
+# Definitions of common representations of group elements
+
+## Group element interface
+
+class group_element():
+    """
+    Interface class for a group element object.
+    """
+
+    def __mul__(self, element):
+        """
+        Left group element multiplication and group action.
+        """
+        pass
+
+    def __rmul__(self, element):
+        """
+        Right group element multiplication and group action.
+        """
+        pass
+
+    def inv(self):
+        """
+        Group element inverse.
+        """
+        pass 
+
+    def __eq__(self, element):
+        """
+        Group element comparison.
+        """
+        pass
+
+    def __str__(self):
+        """
+        User-friendly output.
+        """
+        pass
+
+## Generator pointer representation
+
+class pointer_group_element(group_element):
+    """
+    Translates group element properties (element multiplication, inverse) to
+    pointer representation of the group elements.
+
+
+    In the pointer representation a specified group element is represented 
+    as a list of integers that correspond to the sequence of generators that 
+    produce the specified group element. For example, if the generator set is 
+    
+    generator_list = {g1,g2}, 
+
+    and some other group element g3 can be written as  
+
+    g3 = g1 * g2 * g2 * g1 * g1 *... 
+       = generator_list[0] * generator_list[1] * generator_list[1] * ...,
+
+    then we may represent g3 as a pointer
+
+    g3_pointer = [(0,1),(1,2),(0,2),...],
+
+    where the first number in the tuple is the index of the generator in 
+    generator_list, and the second is the multiplicative power of this
+    generator, i.e. the number of elements that form an unbroken product chain.
+
+    Note that the power of an element is defined modulo its cycle order. 
+    Therefore, if the cycle orders of the generators are known, the program
+    will use them to simplify pointer products and inverses.
+    """
+
+    def __init__(self, pointer, generator_list = None, generator_order = None):
+        """
+        Initializes a group element in the pointer representation.
+
+        Arguments:
+        pointer         - list of tuple, pointer representation of some group 
+                          element;
+        generator_list  - list of group_element_type (optional, default None),
+                          if not None, provides a list of group generators;
+        generator_order - list (optional, default None), if not None, provides
+                          the list of generator cycle orders.
+
+        """
+
+        if generator_list is not None:
+            self.n_generators = len(generator_list)
+            self.order = [g.order for g in generator_list]
+
+        else:
+            if generator_data is not None:
+                self.order = generator_order
+                self.n_generators = len(self.order)
+
+            else: 
+                raise Exception("Generator data not provided!")
+
+        self.pointer = pointer 
+
+        # Test the validity of the pointer
+
+        for i, p in enumerate(pointer):
+            if p[0] >= n_generators:
+                raise ValueError("Pointer value {} exceeds the ".format(p[0])\
+                                 "number of generators {}".format(n_generators))
+            
+            pointer[i][1] = mod(p[1],self.order[p[0]])
+
+
+    def __mul__(self, element):
+        """
+        Group element multiplication in pointer representation.
+        """
+
+        if isinstance(element, pointer_group_element):
+            
+            # Determine the rightmost generator of the left operator (self)
+            # and leftmost generator of the right operator (element)
+            g_right = self.pointer[-1]
+            g_left  = element.pointer[0]
+
+            if g_right[0] == g_left[0]:
+                # Extend generator chain
+
+                g_order = self.order[g_right[0]]
+                g_power_new = mod(g_right[1]+g_left[1], g_order)
+
+                if g_power_new == 0:
+                    g_extend = []
+                
+                else:
+                    g_extend = [ ( g_right[0], g_power_new ) ]
+
+                new_pointer = self.pointer[:-1] + g_extend + element.pointer[1:]
+            
+            else:
+                # Simply append the pointers
+                new_pointer = self.pointer + element.pointer
+
+            return pointer_group_element(pointer,
+                                         generator_order=self.order)
+            
+        else:
+            raise TypeError("Multiplication is not defined for types "\
+                            "{} and {}".format(self.__class__.__name__, 
+                                               type(element).__name__))
+
+
+    def __rmul__(self, element):
+        """
+        Right group action is not defined for pointer representation.
+        """
+        if not isinstance(element, pointer_group_element):
+            raise TypeError("Multiplication is not defined for types "\
+                            "{} and {}".format(self.__class__.__name__, 
+                                               type(element).__name__))
+
+    def inv(self):
+        """
+        Group element inverse for pointer representation.
+        """
+ 
+        pointer_inv = [(p[0],
+                        mod(-p[1],self.order[p[0]])), for p in self.pointer]
+
+        return pointer_group_element(pointer_inv,
+                                     generator_order=self.order)
+        
+
+    def __eq__(self, element):
+        """
+        Pointer comparison.
+
+        Note that a pointer representation of a group element is not unique,
+        so this function is equivalent to group element comparison. 
+        """
+
+        if isinstance(element, pointer_group_element):
+            
+            return self.pointer == element.pointer
+
+        else:
+            warnings.warn("Comparison of " + self.__class__.__name__\
+                        + " with " + type(element).__name__\
+                        + " yields False by default.")
+            return False
+
+    def __str__(self):
+        """
+        User-friendly output.
+        """
+
+        return str(self.pointer)
+
+
+## Matrix representation
+
+class matrix_group_element(group_element):
+    """
+    Converts a matrix operator to a group elment object with strict
+    multiplication and inversion rules. 
+    """
+
+    def __init__(self, operator, store_inverse = True, operator_inv = None):
+        """
+        Defines the matrix operator and, optionally, its inverse.
+
+        Arguments:
+        operator - 2darray_type, matrix operator, defining the group element;
+        store_inverse - bool, (optional, default = True) if True, instructs the
+                        class to explicitly store the matrix inverse of
+                        self.operator;
+        operator_inv - 2darray_type, (optional, default = None) if not None, 
+                       proposes an inverse of self.operator.
+        """
+
+        self.operator = np.array(operator)
+        self.rank = len(self.operator)
+        self.operator_inv = None
+        self.store_inverse = store_inverse
+
+        if operator_inv is not None:
+
+            # Test that the proposed inverse yields identity when multiplied by
+            # self.operator
+            operator_inv = np.array(operator_inv)
+            identity_test = operator_inv.dot(self.operator) - np.eye(rank)
+            
+            eps = 1e-10
+
+            if np.max(np.abs(identity_test)) > eps:
+                raise ValueError("Proposed inverse does not produce identity "\
+                                 "under multiplication with the operator!")
+
+            self.operator_inv = operator_inv
+            self.store_inverse = True
+
+        else:
+            if store_inverse == True:
+                self.operator_inv = self.inv()
+
+    
+    def __mul__(self, element):
+        """
+        Shortcut for calculating (left) group element action.
+        """
+
+        # Multiplication of two group elements
+        if isinstance(element, matrix_group_element):
+            
+            if element.rank != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.rank))
+            
+            product = self.operator.dot(element.operator)
+
+            return matrix_group_element(product,False)
+
+
+        elif isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[0] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.shape[0]))
+            
+            return self.operator.dot(element)
+
+        else:
+            raise TypeError("Cannot multiply "\
+                          + self.__class__.__name__ + " and "\
+                          + type(element).__name__ + "!") 
+
+    
+    def __rmul__(self, element):
+        """
+        Shortcut for calculating (right) group element action.
+        """
+
+        if isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[-1] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             element.shape[-1],
+                                                             self.rank))
+            
+            return element.dot(self.operator)
+
+        else:
+            raise TypeError("Cannot multiply " + type(element).__name__\
+                          + " and " + self.__class__.__name__ + "!") 
+
+    
+    def inv(self, store_inverse = False):
+        """
+        Returns matrix inverse of self.operator.
+
+        Arguments:
+        store_inverse - bool, (optional, default = False), if True, also stores
+                        the original operator as the inverse of operator_inv. 
+        
+        Returns:
+        operator_inv - matrix_group_element, inverse of the self.operator.
+        """
+
+        if self.operator_inv is not None:
+            return self.operator_inv
+
+        else:
+            operator_inverse = np.linalg.inv(self.operator)
+
+            if store_inverse == True:
+                return matrix_group_element(operator_inverse,True,operator)
+
+            else:
+                return matrix_group_element(operator_inverse,False)
+
+    def __eq__(self, element):
+        """
+        Determines if two matrix group elements are the same up to numerical
+        precision.
+        """
+        
+        if isinstance(element, matrix_group_element):
+            
+            # Define numerical tolerance
+            eps = 1e-10
+            
+            return np.isclose(self.operator,element.operator).all()
+
+        else:
+            warnings.warn("Comparison of " + self.__class__.__name__\
+                        + " with " + type(element).__name__\
+                        + " yields False by default.")
+            return False
+
+    def __str__(self):
+        """
+        User-friendly output of the group element.
+        """
+
+        # Define float precision for output
+        log_eps = 4
+
+        return str(np.round(self.operator, log_eps))

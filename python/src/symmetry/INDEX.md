@@ -14,28 +14,41 @@ focused on symmetric groups of permutations.
 
 ### TO-DO
 
+#### Testing
+* `symmetry_utils.py`
+
+- Try to initialize a group from a set of proper and improper generators;
+- 
+
+* `point_group_utils.py`
+
 #### Organization
-* Move methods that relate to point groups currently from `symmetry_utils.py` to
-`point_group_utils.py`.
+* [x] Move methods that relate to point groups currently from 
+`symmetry_utils.py` to `point_group_utils.py`.
 
 #### Features
 
-* Implement `group_element` objects for matrix and permutation operators
+* Implement `group_element` objects for matrix operators in `symmetry_utils.py`
 
-The main properties of a `group_element` are
+- [x] method for element product;
+- [x] method for element inverse;
+- [x] method for group action; 
+- [x] `__str__` magic function for user-friendly output.
 
-- method for element product;
-- method for element inverse;
-- method for group action; 
-- `__str__` magic function for user-friendly output;
-- method for returning the element as a matrix;
-- method for returning the element as a permutation.
+* Implement `group_element` objects for pointer representation 
+
+- [x] method for element product;
+- [x] method for element inverse;
+- [x] `__str__` magic function for user-friendly output.
+
+Note that the representation can be simplified if we know the cycle order of
+the generators.
 
 * Implement `group` class object in `symmetry_utils.py`.
 
 The `group` object should contain 
 
-- group generators;
+- [x] group generators;
 - method to calculate an orbit of of a point;
 - method to define a permutation representation for group generators from an
 orbit/stabilizer chain;
