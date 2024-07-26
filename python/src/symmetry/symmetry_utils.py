@@ -54,13 +54,30 @@ def mod(a,n):
         return a % n
     else:
         return a
-# Group element interface
 
-# Pointer group element
+def _check_orthogonal(operator):
+    """
+    Checks if the operator is orthogonal.
+    """
 
+    operator = np.array(operator)
+
+    # Define numerical precision required
+    eps = 1e-10
+
+    # Check if O * O.T = identity
+    diff =  np.max(np.abs(operator.dot(operator.T) - np.eye(len(operator))))
+
+    if diff < eps:
+        return True
+    else:
+        return False
 
 
 # Definition of the group object
+
+# TODO add an option to name the group
+# TODO provovide nice representation of the group object
 
 class group:
     """
@@ -275,10 +292,10 @@ def as_permutation(a_list, matrix_operator):
 
     except KeyError:
         raise ValueError("Cannot determine the permutation representation: "\
-                + "list of points is not a closed set")
+                         "list of points is not a closed set")
 
 
-        return permutation_operator
+    return permutation_operator
 
 # Definitions of common representations of group elements
 
@@ -384,7 +401,7 @@ class pointer_group_element(group_element):
         for i, p in enumerate(pointer):
             if p[0] >= n_generators:
                 raise ValueError("Pointer value {} exceeds the ".format(p[0])\
-                                 "number of generators {}".format(n_generators))
+                               + "number of generators {}".format(n_generators))
             
             pointer[i][1] = mod(p[1],self.order[p[0]])
 
@@ -442,8 +459,7 @@ class pointer_group_element(group_element):
         Group element inverse for pointer representation.
         """
  
-        pointer_inv = [(p[0],
-                        mod(-p[1],self.order[p[0]])), for p in self.pointer]
+        pointer_inv = [(p[0],mod(-p[1],self.order[p[0]])) for p in self.pointer]
 
         return pointer_group_element(pointer_inv,
                                      generator_order=self.order)
@@ -477,6 +493,7 @@ class pointer_group_element(group_element):
 
 ## Matrix representation
 ## TODO in the future, should implement cycle order calculation
+## TODO provide nice representation of the group element object
 class matrix_group_element(group_element):
     """
     Converts a matrix operator to a group elment object with strict
@@ -489,29 +506,31 @@ class matrix_group_element(group_element):
         Defines the matrix operator and, optionally, its inverse.
 
         Arguments:
-        operator      - 2darray_type, matrix operator, defining the group 
-                        element;
-        operator_inv  - 2darray_type, (optional, default = None), if not None, 
-                        proposes an inverse of operator;
-        cycle_order   - int, (optional, default = None), if not None, gives the
-                        cycle order of the operator, i.e. n for which 
-                        operator^n = identity.
-        store_inverse - bool, (optional, default = True) if True, explicitly 
-                        stores the matrix inverse of the operator.
+        operator         - 2darray_type, matrix operator, defining the group 
+                           element;
+        operator_inv     - 2darray_type, (optional, default = None), if not 
+                           None, proposes an inverse of operator;
+        cycle_order      - int, (optional, default = None), if not None, gives 
+                           the cycle order of the operator, i.e. n for which 
+                           operator^n = identity;
+        store_inverse    - bool, (optional, default = True) if True, explicitly 
+                           stores the matrix inverse of the operator.
         """
 
-        self.operator = np.array(operator)
+        self.operator = np.array(operator) 
         self.rank = len(self.operator)
         self.store_inverse = store_inverse
         self.order = cycle_order
+        self.orthogonal_basis = _check_orthogonal(self.operator)
 
         if self.store_inverse == True:
             if not_None(operator_inv):
 
-                # Test that the proposed inverse yields identity when multiplied 
+                # Test that the proposed inverse yields identity when multiplied
                 # by self.operator
                 operator_inv = np.array(operator_inv)
-                identity_test = operator_inv.dot(self.operator) - np.eye(rank)
+                identity_test = operator_inv.dot(self.operator)\
+                              - np.eye(self.rank)
                 
                 eps = 1e-10
 
@@ -528,7 +547,6 @@ class matrix_group_element(group_element):
 
         else:
             self.operator_inv = None
-
 
     
     def __mul__(self, element):
@@ -606,7 +624,11 @@ class matrix_group_element(group_element):
             return self.operator_inv
 
         else:
-            operator_inverse = np.linalg.inv(self.operator)
+            if self.orthogonal_basis:
+                operator_inverse = self.operator.T
+
+            else:
+                operator_inverse = np.linalg.inv(self.operator)
 
             if store_inverse == True:
                 return matrix_group_element(operator_inverse,True,operator)
