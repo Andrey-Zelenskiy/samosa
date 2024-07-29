@@ -4,7 +4,6 @@
 *.json
 
 /build*/
-/test*/
 /input*/
-*/__pycache__/*
+**/__pycache__/
 *checkpoints*
