@@ -174,25 +174,259 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
 # Polyhedral point groups
 
 def _T_group(store_inverse = True, basis = None):
-    pass
+    """
+    Tetrahedral rotational point group. 
+
+    Selected generators are C3,[111], and C2,[001].
+    
+    Arguments:
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Define generators
+    axis_1 = [1,1,1]
+    C3 = matrix_group_element(operator_C(axis_1,3,basis),
+                              operator_inv = operator_C(axis_1,-3,basis),
+                              cycle_order = 3,
+                              store_inverse = store_inverse)
+
+    axis_2 = [0,0,1]
+    C2 = matrix_group_element(operator_C(axis_2,2,basis),
+                              operator_inv = operator_C(axis_2,2,basis),
+                              cycle_order = 2,
+                              store_inverse = store_inverse)
+    
+    generators = [C3,C2]
+
+    return group(generators) 
+
 
 def _Td_group(store_inverse = True, basis = None):
-    pass
+    """
+    Tetrahedral point group.
+
+    Selected generators are S4,[001], and S4,[100].
+    
+    Arguments:
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Define generators
+    axis_1 = [0,0,1]
+    S4_1 = matrix_group_element(operator_S(axis_1,4,basis),
+                                operator_inv = operator_S(axis_1,-4,basis),
+                                cycle_order = 4,
+                                store_inverse = store_inverse)
+
+    axis_2 = [1,0,0]
+    S4_2 = matrix_group_element(operator_S(axis_2,4,basis),
+                                operator_inv = operator_S(axis_2,-4,basis),
+                                cycle_order = 4,
+                                store_inverse = store_inverse)
+    
+    generators = [S4_1,S4_2]
+
+    return group(generators) 
+
 
 def _Th_group(store_inverse = True, basis = None):
-    pass
+    """
+    Tetrahedral rotation-inversion point group.
+
+    Selected generators are C3,[111], and Mh,[001]. 
+    
+    Arguments:
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Define generators
+    axis_1 = [1,1,1]
+    C3 = matrix_group_element(operator_C(axis_1,3,basis),
+                              operator_inv = operator_S(axis_1,-3,basis),
+                              cycle_order = 3,
+                              store_inverse = store_inverse)
+
+    axis_2 = [0,0,1]
+    Mh = matrix_group_element(operator_M(axis_2,basis),
+                              operator_inv = operator_M(axis_2,basis),
+                              cycle_order = 2,
+                              store_inverse = store_inverse)
+    
+    generators = [C3,Mh]
+
+    return group(generators) 
+
 
 def _O_group(store_inverse = True, basis = None):
-    pass
+    """
+    Octahedral rotational point group. 
+
+    Selected generators are C4,[001], and C4,[100].
+    
+    Arguments:
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Define generators
+    axis_1 = [0,0,1]
+    C4_1 = matrix_group_element(operator_C(axis_1,4,basis),
+                                operator_inv = operator_C(axis_1,-4,basis),
+                                cycle_order = 4,
+                                store_inverse = store_inverse)
+
+    axis_2 = [1,0,0]
+    C4_2 = matrix_group_element(operator_C(axis_2,4,basis),
+                                operator_inv = operator_C(axis_2,4,basis),
+                                cycle_order = 4,
+                                store_inverse = store_inverse)
+    
+    generators = [C4_1,C4_2]
+
+    return group(generators) 
+
 
 def _Oh_group(store_inverse = True, basis = None):
-    pass
+    """
+    Octahedral point group. 
+
+    Selected generators are S6,[111], and S4,[001].
+    
+    Arguments:
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Define generators
+    axis_1 = [1,1,1]
+    S6 = matrix_group_element(operator_S(axis_1,6,basis),
+                              operator_inv = operator_S(axis_1,-6,basis),
+                              cycle_order = 6,
+                              store_inverse = store_inverse)
+
+    axis_2 = [0,0,1]
+    S4 = matrix_group_element(operator_S(axis_2,4,basis),
+                              operator_inv = operator_S(axis_2,4,basis),
+                              cycle_order = 4,
+                              store_inverse = store_inverse)
+    
+    generators = [S6,S4]
+
+    return group(generators) 
+
 
 def _I_group(store_inverse = True, basis = None):
-    pass
+    """
+    Icosahedral rotational point group. 
+
+    Selected generators are C5,[01p], and C5,[p01], where
+
+    p = (1 + sqrt(5))/2,
+    
+    is the golden ratio.
+    
+    Arguments:
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Define generators
+    phi = (1 + np.sqrt(5))/2
+    axis_1 = [0,1,phi]
+    C5_1 = matrix_group_element(operator_C(axis_1,5,basis),
+                                operator_inv = operator_C(axis_1,-5,basis),
+                                cycle_order = 5,
+                                store_inverse = store_inverse)
+
+    axis_2 = [phi,0,1]
+    C5_2 = matrix_group_element(operator_C(axis_2,5,basis),
+                                operator_inv = operator_C(axis_2,5,basis),
+                                cycle_order = 5,
+                                store_inverse = store_inverse)
+    
+    generators = [C5_1,C5_2]
+
+    return group(generators) 
+
 
 def _Ih_group(store_inverse = True, basis = None):
-    pass
+    """
+    Icosahedral point group. 
+
+    Selected generators are S10,[01p], and S10,[p01], where
+
+    p = (1 + sqrt(5))/2,
+    
+    is the golden ratio.
+    
+    Arguments:
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Define generators
+    phi = (1 + np.sqrt(5))/2
+    axis_1 = [0,1,phi]
+    S10_1 = matrix_group_element(operator_S(axis_1,10,basis),
+                                 operator_inv = operator_S(axis_1,-10,basis),
+                                 cycle_order = 10,
+                                 store_inverse = store_inverse)
+
+    axis_2 = [phi,0,1]
+    S10_2 = matrix_group_element(operator_S(axis_2,10,basis),
+                                 operator_inv = operator_S(axis_2,10,basis),
+                                 cycle_order = 10,
+                                 store_inverse = store_inverse)
+    
+    generators = [S10_1,S10_2]
+
+    return group(generators) 
+
 
 # Axial point groups
 

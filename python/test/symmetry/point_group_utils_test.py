@@ -7,10 +7,9 @@ import numpy as np
 
 import sys
 from os.path import dirname
-sys.path.append(dirname("/home/azelenskiy/Documents/"\
-                      + "frusa_symmetry/python/src/symmetry/"))
+sys.path.append(dirname("../../src/symmetry/"))
 
-from point_group_utils import operator_C
+from point_group_utils import operator_C, point_group
 
 class TestPointGroupUtils(unittest.TestCase):
     
@@ -46,6 +45,57 @@ class TestPointGroupUtils(unittest.TestCase):
         diff = np.round(np.max(np.abs(c2_z - c2_z_module)),10)
 
         self.assertEqual(diff,0.0)
+
+    
+    # Generate 1000 axial point groups with random n
+    def test_cn_group(self):
+        for i in range(1000):
+            n = np.random.randint(1,100)
+            pg_symbol = 'C' + str(n)
+            pg = point_group(pg_symbol)
+
+    
+    def test_cnv_group(self):
+        for i in range(1000):
+            n = np.random.randint(2,100)
+            pg_symbol = 'C' + str(n) + 'v'
+            pg = point_group(pg_symbol)
+
+    
+    def test_cnh_group(self):
+        for i in range(1000):
+            n = np.random.randint(1,100)
+            pg_symbol = 'C' + str(n) + 'h'
+            pg = point_group(pg_symbol)
+
+    
+    def test_sn_group(self):
+        for i in range(1000):
+            n = 2*np.random.randint(1,50)
+            pg_symbol = 'S' + str(n)
+            pg = point_group(pg_symbol)
+
+    
+    def test_dn_group(self):
+        for i in range(1000):
+            n = np.random.randint(2,100)
+            pg_symbol = 'D' + str(n)
+            pg = point_group(pg_symbol)
+
+    
+    def test_dnd_group(self):
+        for i in range(1000):
+            n = np.random.randint(2,100)
+            pg_symbol = 'D' + str(n) + 'd'
+            pg = point_group(pg_symbol)
+
+    
+    def test_dnh_group(self):
+        for i in range(1000):
+            n = np.random.randint(2,100)
+            pg_symbol = 'D' + str(n) + 'h'
+            pg = point_group(pg_symbol)
+
 
 if __name__ == '__main__':
     unittest.main()
