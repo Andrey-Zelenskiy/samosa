@@ -96,29 +96,45 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
 
 
     # Test if the point group is axial
-    else:        
+    else:
+        if len(pg_symbol) == 1:
+            raise symbol_error
+
+        ## Convert Cs and Ci symbols to C1h and S2 respectively
+        if pg_symbol == 'Cs':
+            pg_symbol = 'C1h'
+
+        elif pg_symbol == 'Ci':
+            pg_symbol = 'S2'
+
         ## If given, assign the rotation axes
         if len(axes) == 0:
             axes = None
         
         else:
             axes = [a for a in axes]
-            
+    
+        ## Define the order of the primary rotation
+        n_str = pg_symbol.lstrip('CSD').rstrip('vdh') 
         try:
-            n = int(pg_symbol[1])
-        
+            n = int(n_str)
+            if n < 1:
+                raise Exception("n is smaller than 1!")
         except:
-            raise symbol_error   
+            raise symbol_error
+
+        ## Determine the secondary point group characteristic
+        pg_symbol_tail = pg_symbol[(len(n_str)+1):]
 
         if pg_type == 'C':
             ## Cyclic proper rotation point groups
-            if len(pg_symbol) == 2:
+            if pg_symbol_tail == '':
                 return _Cn_group(n,axes,store_inverse,basis)
             
-            elif len(pg_symbol) == 3 and pg_symbol[2] == 'v':
+            elif pg_symbol_tail == 'v':
                 return _Cnv_group(n,axes,store_inverse,basis)
 
-            elif len(pg_symbol) == 3 and pg_symbol[2] == 'h':
+            elif pg_symbol_tail == 'h':
                 return _Cnh_group(n,axes,store_inverse,basis)
 
             else:
@@ -126,20 +142,21 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
             
         elif pg_type == 'S':
             ## Cyclic improper rotation point groups
-            if len(pg_symbol) != 2:
-                raise symbol_error
+            if pg_symbol_tail == '':
+                return _Sn_group(n,axes,store_inverse,basis)
 
-            return _Sn_group(n,axes,store_inverse,basis)
+            else:
+                raise symbol_error
 
         elif pg_type == 'D':
             ## Dihedral point groups
-            if len(pg_symbol) == 2:
+            if pg_symbol_tail == '':
                 return _Dn_group(n,axes,store_inverse,basis)
             
-            elif len(pg_symbol) == 3 and pg_symbol[2] == 'd':
+            elif pg_symbol_tail == 'd':
                 return _Dnd_group(n,axes,store_inverse,basis)
             
-            elif len(pg_symbol) == 3 and pg_symbol[2] == 'h':
+            elif pg_symbol_tail == 'h':
                 return _Dnh_group(n,axes,store_inverse,basis)
             
             else:
@@ -197,6 +214,7 @@ def _Cn_group(n, axis = None, store_inverse = True, basis = None):
     group, point group object.
     """
    
+    ## Assign primary axis
     if not_None(axis):
         
         if len(axis) != 1:
@@ -207,9 +225,10 @@ def _Cn_group(n, axis = None, store_inverse = True, basis = None):
             axis = axis[0]
 
     else:
-        # By default, choose z-axis as the primary rotation axis
+        ### By default, choose z-axis as the primary rotation axis
         axis = [0,0,1]
 
+    ## Define generators
     Cn = matrix_group_element(operator_C(axis,n,basis),
                               operator_inv = operator_C(axis,-n,basis),
                               cycle_order = n,
@@ -226,7 +245,7 @@ def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
     parallel to the n-fold axis.
 
     Arguments:
-    n             - int, cycle order of the rotations; 
+    n             - int, cycle order of the rotations, must be larger than 1; 
     axes          - array_type, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
@@ -240,6 +259,11 @@ def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
     group, point group object.
     """
     
+    ## Check that n > 1
+    if n == 1:
+        raise ValueError("C1v point group is not defined!")
+    
+    ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
             raise Exception("Two axes are required for "\
@@ -255,6 +279,7 @@ def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
         axis_1 = [0,0,1]
         axis_2 = [0,1,0]
 
+    ## Define generators
     Cn = matrix_group_element(operator_C(axis_1,n,basis),
                               operator_inv = operator_C(axis_1,-n,basis),
                               cycle_order = n,
@@ -289,11 +314,12 @@ def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
     group, point group object.
     """
     
+    ## Assign primary axis
     if not_None(axis):
         
         if len(axis) != 1:
             raise Exception("Only one axis is required for "\
-                            "Cn point groups ({} provided).".format(len(axis)))
+                            "Cnh point groups ({} provided).".format(len(axis)))
 
         else:    
             axis = axis[0]
@@ -302,6 +328,7 @@ def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
         # By default, choose z-axis as the primary rotation axis
         axis = [0,0,1]
     
+    ## Define generators
     Cn = matrix_group_element(operator_C(axis,n,basis),
                               operator_inv = operator_C(axis,-n,basis),
                               cycle_order = n,
@@ -318,19 +345,223 @@ def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
 
 
 def _Sn_group(n, axis = None, store_inverse = True, basis = None):
-    pass
+    """
+    Group of n-fold improper rotations.
+
+    Arguments:
+    n             - int, cycle order of the improper rotations, must be an even
+                    integer; 
+    axis          - array_type, (optional, default = None), defines the primary
+                    rotation axis. If None, assumes [0,0,1]; 
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+   
+    ## Check that n is even
+    if n%2 != 0:
+        raise ValueError("Sn point group requires n to be an even interger!\n"
+                         "n = {}".format(n))
+    
+    ## Assign primary axis
+    if not_None(axis):
+        
+        if len(axis) != 1:
+            raise Exception("Only one axis is required for "\
+                            "Sn point groups ({} provided).".format(len(axis)))
+
+        else:    
+            axis = axis[0]
+
+    else:
+        # By default, choose z-axis as the primary rotation axis
+        axis = [0,0,1]
+
+    ## Define generators
+    Sn = matrix_group_element(operator_S(axis,n,basis),
+                              operator_inv = operator_S(axis,-n,basis),
+                              cycle_order = n,
+                              store_inverse = store_inverse)
+
+    generators = [Sn]
+
+    return group(generators) 
 
 
 def _Dn_group(n, axes = None, store_inverse = True, basis = None):
-    pass
+    """
+    Dihedral group of order n.
+
+    Arguments:
+    n             - int, cycle order of the rotations, must be larger than 1; 
+    axes          - array_type, (optional, default = None), defines the primary
+                    rotation axis and the direction of the mirror plane normal.
+                    If None, assumes [0,0,1] and [0,1,0]; 
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+    
+    ## Check that n > 1
+    if n == 1:
+        raise ValueError("D1 point group is not defined!")
+    
+    ## Assign primary axes
+    if not_None(axes):
+        if len(axes) != 2:
+            raise Exception("Two axes are required for "\
+                            "Dn point groups ({} provided).".format(len(axes)))
+    
+        else:
+            axis_1 = axes[0]
+            axis_2 = axes[1]
+
+    else:
+        # By default, choose z-axis as the primary rotation axis, and y-axis as
+        # the C2 axis
+        axis_1 = [0,0,1]
+        axis_2 = [0,1,0]
+
+    ## Define generators
+    Cn = matrix_group_element(operator_C(axis_1,n,basis),
+                              operator_inv = operator_C(axis_1,-n,basis),
+                              cycle_order = n,
+                              store_inverse = store_inverse)
+
+    C2 = matrix_group_element(operator_C(axis_2,2,basis),
+                              operator_inv = operator_C(axis_2,2,basis),
+                              cycle_order = 2,
+                              store_inverse = store_inverse)
+
+    generators = [Cn, C2]
+
+    return group(generators) 
 
 
 def _Dnd_group(n, axes = None, store_inverse = True, basis = None):
-    pass
+    """
+    Dihedral group of order n with dihedral mirror reflections (bipyramidal
+    symmetry).
+
+    Arguments:
+    n             - int, cycle order of the rotations, must be larger than 1; 
+    axes          - array_type, (optional, default = None), defines the primary
+                    rotation axis and the direction of the mirror plane normal.
+                    If None, assumes [0,0,1] and [0,1,0]; 
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+    
+    ## Check that n > 1
+    if n == 1:
+        raise ValueError("D1d point group is not defined!")
+    
+    ## Assign primary axes
+    if not_None(axes):
+        if len(axes) != 2:
+            raise Exception("Two axes are required for "\
+                            "Dnd point groups ({} provided).".format(len(axes)))
+    
+        else:
+            axis_1 = axes[0]
+            axis_2 = axes[1]
+
+    else:
+        # By default, choose z-axis as the primary rotation axis, and y-axis as
+        # the Mv axis
+        axis_1 = [0,0,1]
+        axis_2 = [0,1,0]
+
+    ## Define generators
+    S2n = matrix_group_element(operator_S(axis_1,2*n,basis),
+                               operator_inv = operator_S(axis_1,-2*n,basis),
+                               cycle_order = 2*n,
+                               store_inverse = store_inverse)
+
+    Mv = matrix_group_element(operator_M(axis_2,basis),
+                              operator_inv = operator_M(axis_2,basis),
+                              cycle_order = 2,
+                              store_inverse = store_inverse)
+
+    generators = [S2n, Mv]
+
+    return group(generators) 
 
 
 def _Dnh_group(n, axes = None, store_inverse = True, basis = None):
-    pass
+    """
+    Dihedral group of order n with inversion symmetry (n-gon prism symmetry).
+
+    Arguments:
+    n             - int, cycle order of the rotations, must be larger than 1; 
+    axes          - array_type, (optional, default = None), defines the primary
+                    rotation axis and the direction of the mirror plane normal.
+                    If None, assumes [0,0,1] and [0,1,0]; 
+    store_inverse - bool, (optional, default = True), if True, the generator
+                    objects explicitly store their inverses;
+    basis         - array_type (optional, default None), if not None, specifies
+                    the basis of the transformations, assuming basis[n] = nth 
+                    basis vector. If None, assumes Cartesian basis.
+
+    Returns: 
+    group, point group object.
+    """
+    
+    ## Check that n > 1
+    if n == 1:
+        raise ValueError("D1h point group is not defined!")
+    
+    ## Assign primary axes
+    if not_None(axes):
+        if len(axes) != 2:
+            raise Exception("Two axes are required for "\
+                            "Dnh point groups ({} provided).".format(len(axes)))
+    
+        else:
+            axis_1 = axes[0]
+            axis_2 = axes[1]
+
+    else:
+        # By default, choose z-axis as the primary rotation axis, and y-axis as
+        # the Mv axis
+        axis_1 = [0,0,1]
+        axis_2 = [0,1,0]
+
+    ## Define generators
+    Cn = matrix_group_element(operator_C(axis_1,n,basis),
+                              operator_inv = operator_C(axis_1,-n,basis),
+                              cycle_order = n,
+                              store_inverse = store_inverse)
+
+    Mv = matrix_group_element(operator_M(axis_2,basis),
+                              operator_inv = operator_M(axis_2,basis),
+                              cycle_order = 2,
+                              store_inverse = store_inverse)
+
+    Mh = matrix_group_element(operator_M(axis_1,basis),
+                              operator_inv = operator_M(axis_1,basis),
+                              cycle_order = 2,
+                              store_inverse = store_inverse)
+
+    generators = [Cn, Mv, Mh]
+
+    return group(generators) 
 
 
 """
@@ -593,6 +824,3 @@ def _normalize_vector(v):
         v /= v_norm
 
     return v
-
-
-

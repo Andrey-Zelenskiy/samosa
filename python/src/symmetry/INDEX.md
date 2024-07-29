@@ -34,7 +34,10 @@ focused on symmetric groups of permutations.
 - [x] method for element inverse;
 - [x] method for group action; 
 - [x] `__str__` magic function for user-friendly output;
-- [] cycle order calculation.
+- [x] `__repr__` magic for useful object printout;
+- [] cycle order calculation;
+- [] if orthogonal basis is selected, no need to store the inverse, simply
+return the transpose.
 
 * Implement `group_element` objects for pointer representation 
 

@@ -259,7 +259,12 @@ class group:
 
         return summary_string
 
-
+    def __repr__(self):
+        """
+        Provedes useful print output.
+        """
+        cls = self.__class__.__name__
+        return f"{cls}(generators = {self.generators!r})"
 
 
 
@@ -664,3 +669,10 @@ class matrix_group_element(group_element):
         log_eps = 4
 
         return str(np.round(self.operator, log_eps))
+
+    def __repr__(self):
+        """
+        Provedes useful print output.
+        """
+        cls = self.__class__.__name__
+        return f"{cls}(operator = {np.round(self.operator,4)!r})"
