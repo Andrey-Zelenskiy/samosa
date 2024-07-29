@@ -10,7 +10,7 @@ This program defines methods for defining and manipulating 3D point groups.
 """
 
 import numpy as np
-from symmetry_utils import group, matrix_group_element, not_None
+from symmetry_utils import Group, MatrixGroupElement, not_None
 
 def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
     """
@@ -192,20 +192,20 @@ def _T_group(store_inverse = True, basis = None):
    
     ## Define generators
     axis_1 = [1,1,1]
-    C3 = matrix_group_element(operator_C(axis_1,3,basis),
-                              operator_inv = operator_C(axis_1,-3,basis),
-                              cycle_order = 3,
-                              store_inverse = store_inverse)
+    C3 = MatrixGroupElement(operator_C(axis_1,3,basis),
+                            operator_inv = operator_C(axis_1,-3,basis),
+                            cycle_order = 3,
+                            store_inverse = store_inverse)
 
     axis_2 = [0,0,1]
-    C2 = matrix_group_element(operator_C(axis_2,2,basis),
-                              operator_inv = operator_C(axis_2,2,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    C2 = MatrixGroupElement(operator_C(axis_2,2,basis),
+                            operator_inv = operator_C(axis_2,2,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
     
     generators = [C3,C2]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Td_group(store_inverse = True, basis = None):
@@ -227,20 +227,20 @@ def _Td_group(store_inverse = True, basis = None):
    
     ## Define generators
     axis_1 = [0,0,1]
-    S4_1 = matrix_group_element(operator_S(axis_1,4,basis),
-                                operator_inv = operator_S(axis_1,-4,basis),
-                                cycle_order = 4,
-                                store_inverse = store_inverse)
+    S4_1 = MatrixGroupElement(operator_S(axis_1,4,basis),
+                              operator_inv = operator_S(axis_1,-4,basis),
+                              cycle_order = 4,
+                              store_inverse = store_inverse)
 
     axis_2 = [1,0,0]
-    S4_2 = matrix_group_element(operator_S(axis_2,4,basis),
-                                operator_inv = operator_S(axis_2,-4,basis),
-                                cycle_order = 4,
-                                store_inverse = store_inverse)
+    S4_2 = MatrixGroupElement(operator_S(axis_2,4,basis),
+                              operator_inv = operator_S(axis_2,-4,basis),
+                              cycle_order = 4,
+                              store_inverse = store_inverse)
     
     generators = [S4_1,S4_2]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Th_group(store_inverse = True, basis = None):
@@ -262,20 +262,20 @@ def _Th_group(store_inverse = True, basis = None):
    
     ## Define generators
     axis_1 = [1,1,1]
-    C3 = matrix_group_element(operator_C(axis_1,3,basis),
-                              operator_inv = operator_S(axis_1,-3,basis),
-                              cycle_order = 3,
-                              store_inverse = store_inverse)
+    C3 = MatrixGroupElement(operator_C(axis_1,3,basis),
+                            operator_inv = operator_S(axis_1,-3,basis),
+                            cycle_order = 3,
+                            store_inverse = store_inverse)
 
     axis_2 = [0,0,1]
-    Mh = matrix_group_element(operator_M(axis_2,basis),
-                              operator_inv = operator_M(axis_2,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    Mh = MatrixGroupElement(operator_M(axis_2,basis),
+                            operator_inv = operator_M(axis_2,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
     
     generators = [C3,Mh]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _O_group(store_inverse = True, basis = None):
@@ -297,20 +297,20 @@ def _O_group(store_inverse = True, basis = None):
    
     ## Define generators
     axis_1 = [0,0,1]
-    C4_1 = matrix_group_element(operator_C(axis_1,4,basis),
-                                operator_inv = operator_C(axis_1,-4,basis),
-                                cycle_order = 4,
-                                store_inverse = store_inverse)
+    C4_1 = MatrixGroupElement(operator_C(axis_1,4,basis),
+                              operator_inv = operator_C(axis_1,-4,basis),
+                              cycle_order = 4,
+                              store_inverse = store_inverse)
 
     axis_2 = [1,0,0]
-    C4_2 = matrix_group_element(operator_C(axis_2,4,basis),
-                                operator_inv = operator_C(axis_2,4,basis),
-                                cycle_order = 4,
-                                store_inverse = store_inverse)
+    C4_2 = MatrixGroupElement(operator_C(axis_2,4,basis),
+                              operator_inv = operator_C(axis_2,4,basis),
+                              cycle_order = 4,
+                              store_inverse = store_inverse)
     
     generators = [C4_1,C4_2]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Oh_group(store_inverse = True, basis = None):
@@ -332,20 +332,20 @@ def _Oh_group(store_inverse = True, basis = None):
    
     ## Define generators
     axis_1 = [1,1,1]
-    S6 = matrix_group_element(operator_S(axis_1,6,basis),
-                              operator_inv = operator_S(axis_1,-6,basis),
-                              cycle_order = 6,
-                              store_inverse = store_inverse)
+    S6 = MatrixGroupElement(operator_S(axis_1,6,basis),
+                            operator_inv = operator_S(axis_1,-6,basis),
+                            cycle_order = 6,
+                            store_inverse = store_inverse)
 
     axis_2 = [0,0,1]
-    S4 = matrix_group_element(operator_S(axis_2,4,basis),
-                              operator_inv = operator_S(axis_2,4,basis),
-                              cycle_order = 4,
-                              store_inverse = store_inverse)
+    S4 = MatrixGroupElement(operator_S(axis_2,4,basis),
+                            operator_inv = operator_S(axis_2,4,basis),
+                            cycle_order = 4,
+                            store_inverse = store_inverse)
     
     generators = [S6,S4]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _I_group(store_inverse = True, basis = None):
@@ -372,20 +372,20 @@ def _I_group(store_inverse = True, basis = None):
     ## Define generators
     phi = (1 + np.sqrt(5))/2
     axis_1 = [0,1,phi]
-    C5_1 = matrix_group_element(operator_C(axis_1,5,basis),
-                                operator_inv = operator_C(axis_1,-5,basis),
-                                cycle_order = 5,
-                                store_inverse = store_inverse)
+    C5_1 = MatrixGroupElement(operator_C(axis_1,5,basis),
+                              operator_inv = operator_C(axis_1,-5,basis),
+                              cycle_order = 5,
+                              store_inverse = store_inverse)
 
     axis_2 = [phi,0,1]
-    C5_2 = matrix_group_element(operator_C(axis_2,5,basis),
-                                operator_inv = operator_C(axis_2,5,basis),
-                                cycle_order = 5,
-                                store_inverse = store_inverse)
+    C5_2 = MatrixGroupElement(operator_C(axis_2,5,basis),
+                              operator_inv = operator_C(axis_2,5,basis),
+                              cycle_order = 5,
+                              store_inverse = store_inverse)
     
     generators = [C5_1,C5_2]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Ih_group(store_inverse = True, basis = None):
@@ -412,20 +412,20 @@ def _Ih_group(store_inverse = True, basis = None):
     ## Define generators
     phi = (1 + np.sqrt(5))/2
     axis_1 = [0,1,phi]
-    S10_1 = matrix_group_element(operator_S(axis_1,10,basis),
-                                 operator_inv = operator_S(axis_1,-10,basis),
-                                 cycle_order = 10,
-                                 store_inverse = store_inverse)
+    S10_1 = MatrixGroupElement(operator_S(axis_1,10,basis),
+                               operator_inv = operator_S(axis_1,-10,basis),
+                               cycle_order = 10,
+                               store_inverse = store_inverse)
 
     axis_2 = [phi,0,1]
-    S10_2 = matrix_group_element(operator_S(axis_2,10,basis),
-                                 operator_inv = operator_S(axis_2,10,basis),
-                                 cycle_order = 10,
-                                 store_inverse = store_inverse)
+    S10_2 = MatrixGroupElement(operator_S(axis_2,10,basis),
+                               operator_inv = operator_S(axis_2,10,basis),
+                               cycle_order = 10,
+                               store_inverse = store_inverse)
     
     generators = [S10_1,S10_2]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 # Axial point groups
@@ -463,14 +463,14 @@ def _Cn_group(n, axis = None, store_inverse = True, basis = None):
         axis = [0,0,1]
 
     ## Define generators
-    Cn = matrix_group_element(operator_C(axis,n,basis),
-                              operator_inv = operator_C(axis,-n,basis),
-                              cycle_order = n,
-                              store_inverse = store_inverse)
+    Cn = MatrixGroupElement(operator_C(axis,n,basis),
+                            operator_inv = operator_C(axis,-n,basis),
+                            cycle_order = n,
+                            store_inverse = store_inverse)
 
     generators = [Cn]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
@@ -514,19 +514,19 @@ def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    Cn = matrix_group_element(operator_C(axis_1,n,basis),
-                              operator_inv = operator_C(axis_1,-n,basis),
-                              cycle_order = n,
-                              store_inverse = store_inverse)
+    Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
+                            operator_inv = operator_C(axis_1,-n,basis),
+                            cycle_order = n,
+                            store_inverse = store_inverse)
 
-    Mv = matrix_group_element(operator_M(axis_2,basis),
-                              operator_inv = operator_M(axis_2,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    Mv = MatrixGroupElement(operator_M(axis_2,basis),
+                            operator_inv = operator_M(axis_2,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
 
     generators = [Cn, Mv]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
@@ -563,19 +563,19 @@ def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
         axis = [0,0,1]
     
     ## Define generators
-    Cn = matrix_group_element(operator_C(axis,n,basis),
-                              operator_inv = operator_C(axis,-n,basis),
-                              cycle_order = n,
-                              store_inverse = store_inverse)
+    Cn = MatrixGroupElement(operator_C(axis,n,basis),
+                            operator_inv = operator_C(axis,-n,basis),
+                            cycle_order = n,
+                            store_inverse = store_inverse)
 
-    Mh = matrix_group_element(operator_M(axis,basis),
-                              operator_inv = operator_M(axis,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    Mh = MatrixGroupElement(operator_M(axis,basis),
+                            operator_inv = operator_M(axis,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
 
     generators = [Cn, Mh]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Sn_group(n, axis = None, store_inverse = True, basis = None):
@@ -617,14 +617,14 @@ def _Sn_group(n, axis = None, store_inverse = True, basis = None):
         axis = [0,0,1]
 
     ## Define generators
-    Sn = matrix_group_element(operator_S(axis,n,basis),
-                              operator_inv = operator_S(axis,-n,basis),
-                              cycle_order = n,
-                              store_inverse = store_inverse)
+    Sn = MatrixGroupElement(operator_S(axis,n,basis),
+                            operator_inv = operator_S(axis,-n,basis),
+                            cycle_order = n,
+                            store_inverse = store_inverse)
 
     generators = [Sn]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Dn_group(n, axes = None, store_inverse = True, basis = None):
@@ -667,19 +667,19 @@ def _Dn_group(n, axes = None, store_inverse = True, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    Cn = matrix_group_element(operator_C(axis_1,n,basis),
-                              operator_inv = operator_C(axis_1,-n,basis),
-                              cycle_order = n,
-                              store_inverse = store_inverse)
+    Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
+                            operator_inv = operator_C(axis_1,-n,basis),
+                            cycle_order = n,
+                            store_inverse = store_inverse)
 
-    C2 = matrix_group_element(operator_C(axis_2,2,basis),
-                              operator_inv = operator_C(axis_2,2,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    C2 = MatrixGroupElement(operator_C(axis_2,2,basis),
+                            operator_inv = operator_C(axis_2,2,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
 
     generators = [Cn, C2]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Dnd_group(n, axes = None, store_inverse = True, basis = None):
@@ -723,19 +723,19 @@ def _Dnd_group(n, axes = None, store_inverse = True, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    S2n = matrix_group_element(operator_S(axis_1,2*n,basis),
-                               operator_inv = operator_S(axis_1,-2*n,basis),
-                               cycle_order = 2*n,
-                               store_inverse = store_inverse)
+    S2n = MatrixGroupElement(operator_S(axis_1,2*n,basis),
+                             operator_inv = operator_S(axis_1,-2*n,basis),
+                             cycle_order = 2*n,
+                             store_inverse = store_inverse)
 
-    Mv = matrix_group_element(operator_M(axis_2,basis),
-                              operator_inv = operator_M(axis_2,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    Mv = MatrixGroupElement(operator_M(axis_2,basis),
+                            operator_inv = operator_M(axis_2,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
 
     generators = [S2n, Mv]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 def _Dnh_group(n, axes = None, store_inverse = True, basis = None):
@@ -778,24 +778,24 @@ def _Dnh_group(n, axes = None, store_inverse = True, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    Cn = matrix_group_element(operator_C(axis_1,n,basis),
-                              operator_inv = operator_C(axis_1,-n,basis),
-                              cycle_order = n,
-                              store_inverse = store_inverse)
+    Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
+                            operator_inv = operator_C(axis_1,-n,basis),
+                            cycle_order = n,
+                            store_inverse = store_inverse)
 
-    Mv = matrix_group_element(operator_M(axis_2,basis),
-                              operator_inv = operator_M(axis_2,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    Mv = MatrixGroupElement(operator_M(axis_2,basis),
+                            operator_inv = operator_M(axis_2,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
 
-    Mh = matrix_group_element(operator_M(axis_1,basis),
-                              operator_inv = operator_M(axis_1,basis),
-                              cycle_order = 2,
-                              store_inverse = store_inverse)
+    Mh = MatrixGroupElement(operator_M(axis_1,basis),
+                            operator_inv = operator_M(axis_1,basis),
+                            cycle_order = 2,
+                            store_inverse = store_inverse)
 
     generators = [Cn, Mv, Mh]
 
-    return group(generators) 
+    return Group(generators) 
 
 
 """
