@@ -29,12 +29,20 @@ orbit/stabilizer chain;
 
 ## MatrixGroupElement (in `symmetry_utils.py`)
 
-### TODO
-
-- [ ] Clean up inverse-storage options;
+- [x] Clean up inverse-storage options;
+- [ ] Type tests; 
 - [ ] Implement cycle order calculation method;
 
 ## PointerGroupElement (in `symmetry_utils.py`)
 
+- [ ] Type tests;
 
+## PermutationGroupElement (in `symmetry_utils.py`)
+
+- [ ] Group action;
+- [ ] Inverse element;
+- [ ] Permutation comparison;
+- [ ] `__str__` magic;
+- [ ] `__repr__` magic;
+- [ ] Type tests;
 

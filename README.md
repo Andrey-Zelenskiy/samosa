@@ -1,4 +1,4 @@
-# `samosa` Symmetry Analysis MOdule for Self-Assembly
+# `samosa`: Symmetry Analysis MOdule for Self-Assembly
 
 The goal of this module is to provide a toolset for symmetry analysis relevant
 to the studies of anisotropic/frustrated lattice particles. 

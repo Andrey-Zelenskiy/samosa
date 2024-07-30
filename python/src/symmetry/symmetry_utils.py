@@ -363,7 +363,7 @@ Matrix representation of group elements
 
 class MatrixGroupElement(GroupElement):
     """
-    Converts a matrix operator to a group element object with strict
+    Representation of a group element as a matrix operator with strict
     multiplication and inversion rules. 
     """
 
@@ -416,6 +416,200 @@ class MatrixGroupElement(GroupElement):
 
         else:
             self.operator_inv = None
+
+    
+    def __mul__(self, element):
+        """
+        Shortcut for calculating (left) group element action.
+        """
+
+        # Multiplication of two group elements
+        if isinstance(element, MatrixGroupElement):
+            
+            if element.rank != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.rank))
+            
+            product = self.operator.dot(element.operator)
+
+            return MatrixGroupElement(product)
+
+        # Left action on an array
+        elif isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[0] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.shape[0]))
+            
+            return self.operator.dot(element)
+
+        # Left action on Identity object
+        elif isinstance(element, IdentityGroupElement):
+            return self
+
+        else:
+            raise TypeError("Cannot multiply "\
+                          + self.__class__.__name__ + " and "\
+                          + type(element).__name__ + "!") 
+
+    
+    def __rmul__(self, element):
+        """
+        Shortcut for calculating (right) group element action.
+        """
+
+        # Right action on an array
+        if isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[-1] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             element.shape[-1],
+                                                             self.rank))
+            
+            return element.dot(self.operator)
+
+        # Right action on Identity object
+        elif isinstance(element, IdentityGroupElement):
+            return self
+
+        else:
+            raise TypeError("Cannot multiply " + type(element).__name__\
+                          + " and " + self.__class__.__name__ + "!") 
+
+    
+    def inv(self, store_inverse = False):
+        """
+        Returns matrix inverse of self.operator.
+
+        Arguments:
+        store_inverse - bool, (optional, default = False), if True, also stores
+                        the original operator as the inverse of operator_inv. 
+        
+        Returns:
+        operator_inv - MatrixGroupElement, inverse of the self.operator.
+        """
+
+        # Check if operator inverse is stored
+        if not_None(self.operator_inv):
+            return self.operator_inv
+
+        else:
+            # If the operator is orthogonal, return the transpose
+            if self.orthogonal_basis:
+                operator_inverse = self.operator.T
+            # If we have to calculate matrix inverse, it's good to store it 
+            # for future calculations
+            else:
+                operator_inverse = np.linalg.inv(self.operator)
+                self.operator_inv = MatrixGroupElement(operator_inverse)
+
+            # Return the inverse group element
+            if store_inverse == True:
+                return MatrixGroupElement(operator_inverse,
+                                          operator_inv = operator)
+
+            else:
+                return MatrixGroupElement(operator_inverse)
+
+                
+    def is_identity(self):
+        """
+        Returns True if the operator corresponds to the matrix identity.
+        """
+        # Define numerical tolerance
+        eps = 1e-10
+        
+        return np.isclose(self.operator,np.eye(self.rank),eps).all()
+
+    def __eq__(self, element):
+        """
+        Determines if two matrix group elements are the same up to numerical
+        precision.
+        """
+        
+        # Define numerical tolerance
+        eps = 1e-10
+        
+        # Comparison of two MatrixGroupElements
+        if isinstance(element, MatrixGroupElement):
+            return np.isclose(self.operator,element.operator,eps).all()
+
+        # Comparison with IdentityGroupElement
+        elif isinstance(element, IdentityGroupElement):
+            return self.is_identity() 
+
+        # Any other comparison yields False
+        else:
+            warnings.warn("Comparison of " + self.__class__.__name__\
+                        + " with " + type(element).__name__\
+                        + " yields False by default.")
+            return False
+
+    def __str__(self):
+        """
+        User-friendly output of the group element.
+        """
+
+        # Define float precision for output
+        log_eps = 4
+
+        return str(np.round(self.operator, log_eps))
+
+    def __repr__(self):
+        """
+        Provedes useful print output.
+        """
+        cls = self.__class__.__name__
+        return f"{cls}(operator = {np.round(self.operator,4)!r})"
+
+
+"""
+-------------------------------------------------------------------------------
+Permutation representation of group elements
+-------------------------------------------------------------------------------
+"""
+
+class PermutationGroupElement(GroupElement):
+    """
+    Representation of a group element object as a permutation with strict
+    multiplication and inversion rules. 
+    """
+
+    def __init__(self, permutation):
+        """
+        Defines the permutation tuple.
+
+        Arguments:
+        permutation - array_type or dict int:int, permutation tuple or 
+                      IdentityGroupElement, defines an identity element;
+        """
+
+        # Define identity if IdentityGroupElement is given
+        if isinstance(operator, IdentityGroupElement):
+            self.dim = operator.dim
+            self.permutation = (i for i in range(self.dim))
+            self.order = 1
+        
+        elif isinstance(operator, dict):
+            self.dim = max(permutation.keys())
+            try:
+                self.permutation = (permutation[i] for i in range(self.dim))
+            except KeyError:
+                raise ValueError("Permutation dictionary is incomplete: "
+                                 "{}".format(permutation))
+        
+        else:
+            self.permutation = tuple(permutation)
+            self.dim = len(permutation)
 
     
     def __mul__(self, element):
