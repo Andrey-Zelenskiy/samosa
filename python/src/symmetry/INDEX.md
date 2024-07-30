@@ -19,7 +19,8 @@ focused on symmetric groups of permutations.
 - [x] group generators;
 - [x] method to calculate an orbit of of a point;
 - [x] method to remove redundant operators from the generator list;
-- [ ] method to define a permutation representation for group generators from an
+- [ ] method to convert from pointers to group elements;
+- [x] method to define a permutation representation for group generators from an
 orbit/stabilizer chain;
 - [ ] group character table;
 - [ ] method for generating all group elements;

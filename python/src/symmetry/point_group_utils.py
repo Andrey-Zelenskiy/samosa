@@ -786,6 +786,7 @@ def operator_C(axis, n, basis = None):
     rotation[2,2] = cos_a + axis[2]**2*(1-cos_a)
     
     if not_None(basis):
+        basis = basis.T
         basis_inv = np.linalg.inv(basis)
         rotation = basis_inv.dot(rotation.dot(basis))
 
