@@ -12,14 +12,12 @@ This program defines methods for defining and manipulating 3D point groups.
 import numpy as np
 from symmetry_utils import Group, MatrixGroupElement, not_None
 
-def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
+def point_group(pg_symbol, basis = None, *axes):
     """
     Returns the 3D point group given its Schoenflies symbol.   
     
     Arguments:
     pg_symbol     - str, Schoenflies symbol of the point group;
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis;
@@ -61,13 +59,13 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
     if pg_type == 'T':
         ## Tetrahedral point groups
         if len(pg_symbol) == 1:
-            return _T_group(store_inverse,basis)
+            return _T_group(basis)
         
         elif len(pg_symbol) == 2 and pg_type[1] == 'd':
-            return _Td_group(store_inverse,basis)
+            return _Td_group(basis)
         
         elif len(pg_symbol) == 2 and pg_type[1] == 'h':
-            return _Th_group(store_inverse,basis)
+            return _Th_group(basis)
         
         else:
             raise symbol_error
@@ -75,10 +73,10 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
     elif pg_type == 'O':
         ## Octahedral point groups
         if len(pg_symbol) == 1:
-            return _O_group(store_inverse,basis)
+            return _O_group(basis)
         
         elif len(pg_symbol) == 2 and pg_type[1] == 'h':
-            return _Oh_group(store_inverse,basis)
+            return _Oh_group(basis)
         
         else:
             raise symbol_error
@@ -86,10 +84,10 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
     elif pg_type == 'I':
         ## Icosahedral point groups
         if len(pg_symbol) == 1:
-            return _I_group(store_inverse,basis)
+            return _I_group(basis)
         
         elif len(pg_symbol) == 2 and pg_type[1] == 'h':
-            return _Ih_group(store_inverse,basis)
+            return _Ih_group(basis)
         
         else:
             raise symbol_error
@@ -129,13 +127,13 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
         if pg_type == 'C':
             ## Cyclic proper rotation point groups
             if pg_symbol_tail == '':
-                return _Cn_group(n,axes,store_inverse,basis)
+                return _Cn_group(n,axes,basis)
             
             elif pg_symbol_tail == 'v':
-                return _Cnv_group(n,axes,store_inverse,basis)
+                return _Cnv_group(n,axes,basis)
 
             elif pg_symbol_tail == 'h':
-                return _Cnh_group(n,axes,store_inverse,basis)
+                return _Cnh_group(n,axes,basis)
 
             else:
                 raise symbol_error
@@ -143,7 +141,7 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
         elif pg_type == 'S':
             ## Cyclic improper rotation point groups
             if pg_symbol_tail == '':
-                return _Sn_group(n,axes,store_inverse,basis)
+                return _Sn_group(n,axes,basis)
 
             else:
                 raise symbol_error
@@ -151,13 +149,13 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
         elif pg_type == 'D':
             ## Dihedral point groups
             if pg_symbol_tail == '':
-                return _Dn_group(n,axes,store_inverse,basis)
+                return _Dn_group(n,axes,basis)
             
             elif pg_symbol_tail == 'd':
-                return _Dnd_group(n,axes,store_inverse,basis)
+                return _Dnd_group(n,axes,basis)
             
             elif pg_symbol_tail == 'h':
-                return _Dnh_group(n,axes,store_inverse,basis)
+                return _Dnh_group(n,axes,basis)
             
             else:
                 raise symbol_error
@@ -173,15 +171,13 @@ def point_group(pg_symbol, store_inverse = True, basis = None, *axes):
 
 # Polyhedral point groups
 
-def _T_group(store_inverse = True, basis = None):
+def _T_group(basis = None):
     """
     Tetrahedral rotational point group. 
 
     Selected generators are C3,[111], and C2,[001].
     
     Arguments:
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -194,29 +190,25 @@ def _T_group(store_inverse = True, basis = None):
     axis_1 = [1,1,1]
     C3 = MatrixGroupElement(operator_C(axis_1,3,basis),
                             operator_inv = operator_C(axis_1,-3,basis),
-                            cycle_order = 3,
-                            store_inverse = store_inverse)
+                            cycle_order = 3)
 
     axis_2 = [0,0,1]
     C2 = MatrixGroupElement(operator_C(axis_2,2,basis),
                             operator_inv = operator_C(axis_2,2,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
     
     generators = [C3,C2]
 
     return Group(generators) 
 
 
-def _Td_group(store_inverse = True, basis = None):
+def _Td_group(basis = None):
     """
     Tetrahedral point group.
 
     Selected generators are S4,[001], and S4,[100].
     
     Arguments:
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -229,29 +221,25 @@ def _Td_group(store_inverse = True, basis = None):
     axis_1 = [0,0,1]
     S4_1 = MatrixGroupElement(operator_S(axis_1,4,basis),
                               operator_inv = operator_S(axis_1,-4,basis),
-                              cycle_order = 4,
-                              store_inverse = store_inverse)
+                              cycle_order = 4)
 
     axis_2 = [1,0,0]
     S4_2 = MatrixGroupElement(operator_S(axis_2,4,basis),
                               operator_inv = operator_S(axis_2,-4,basis),
-                              cycle_order = 4,
-                              store_inverse = store_inverse)
+                              cycle_order = 4)
     
     generators = [S4_1,S4_2]
 
     return Group(generators) 
 
 
-def _Th_group(store_inverse = True, basis = None):
+def _Th_group(basis = None):
     """
     Tetrahedral rotation-inversion point group.
 
     Selected generators are C3,[111], and Mh,[001]. 
     
     Arguments:
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -264,29 +252,25 @@ def _Th_group(store_inverse = True, basis = None):
     axis_1 = [1,1,1]
     C3 = MatrixGroupElement(operator_C(axis_1,3,basis),
                             operator_inv = operator_S(axis_1,-3,basis),
-                            cycle_order = 3,
-                            store_inverse = store_inverse)
+                            cycle_order = 3)
 
     axis_2 = [0,0,1]
     Mh = MatrixGroupElement(operator_M(axis_2,basis),
                             operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
     
     generators = [C3,Mh]
 
     return Group(generators) 
 
 
-def _O_group(store_inverse = True, basis = None):
+def _O_group(basis = None):
     """
     Octahedral rotational point group. 
 
     Selected generators are C4,[001], and C4,[100].
     
     Arguments:
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -299,29 +283,25 @@ def _O_group(store_inverse = True, basis = None):
     axis_1 = [0,0,1]
     C4_1 = MatrixGroupElement(operator_C(axis_1,4,basis),
                               operator_inv = operator_C(axis_1,-4,basis),
-                              cycle_order = 4,
-                              store_inverse = store_inverse)
+                              cycle_order = 4)
 
     axis_2 = [1,0,0]
     C4_2 = MatrixGroupElement(operator_C(axis_2,4,basis),
                               operator_inv = operator_C(axis_2,4,basis),
-                              cycle_order = 4,
-                              store_inverse = store_inverse)
+                              cycle_order = 4)
     
     generators = [C4_1,C4_2]
 
     return Group(generators) 
 
 
-def _Oh_group(store_inverse = True, basis = None):
+def _Oh_group(basis = None):
     """
     Octahedral point group. 
 
     Selected generators are S6,[111], and S4,[001].
     
     Arguments:
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -334,21 +314,19 @@ def _Oh_group(store_inverse = True, basis = None):
     axis_1 = [1,1,1]
     S6 = MatrixGroupElement(operator_S(axis_1,6,basis),
                             operator_inv = operator_S(axis_1,-6,basis),
-                            cycle_order = 6,
-                            store_inverse = store_inverse)
+                            cycle_order = 6)
 
     axis_2 = [0,0,1]
     S4 = MatrixGroupElement(operator_S(axis_2,4,basis),
                             operator_inv = operator_S(axis_2,4,basis),
-                            cycle_order = 4,
-                            store_inverse = store_inverse)
+                            cycle_order = 4)
     
     generators = [S6,S4]
 
     return Group(generators) 
 
 
-def _I_group(store_inverse = True, basis = None):
+def _I_group(basis = None):
     """
     Icosahedral rotational point group. 
 
@@ -359,8 +337,6 @@ def _I_group(store_inverse = True, basis = None):
     is the golden ratio.
     
     Arguments:
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -374,21 +350,19 @@ def _I_group(store_inverse = True, basis = None):
     axis_1 = [0,1,phi]
     C5_1 = MatrixGroupElement(operator_C(axis_1,5,basis),
                               operator_inv = operator_C(axis_1,-5,basis),
-                              cycle_order = 5,
-                              store_inverse = store_inverse)
+                              cycle_order = 5)
 
     axis_2 = [phi,0,1]
     C5_2 = MatrixGroupElement(operator_C(axis_2,5,basis),
                               operator_inv = operator_C(axis_2,5,basis),
-                              cycle_order = 5,
-                              store_inverse = store_inverse)
+                              cycle_order = 5)
     
     generators = [C5_1,C5_2]
 
     return Group(generators) 
 
 
-def _Ih_group(store_inverse = True, basis = None):
+def _Ih_group(basis = None):
     """
     Icosahedral point group. 
 
@@ -399,8 +373,6 @@ def _Ih_group(store_inverse = True, basis = None):
     is the golden ratio.
     
     Arguments:
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -414,14 +386,12 @@ def _Ih_group(store_inverse = True, basis = None):
     axis_1 = [0,1,phi]
     S10_1 = MatrixGroupElement(operator_S(axis_1,10,basis),
                                operator_inv = operator_S(axis_1,-10,basis),
-                               cycle_order = 10,
-                               store_inverse = store_inverse)
+                               cycle_order = 10)
 
     axis_2 = [phi,0,1]
     S10_2 = MatrixGroupElement(operator_S(axis_2,10,basis),
                                operator_inv = operator_S(axis_2,10,basis),
-                               cycle_order = 10,
-                               store_inverse = store_inverse)
+                               cycle_order = 10)
     
     generators = [S10_1,S10_2]
 
@@ -430,7 +400,7 @@ def _Ih_group(store_inverse = True, basis = None):
 
 # Axial point groups
 
-def _Cn_group(n, axis = None, store_inverse = True, basis = None):
+def _Cn_group(n, axis = None, basis = None):
     """
     Cyclic group of n-fold rotations.
 
@@ -438,8 +408,6 @@ def _Cn_group(n, axis = None, store_inverse = True, basis = None):
     n             - int, cycle order of the rotations; 
     axis          - array_type, (optional, default = None), defines the primary
                     rotation axis. If None, assumes [0,0,1]; 
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -465,15 +433,14 @@ def _Cn_group(n, axis = None, store_inverse = True, basis = None):
     ## Define generators
     Cn = MatrixGroupElement(operator_C(axis,n,basis),
                             operator_inv = operator_C(axis,-n,basis),
-                            cycle_order = n,
-                            store_inverse = store_inverse)
+                            cycle_order = n)
 
     generators = [Cn]
 
     return Group(generators) 
 
 
-def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
+def _Cnv_group(n, axes = None, basis = None):
     """
     Cyclic group of n-fold rotations and reflections with mirror planes 
     parallel to the n-fold axis.
@@ -483,8 +450,6 @@ def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
     axes          - array_type, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -516,20 +481,18 @@ def _Cnv_group(n, axes = None, store_inverse = True, basis = None):
     ## Define generators
     Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
                             operator_inv = operator_C(axis_1,-n,basis),
-                            cycle_order = n,
-                            store_inverse = store_inverse)
+                            cycle_order = n)
 
     Mv = MatrixGroupElement(operator_M(axis_2,basis),
                             operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
 
     generators = [Cn, Mv]
 
     return Group(generators) 
 
 
-def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
+def _Cnh_group(n, axis = None, basis = None):
     """
     Cyclic group of n-fold rotations and a reflection with mirror plane 
     perpendicular to the n-fold axis.
@@ -538,8 +501,6 @@ def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
     n             - int, cycle order of the rotations; 
     axis          - array_type, (optional, default = None), defines the primary
                     rotation axis. If None, assumes [0,0,1]; 
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -565,20 +526,18 @@ def _Cnh_group(n, axis = None, store_inverse = True, basis = None):
     ## Define generators
     Cn = MatrixGroupElement(operator_C(axis,n,basis),
                             operator_inv = operator_C(axis,-n,basis),
-                            cycle_order = n,
-                            store_inverse = store_inverse)
+                            cycle_order = n)
 
     Mh = MatrixGroupElement(operator_M(axis,basis),
                             operator_inv = operator_M(axis,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
 
     generators = [Cn, Mh]
 
     return Group(generators) 
 
 
-def _Sn_group(n, axis = None, store_inverse = True, basis = None):
+def _Sn_group(n, axis = None, basis = None):
     """
     Group of n-fold improper rotations.
 
@@ -587,8 +546,6 @@ def _Sn_group(n, axis = None, store_inverse = True, basis = None):
                     integer; 
     axis          - array_type, (optional, default = None), defines the primary
                     rotation axis. If None, assumes [0,0,1]; 
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -619,15 +576,14 @@ def _Sn_group(n, axis = None, store_inverse = True, basis = None):
     ## Define generators
     Sn = MatrixGroupElement(operator_S(axis,n,basis),
                             operator_inv = operator_S(axis,-n,basis),
-                            cycle_order = n,
-                            store_inverse = store_inverse)
+                            cycle_order = n)
 
     generators = [Sn]
 
     return Group(generators) 
 
 
-def _Dn_group(n, axes = None, store_inverse = True, basis = None):
+def _Dn_group(n, axes = None, basis = None):
     """
     Dihedral group of order n.
 
@@ -636,8 +592,6 @@ def _Dn_group(n, axes = None, store_inverse = True, basis = None):
     axes          - array_type, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -669,20 +623,18 @@ def _Dn_group(n, axes = None, store_inverse = True, basis = None):
     ## Define generators
     Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
                             operator_inv = operator_C(axis_1,-n,basis),
-                            cycle_order = n,
-                            store_inverse = store_inverse)
+                            cycle_order = n)
 
     C2 = MatrixGroupElement(operator_C(axis_2,2,basis),
                             operator_inv = operator_C(axis_2,2,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
 
     generators = [Cn, C2]
 
     return Group(generators) 
 
 
-def _Dnd_group(n, axes = None, store_inverse = True, basis = None):
+def _Dnd_group(n, axes = None, basis = None):
     """
     Dihedral group of order n with dihedral mirror reflections (bipyramidal
     symmetry).
@@ -692,8 +644,6 @@ def _Dnd_group(n, axes = None, store_inverse = True, basis = None):
     axes          - array_type, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -725,20 +675,18 @@ def _Dnd_group(n, axes = None, store_inverse = True, basis = None):
     ## Define generators
     S2n = MatrixGroupElement(operator_S(axis_1,2*n,basis),
                              operator_inv = operator_S(axis_1,-2*n,basis),
-                             cycle_order = 2*n,
-                             store_inverse = store_inverse)
+                             cycle_order = 2*n)
 
     Mv = MatrixGroupElement(operator_M(axis_2,basis),
                             operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
 
     generators = [S2n, Mv]
 
     return Group(generators) 
 
 
-def _Dnh_group(n, axes = None, store_inverse = True, basis = None):
+def _Dnh_group(n, axes = None, basis = None):
     """
     Dihedral group of order n with inversion symmetry (n-gon prism symmetry).
 
@@ -747,8 +695,6 @@ def _Dnh_group(n, axes = None, store_inverse = True, basis = None):
     axes          - array_type, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    store_inverse - bool, (optional, default = True), if True, the generator
-                    objects explicitly store their inverses;
     basis         - array_type (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
@@ -780,18 +726,15 @@ def _Dnh_group(n, axes = None, store_inverse = True, basis = None):
     ## Define generators
     Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
                             operator_inv = operator_C(axis_1,-n,basis),
-                            cycle_order = n,
-                            store_inverse = store_inverse)
+                            cycle_order = n)
 
     Mv = MatrixGroupElement(operator_M(axis_2,basis),
                             operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
 
     Mh = MatrixGroupElement(operator_M(axis_1,basis),
                             operator_inv = operator_M(axis_1,basis),
-                            cycle_order = 2,
-                            store_inverse = store_inverse)
+                            cycle_order = 2)
 
     generators = [Cn, Mv, Mh]
 
