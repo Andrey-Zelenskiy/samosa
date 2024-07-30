@@ -34,48 +34,18 @@ class Group:
     def __init__(self, generators):
         """
         Defines the group generators.
+
+        Arguments:
+        generators - list of GroupElement_type, list of group generators.
         """
+
+        if len(generators) == 0:
+            raise Exception("List of generators cannot be empty.")
 
         self.generators = generators
 
 
     # Routines for orbit/stabilizers calculations
-
-    def stabilizer_generator_filter(stabilizer, stabilizer_list, blacklist):
-        """
-        Determines whether a stabilizing operation qualifies as a new generator
-        of the stabilizer group. 
-    
-        Arguments:
-        stabilizer      - np.2darray, stabilizer matrix;
-        stabilizer_list - list of np.2darray, list of known generators of the
-                          stabilizer group;
-        blacklist       - list of np.2darray, list of operators related to the
-                          known generators of the stabilizer group.
-
-        Returns:
-        Either the original, or the updated stabilizer_list, blacklist.
-        """
-
-        # Check if the stabilizer is already in the stabilizer list
-        if not array_in_list(stabilizer, stabilizer_list):
-
-            # Check if the stabilizer is related to the known generators
-            if not array_in_list(stabilizer, blacklist):  
-
-                # Both tests are passed, update stabilizer_list and blacklist  
-                extended_stabilizer = [np.eye(3,dtype=int)] + stabilizer_list
-
-                for s in extended_stabilizer:
-                    g_head = s.dot(stabilizer)
-                    g_chain = g_head
-                    while not array_in_list(g_chain, blacklist):
-                        blacklist += [g_chain]
-                        g_chain = g_chain.dot(g_head)
-
-                stabilizer_list += [stabilizer]
-
-        return stabilizer_list, blacklist         
 
     def calculate_orbit(self, p0, as_pointer = True):
         """
@@ -136,24 +106,18 @@ class Group:
                            operators that leave the seed point unchanged.
         """
 
-        orbit = [p0]
+        orbit = [np.array(p0)]
 
         if as_pointer:
             eye_element = PointerGroupElement([],
                                               generator_list=self.generators)
-            transporter_dict = {tuple(p0):eye_element}
-            stabilizer_list  = [eye_element]
-
         else:
-            matrix_rank = self.generators[0].rank
-            eye_element = MatrixGroupElement(np.eye(matrix_rank),
-                                             store_inverse = True, 
-                                             operator_inv = np.eye(matrix_rank))
-            transporter_dict = {tuple(p0):eye_element}
-            stabilizer_list = [eye_element]
+            eye_element = IdentityGroupElement()
+        
+        transporter_dict = {tuple(p0):eye_element}
+        stabilizer_list = [eye_element]
 
         for p in orbit:
-            print(p)
             for ind_g, g in enumerate(self.generators):
                 q = g*p
 
@@ -202,6 +166,49 @@ class Group:
                         stabilizer_list += [stabilizer]
 
         return orbit, transporter_dict, stabilizer_list
+    
+
+    def generator_filter(self):
+        """
+        Removes redundant operators from the generator list. 
+        """
+
+        candidate_list = []
+        
+        # Remove potential duplicates and identity elements
+        for g in self.generators:
+            if not element_in_list(g,candidate_list) and not g.is_identity():
+                candidate_list += [g]
+        
+        # If the list is empty after sorting, the only generator is identity
+        if len(candidate_list) == 0:
+            self.generators = [IdentityGroupElement()]
+
+        # If only one generator is provided, no need to perform the check
+        elif len(candidate_list) == 1:
+            self.generators = candidate_list
+
+        else:
+            self.generators = []
+            blacklist = [IdentityGroupElement()]
+            
+            for g in candidate_list:
+                # Check if the generator is related to the known generators
+                if not element_in_list(g, blacklist):  
+
+                    # Update stabilizer_list and blacklist  
+                    extended_stabilizer = [IdentityGroupElement()]\
+                                         + self.generators
+
+                    for h in extended_stabilizer:
+                        g_head = h*g
+                        g_chain = g_head
+                        while not element_in_list(g_chain, blacklist):
+                            blacklist += [g_chain]
+                            g_chain = g_chain*g_head
+
+                    self.generators += [g]
+
 
     def __str__(self):
         """
@@ -288,6 +295,13 @@ class GroupElement():
         """
         pass 
 
+
+    def is_identity(self):
+        """
+        Returns True if the group element represents identity
+        """
+        pass
+
     def __eq__(self, element):
         """
         Group element comparison.
@@ -299,6 +313,287 @@ class GroupElement():
         User-friendly output.
         """
         pass
+
+"""
+-------------------------------------------------------------------------------
+Universal identity element
+-------------------------------------------------------------------------------
+"""
+
+class IdentityGroupElement(GroupElement):
+    """
+    An object used to represent a universal identity element. 
+    """
+
+    def __mul__(self, element):
+        """
+        Shortcut for calculating (left) action.
+        """
+        return element
+   
+
+    def __rmul__(self, element):
+        """
+        Shortcut for calculating (right) action.
+        """
+        return element
+   
+
+    def inv(self):
+        """
+        Returns self, since identity is its own inverse.
+        """
+        return self
+
+
+    def is_identity(self):
+        """
+        Returns True.
+        """
+        return True
+
+
+    def __eq__(self, element):
+        """
+        Determines if two matrix group elements are the same up to numerical
+        precision.
+        """
+        
+        if isinstance(element, IdentityGroupElement):
+            return True 
+
+        else:
+            return False
+
+
+    def __str__(self):
+        """
+        User-friendly output of the group element.
+        """
+        cls = self.__class__.__name__
+        return cls
+
+
+    def __repr__(self):
+        """
+        Provedes useful print output.
+        """
+        cls = self.__class__.__name__
+        return f"{cls}"
+
+
+"""
+-------------------------------------------------------------------------------
+Matrix representation of group elements
+-------------------------------------------------------------------------------
+"""
+
+class MatrixGroupElement(GroupElement):
+    """
+    Converts a matrix operator to a group element object with strict
+    multiplication and inversion rules. 
+    """
+
+    def __init__(self, operator, operator_inv = None, cycle_order = None,
+                                 store_inverse = True):
+        """
+        Defines the matrix operator and, optionally, its inverse.
+
+        Arguments:
+        operator         - 2darray_type, matrix operator, defining the group 
+                           element;
+        operator_inv     - 2darray_type, (optional, default = None), if not 
+                           None, proposes an inverse of operator;
+        cycle_order      - int, (optional, default = None), if not None, gives 
+                           the cycle order of the operator, i.e. n for which 
+                           operator^n = identity;
+        store_inverse    - bool, (optional, default = True) if True, explicitly 
+                           stores the matrix inverse of the operator.
+        """
+
+        # Define numerical precision for the matrix values
+        eps = 1e-10
+        log_eps = 10
+
+        self.operator = np.round(np.array(operator),log_eps) 
+        self.rank = len(self.operator)
+        self.store_inverse = store_inverse
+        self.order = cycle_order
+        self.orthogonal_basis = _check_orthogonal(self.operator)
+
+        if self.store_inverse == True:
+            if not_None(operator_inv):
+
+                # Test that the proposed inverse yields identity when multiplied
+                # by self.operator
+                operator_inv = np.array(operator_inv)
+                identity_test = operator_inv.dot(self.operator)\
+                              - np.eye(self.rank)
+                
+                if np.max(np.abs(identity_test)) > eps:
+                    raise ValueError("Proposed inverse does not produce "\
+                                     "identity under multiplication with the "\
+                                     "operator!")
+
+                self.operator_inv = MatrixGroupElement(operator_inv,
+                                                         store_inverse=False)
+
+            else:
+                self.operator_inv = self.inv()
+
+        else:
+            self.operator_inv = None
+
+    
+    def __mul__(self, element):
+        """
+        Shortcut for calculating (left) group element action.
+        """
+
+        # Multiplication of two group elements
+        if isinstance(element, MatrixGroupElement):
+            
+            if element.rank != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.rank))
+            
+            product = self.operator.dot(element.operator)
+
+            return MatrixGroupElement(product,store_inverse=False)
+
+        # Left action on an array
+        elif isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[0] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             self.rank, 
+                                                             element.shape[0]))
+            
+            return self.operator.dot(element)
+
+        # Left action on Identity object
+        elif isinstance(element, IdentityGroupElement):
+            return self
+
+        else:
+            raise TypeError("Cannot multiply "\
+                          + self.__class__.__name__ + " and "\
+                          + type(element).__name__ + "!") 
+
+    
+    def __rmul__(self, element):
+        """
+        Shortcut for calculating (right) group element action.
+        """
+
+        # Right action on an array
+        if isinstance(element, np.ndarray) or isinstance(element, list):
+
+            element = np.array(element)
+
+            if element.shape[-1] != self.rank:
+                raise TypeError("Cannot perform multiplication between "\
+                                "matrices of rank {} and {}!".format(
+                                                             element.shape[-1],
+                                                             self.rank))
+            
+            return element.dot(self.operator)
+
+        # Right action on Identity object
+        elif isinstance(element, IdentityGroupElement):
+            return self
+
+        else:
+            raise TypeError("Cannot multiply " + type(element).__name__\
+                          + " and " + self.__class__.__name__ + "!") 
+
+    
+    def inv(self, store_inverse = False):
+        """
+        Returns matrix inverse of self.operator.
+
+        Arguments:
+        store_inverse - bool, (optional, default = False), if True, also stores
+                        the original operator as the inverse of operator_inv. 
+        
+        Returns:
+        operator_inv - MatrixGroupElement, inverse of the self.operator.
+        """
+
+        if not_None(self.operator_inv):
+            return self.operator_inv
+
+        else:
+            if self.orthogonal_basis:
+                operator_inverse = self.operator.T
+
+            else:
+                operator_inverse = np.linalg.inv(self.operator)
+
+            if store_inverse == True:
+                return MatrixGroupElement(operator_inverse,
+                                            store_inverse = True,
+                                            operator_inverse = operator)
+
+            else:
+                return MatrixGroupElement(operator_inverse,
+                                            store_inverse = False)
+
+                
+    def is_identity(self):
+        """
+        Returns True if the operator corresponds to the matrix identity.
+        """
+        # Define numerical tolerance
+        eps = 1e-10
+        
+        return np.isclose(self.operator,np.eye(self.rank),eps).all()
+
+    def __eq__(self, element):
+        """
+        Determines if two matrix group elements are the same up to numerical
+        precision.
+        """
+        
+        # Define numerical tolerance
+        eps = 1e-10
+        
+        # Comparison of two MatrixGroupElements
+        if isinstance(element, MatrixGroupElement):
+            return np.isclose(self.operator,element.operator,eps).all()
+
+        # Comparison with IdentityGroupElement
+        elif isinstance(element, IdentityGroupElement):
+            return self.is_identity() 
+
+        # Any other comparison yields False
+        else:
+            warnings.warn("Comparison of " + self.__class__.__name__\
+                        + " with " + type(element).__name__\
+                        + " yields False by default.")
+            return False
+
+    def __str__(self):
+        """
+        User-friendly output of the group element.
+        """
+
+        # Define float precision for output
+        log_eps = 4
+
+        return str(np.round(self.operator, log_eps))
+
+    def __repr__(self):
+        """
+        Provedes useful print output.
+        """
+        cls = self.__class__.__name__
+        return f"{cls}(operator = {np.round(self.operator,4)!r})"
 
 
 """
@@ -452,6 +747,10 @@ class PointerGroupElement(GroupElement):
                 return PointerGroupElement(new_pointer,
                                            generator_order=self.order)
 
+        # Left action on Identity object
+        elif isinstance(element, IdentityGroupElement):
+            return self
+
         # Left multiplication by other types is not defined
         else:
             raise TypeError("Multiplication is not defined for types "\
@@ -498,6 +797,10 @@ class PointerGroupElement(GroupElement):
                 return PointerGroupElement(new_pointer,
                                            generator_order=self.order)
 
+        # Right action on Identity object
+        elif isinstance(element, IdentityGroupElement):
+            return self
+
         # Right multiplication by other types is not defined
         else:
             raise TypeError("Multiplication is not defined for types "\
@@ -516,6 +819,16 @@ class PointerGroupElement(GroupElement):
                                    generator_order=self.order)
         
 
+    def is_identity():
+        """
+        Returns True if the pointer is empty.
+        """
+        if len(self.pointer) == 0:
+            return True
+        else:
+            return False
+
+
     def __eq__(self, element):
         """
         Pointer comparison.
@@ -524,9 +837,15 @@ class PointerGroupElement(GroupElement):
         so this function is equivalent to group element comparison. 
         """
 
+        # Comparison of two pointers
         if isinstance(element, PointerGroupElement): 
             return self.pointer == element.pointer
 
+        # Comparison with IdentityGroupElement
+        elif isinstance(element, IdentityGroupElement):
+            return self.is_identity()
+
+        # Any other comparison yields False
         else:
             warnings.warn("Comparison of " + self.__class__.__name__\
                         + " with " + type(element).__name__\
@@ -548,196 +867,6 @@ class PointerGroupElement(GroupElement):
         """
         cls = self.__class__.__name__
         return f"{cls}(pointer = {self.pointer!r})"
-
-
-"""
--------------------------------------------------------------------------------
-Matrix representation of group elements
--------------------------------------------------------------------------------
-"""
-
-class MatrixGroupElement(GroupElement):
-    """
-    Converts a matrix operator to a group element object with strict
-    multiplication and inversion rules. 
-    """
-
-    def __init__(self, operator, operator_inv = None, cycle_order = None,
-                                 store_inverse = True):
-        """
-        Defines the matrix operator and, optionally, its inverse.
-
-        Arguments:
-        operator         - 2darray_type, matrix operator, defining the group 
-                           element;
-        operator_inv     - 2darray_type, (optional, default = None), if not 
-                           None, proposes an inverse of operator;
-        cycle_order      - int, (optional, default = None), if not None, gives 
-                           the cycle order of the operator, i.e. n for which 
-                           operator^n = identity;
-        store_inverse    - bool, (optional, default = True) if True, explicitly 
-                           stores the matrix inverse of the operator.
-        """
-
-        # Define numerical precision for the matrix values
-        eps = 1e-10
-        log_eps = 10
-
-        self.operator = np.round(np.array(operator),log_eps) 
-        self.rank = len(self.operator)
-        self.store_inverse = store_inverse
-        self.order = cycle_order
-        self.orthogonal_basis = _check_orthogonal(self.operator)
-
-        if self.store_inverse == True:
-            if not_None(operator_inv):
-
-                # Test that the proposed inverse yields identity when multiplied
-                # by self.operator
-                operator_inv = np.array(operator_inv)
-                identity_test = operator_inv.dot(self.operator)\
-                              - np.eye(self.rank)
-                
-                if np.max(np.abs(identity_test)) > eps:
-                    raise ValueError("Proposed inverse does not produce "\
-                                     "identity under multiplication with the "\
-                                     "operator!")
-
-                self.operator_inv = MatrixGroupElement(operator_inv,
-                                                         store_inverse=False)
-
-            else:
-                self.operator_inv = self.inv()
-
-        else:
-            self.operator_inv = None
-
-    
-    def __mul__(self, element):
-        """
-        Shortcut for calculating (left) group element action.
-        """
-
-        # Multiplication of two group elements
-        if isinstance(element, MatrixGroupElement):
-            
-            if element.rank != self.rank:
-                raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             self.rank, 
-                                                             element.rank))
-            
-            product = self.operator.dot(element.operator)
-
-            return MatrixGroupElement(product,store_inverse=False)
-
-
-        elif isinstance(element, np.ndarray) or isinstance(element, list):
-
-            element = np.array(element)
-
-            if element.shape[0] != self.rank:
-                raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             self.rank, 
-                                                             element.shape[0]))
-            
-            return self.operator.dot(element)
-
-        else:
-            raise TypeError("Cannot multiply "\
-                          + self.__class__.__name__ + " and "\
-                          + type(element).__name__ + "!") 
-
-    
-    def __rmul__(self, element):
-        """
-        Shortcut for calculating (right) group element action.
-        """
-
-        if isinstance(element, np.ndarray) or isinstance(element, list):
-
-            element = np.array(element)
-
-            if element.shape[-1] != self.rank:
-                raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             element.shape[-1],
-                                                             self.rank))
-            
-            return element.dot(self.operator)
-
-        else:
-            raise TypeError("Cannot multiply " + type(element).__name__\
-                          + " and " + self.__class__.__name__ + "!") 
-
-    
-    def inv(self, store_inverse = False):
-        """
-        Returns matrix inverse of self.operator.
-
-        Arguments:
-        store_inverse - bool, (optional, default = False), if True, also stores
-                        the original operator as the inverse of operator_inv. 
-        
-        Returns:
-        operator_inv - MatrixGroupElement, inverse of the self.operator.
-        """
-
-        if not_None(self.operator_inv):
-            return self.operator_inv
-
-        else:
-            if self.orthogonal_basis:
-                operator_inverse = self.operator.T
-
-            else:
-                operator_inverse = np.linalg.inv(self.operator)
-
-            if store_inverse == True:
-                return MatrixGroupElement(operator_inverse,
-                                            store_inverse = True,
-                                            operator_inverse = operator)
-
-            else:
-                return MatrixGroupElement(operator_inverse,
-                                            store_inverse = False)
-
-    def __eq__(self, element):
-        """
-        Determines if two matrix group elements are the same up to numerical
-        precision.
-        """
-        
-        if isinstance(element, MatrixGroupElement):
-            
-            # Define numerical tolerance
-            eps = 1e-10
-            
-            return np.isclose(self.operator,element.operator).all()
-
-        else:
-            warnings.warn("Comparison of " + self.__class__.__name__\
-                        + " with " + type(element).__name__\
-                        + " yields False by default.")
-            return False
-
-    def __str__(self):
-        """
-        User-friendly output of the group element.
-        """
-
-        # Define float precision for output
-        log_eps = 4
-
-        return str(np.round(self.operator, log_eps))
-
-    def __repr__(self):
-        """
-        Provedes useful print output.
-        """
-        cls = self.__class__.__name__
-        return f"{cls}(operator = {np.round(self.operator,4)!r})"
 
 
 """
