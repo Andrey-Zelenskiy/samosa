@@ -11,16 +11,7 @@ information and methods for symmetry analysis.
 """
 
 import numpy as np
-import warnings
-
-def custom_formatwarning(msg, *args, **kwargs):
-    """
-    When throwing a warning, only throw the message
-    """
-    return str(msg) + '\n'
-
-warnings.formatwarning = custom_formatwarning
-
+from api import array_type, check_type, check_len
 """
 -------------------------------------------------------------------------------
 Group class
@@ -31,7 +22,7 @@ class Group:
     A container for storing the properties and methods of a symmetry group. 
     """
 
-    def __init__(self, generators, filter = False):
+    def __init__(self, generators, filter_generators = False):
         """
         Defines the group generators.
 
@@ -40,13 +31,19 @@ class Group:
         filter     - bool, (optional, default = False) and option to perform
                      filtering of generators to remove redundant operators.
         """
+        check_type('generators',generators,list)
+
+        for g in generators:
+            if not issubclass(g, GroupElement):
+                raise Exception("All generators must inherit from GroupElement"
+                                " class.")
 
         if len(generators) == 0:
             raise Exception("List of generators cannot be empty.")
 
         self.generators = generators
 
-        if filter == True:
+        if filter_generators == True:
             self.generator_filter()
     
 
@@ -143,6 +140,9 @@ class Group:
                            list of GroupElement_type (as_pointer = False),
                            operators that leave the seed point unchanged.
         """
+
+        check_type("p0",p0,array_type)
+        check_type("as_pointer",as_pointer,bool)
 
         p0 = np.array(p0)
 
@@ -298,6 +298,14 @@ class IdentityGroupElement(GroupElement):
     An object used to represent a universal identity element. 
     """
 
+    def __init__(dim = None):
+        """
+        If given, initializes the dimension/trace of the identity.
+        """
+        check_type('dim',dim,int,NoneType)
+        self.dim = dim
+
+
     def __mul__(self, element):
         """
         Shortcut for calculating (left) action.
@@ -381,6 +389,8 @@ class MatrixGroupElement(GroupElement):
         operator_inv     - 2darray_type, (optional, default = None), if not 
                            None, proposes an inverse of operator.
         """
+        
+        check_type('operator',operator,array_type,IdentityGroupElement)
 
         # Define numerical precision for the matrix values
         eps = 1e-10
@@ -388,22 +398,37 @@ class MatrixGroupElement(GroupElement):
 
         # Define identity if IdentityGroupElement is given
         if isinstance(operator, IdentityGroupElement):
+            if operator.dim == None:
+                raise ValueError("Cannot initialize MatrixGroupElement from "
+                                 "IdentityGroupElement with a None type value"
+                                 "of dim.")
+
             self.rank = operator.dim
             self.operator = np.eye(self.rank)
             self.order = 1
             self.orthogonal_basis = True
+            self.operator_inv = None
         
         else:
-            self.operator = np.round(np.array(operator),log_eps) 
-            self.rank = len(self.operator)
+            operator = np.round(np.array(operator),log_eps) 
+            self.rank = len(operator)
+            
+            check_shape('operator',operator,(self.rank,self.rank))
+
+            self.operator = operator 
             self.order = cycle_order
             self.orthogonal_basis = _check_orthogonal(self.operator)
 
         if not_None(operator_inv):
 
+            check_type('operator_inv',operator_inv,array_type)
+
             # Test that the proposed inverse yields identity when multiplied
             # by self.operator
             operator_inv = np.array(operator_inv)
+            
+            check_shape('operator_inv',operator_inv,(self.rank,self.rank))
+            
             identity_test = operator_inv.dot(self.operator)\
                           - np.eye(self.rank)
                 
@@ -437,7 +462,7 @@ class MatrixGroupElement(GroupElement):
             return MatrixGroupElement(product)
 
         # Left action on an array
-        elif isinstance(element, np.ndarray) or isinstance(element, list):
+        elif isinstance(element, array_type):
 
             element = np.array(element)
 
@@ -465,7 +490,7 @@ class MatrixGroupElement(GroupElement):
         """
 
         # Right action on an array
-        if isinstance(element, np.ndarray) or isinstance(element, list):
+        if isinstance(element, array_type):
 
             element = np.array(element)
 
@@ -497,6 +522,8 @@ class MatrixGroupElement(GroupElement):
         Returns:
         operator_inv - MatrixGroupElement, inverse of the self.operator.
         """
+
+        check_type('store_inverse',store_inverse,bool)
 
         # Check if operator inverse is stored
         if not_None(self.operator_inv):
@@ -593,8 +620,16 @@ class PermutationGroupElement(GroupElement):
                       IdentityGroupElement, defines an identity element;
         """
 
+        check_type('permutation',permutation,dict,array_type,
+                                             IdentityGroupElement)
+
         # Define identity if IdentityGroupElement is given
         if isinstance(operator, IdentityGroupElement):
+            if operator.dim == None:
+                raise ValueError("Cannot initialize MatrixGroupElement from "
+                                 "IdentityGroupElement with a None type value"
+                                 "of dim.")
+            
             self.dim = operator.dim
             self.permutation = (i for i in range(self.dim))
             self.order = 1
@@ -618,30 +653,35 @@ class PermutationGroupElement(GroupElement):
         """
 
         # Multiplication of two group elements
-        if isinstance(element, MatrixGroupElement):
+        if isinstance(element, PermutationGroupElement):
             
-            if element.rank != self.rank:
+            if element.dim != self.dim:
                 raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             self.rank, 
-                                                             element.rank))
+                                "permutations of dimension {} and {}!".format(
+                                                                self.dim, 
+                                                                element.dim))
             
-            product = self.operator.dot(element.operator)
+            product = (element.permutation[p] for p in self.permutation)
 
-            return MatrixGroupElement(product)
+            return PermutationGroupElement(product)
 
         # Left action on an array
-        elif isinstance(element, np.ndarray) or isinstance(element, list):
+        elif isinstance(element, array_type):
 
-            element = np.array(element)
-
-            if element.shape[0] != self.rank:
-                raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
+            if len(element) != self.dim:
+                raise TypeError("Cannot perform a permutation with dim "\
+                                "{} and array of length {}".format(
                                                              self.rank, 
-                                                             element.shape[0]))
+                                                             len(element)))
             
-            return self.operator.dot(element)
+            return [element[p] for p in self.permutation].astype(type(element))
+
+        # Left action on int
+        elif isinstance(element, int):
+            if element <= self.dim:
+                return self.permutation[element]
+            else:
+                return element
 
         # Left action on Identity object
         elif isinstance(element, IdentityGroupElement):
@@ -655,24 +695,11 @@ class PermutationGroupElement(GroupElement):
     
     def __rmul__(self, element):
         """
-        Shortcut for calculating (right) group element action.
+        Right permutation action is only defined for Identity.
         """
-
-        # Right action on an array
-        if isinstance(element, np.ndarray) or isinstance(element, list):
-
-            element = np.array(element)
-
-            if element.shape[-1] != self.rank:
-                raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             element.shape[-1],
-                                                             self.rank))
-            
-            return element.dot(self.operator)
-
+        
         # Right action on Identity object
-        elif isinstance(element, IdentityGroupElement):
+        if isinstance(element, IdentityGroupElement):
             return self
 
         else:
@@ -680,62 +707,31 @@ class PermutationGroupElement(GroupElement):
                           + " and " + self.__class__.__name__ + "!") 
 
     
-    def inv(self, store_inverse = False):
+    def inv(self):
         """
-        Returns matrix inverse of self.operator.
-
-        Arguments:
-        store_inverse - bool, (optional, default = False), if True, also stores
-                        the original operator as the inverse of operator_inv. 
-        
-        Returns:
-        operator_inv - MatrixGroupElement, inverse of the self.operator.
+        Returns inverse of self.permutation.
         """
 
-        # Check if operator inverse is stored
-        if not_None(self.operator_inv):
-            return self.operator_inv
+        permutation_inv = tuple(self * np.arange(self.dim)) 
 
-        else:
-            # If the operator is orthogonal, return the transpose
-            if self.orthogonal_basis:
-                operator_inverse = self.operator.T
-            # If we have to calculate matrix inverse, it's good to store it 
-            # for future calculations
-            else:
-                operator_inverse = np.linalg.inv(self.operator)
-                self.operator_inv = MatrixGroupElement(operator_inverse)
-
-            # Return the inverse group element
-            if store_inverse == True:
-                return MatrixGroupElement(operator_inverse,
-                                          operator_inv = operator)
-
-            else:
-                return MatrixGroupElement(operator_inverse)
+        return PermutationGroupElement(permutation_inverse)
 
                 
     def is_identity(self):
         """
-        Returns True if the operator corresponds to the matrix identity.
+        Returns True if none of the elements are permuted.
         """
-        # Define numerical tolerance
-        eps = 1e-10
-        
-        return np.isclose(self.operator,np.eye(self.rank),eps).all()
+        return self.permutation == tuple(np.arange(self.dim)) 
+
 
     def __eq__(self, element):
         """
-        Determines if two matrix group elements are the same up to numerical
-        precision.
+        Determines if two permutations are the same.
         """
         
-        # Define numerical tolerance
-        eps = 1e-10
-        
-        # Comparison of two MatrixGroupElements
-        if isinstance(element, MatrixGroupElement):
-            return np.isclose(self.operator,element.operator,eps).all()
+        # Comparison of two PermutationGroupElements
+        if isinstance(element, PermutationGroupElement):
+            return self.permutation == element.permutation
 
         # Comparison with IdentityGroupElement
         elif isinstance(element, IdentityGroupElement):
@@ -748,22 +744,20 @@ class PermutationGroupElement(GroupElement):
                         + " yields False by default.")
             return False
 
+
     def __str__(self):
         """
         User-friendly output of the group element.
         """
+        return str(self.permutation)
 
-        # Define float precision for output
-        log_eps = 4
-
-        return str(np.round(self.operator, log_eps))
 
     def __repr__(self):
         """
         Provedes useful print output.
         """
         cls = self.__class__.__name__
-        return f"{cls}(operator = {np.round(self.operator,4)!r})"
+        return f"{cls}(permutation = {self.permutation})"
 
 
 """
