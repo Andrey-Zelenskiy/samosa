@@ -6,12 +6,13 @@
 symmetry_utils.py
 =================
 
-This script defines the `group` object, which contains all of the necessary 
-information and methods for symmetry analysis.
+This script defines the `Group` and GroupElement objects, which contain all
+of the necessary information and methods for symmetry analysis.
 """
 
 import numpy as np
-from api import array_type, check_type, check_len
+from samosa.api.api_utils import array_type, NoneType 
+from samosa.api.api_utils import check_type, check_len, check_shape
 """
 -------------------------------------------------------------------------------
 Group class
@@ -34,9 +35,14 @@ class Group:
         check_type('generators',generators,list)
 
         for g in generators:
-            if not issubclass(g, GroupElement):
+            if not issubclass(g.__class__, GroupElement):
                 raise Exception("All generators must inherit from GroupElement"
                                 " class.")
+
+            if isinstance(g, PointerGroupElement):
+                raise Exception("PointerGroupElement is not a valid generator"
+                                " type.")
+
 
         if len(generators) == 0:
             raise Exception("List of generators cannot be empty.")
@@ -56,7 +62,7 @@ class Group:
         
         # Remove potential duplicates and identity elements
         for g in self.generators:
-            if not element_in_list(g,candidate_list) and not g.is_identity():
+            if not _element_in_list(g,candidate_list) and not g.is_identity():
                 candidate_list += [g]
         
         # If the list is empty after sorting, the only generator is identity
@@ -73,7 +79,7 @@ class Group:
             
             for g in candidate_list:
                 # Check if the generator is related to the known generators
-                if not element_in_list(g, blacklist):  
+                if not _element_in_list(g, blacklist):  
 
                     # Update stabilizer_list and blacklist  
                     extended_stabilizer = [IdentityGroupElement()]\
@@ -82,7 +88,7 @@ class Group:
                     for h in extended_stabilizer:
                         g_head = h*g
                         g_chain = g_head
-                        while not element_in_list(g_chain, blacklist):
+                        while not _element_in_list(g_chain, blacklist):
                             blacklist += [g_chain]
                             g_chain = g_chain*g_head
 
@@ -167,7 +173,7 @@ class Group:
 
                 # If the new point is not in the orbit, add it and update 
                 # generators/permutations and transporters
-                if not array_in_list(q, orbit):
+                if not _array_in_list(q, orbit):
                     orbit += [q]
                     p_ind[tuple(q)] = len(orbit) - 1
 
@@ -211,10 +217,12 @@ class Group:
                     else:
                         stabilizer = g_20_inv*g*g_10
 
-                    if not element_in_list(stabilizer, stabilizer_list):
+                    if not _element_in_list(stabilizer, stabilizer_list):
                         stabilizer_list += [stabilizer]
 
                 permutations[ind_g][p_ind[tuple(p)]] = p_ind[tuple(q)]
+
+        permutations = [PermutationGroupElement(p) for p in permutations]
 
         return orbit, permutations, transporter_dict, stabilizer_list
     
@@ -413,13 +421,13 @@ class MatrixGroupElement(GroupElement):
             operator = np.round(np.array(operator),log_eps) 
             self.rank = len(operator)
             
-            check_shape('operator',operator,(self.rank,self.rank))
+            check_shape('operator',operator,self.rank,self.rank)
 
             self.operator = operator 
             self.order = cycle_order
             self.orthogonal_basis = _check_orthogonal(self.operator)
 
-        if not_None(operator_inv):
+        if _not_None(operator_inv):
 
             check_type('operator_inv',operator_inv,array_type)
 
@@ -427,7 +435,7 @@ class MatrixGroupElement(GroupElement):
             # by self.operator
             operator_inv = np.array(operator_inv)
             
-            check_shape('operator_inv',operator_inv,(self.rank,self.rank))
+            check_shape('operator_inv',operator_inv,self.rank,self.rank)
             
             identity_test = operator_inv.dot(self.operator)\
                           - np.eye(self.rank)
@@ -526,7 +534,7 @@ class MatrixGroupElement(GroupElement):
         check_type('store_inverse',store_inverse,bool)
 
         # Check if operator inverse is stored
-        if not_None(self.operator_inv):
+        if _not_None(self.operator_inv):
             return self.operator_inv
 
         else:
@@ -616,28 +624,33 @@ class PermutationGroupElement(GroupElement):
         Defines the permutation tuple.
 
         Arguments:
-        permutation - array_type or dict int:int, permutation tuple or 
-                      IdentityGroupElement, defines an identity element;
+        permutation - array_type or dict int : int or IdentityGroupElement,
+                      Permutations in the 'ordered' representation:
+                      if array_type, assume map n : permutation[n];
+                      if dict, assume a map n : m, where n and m are in the 
+                      same (closed) set;
+                      if IdentityGroupElement, return cycle (1,2,...,dim).
         """
 
         check_type('permutation',permutation,dict,array_type,
                                              IdentityGroupElement)
 
         # Define identity if IdentityGroupElement is given
-        if isinstance(operator, IdentityGroupElement):
-            if operator.dim == None:
+        if isinstance(permutation, IdentityGroupElement):
+            if permutation.dim == None:
                 raise ValueError("Cannot initialize MatrixGroupElement from "
                                  "IdentityGroupElement with a None type value"
                                  "of dim.")
             
-            self.dim = operator.dim
+            self.dim = permutation.dim
             self.permutation = (i for i in range(self.dim))
             self.order = 1
         
-        elif isinstance(operator, dict):
-            self.dim = max(permutation.keys())
+        elif isinstance(permutation, dict):
+            self.dim = max(permutation.keys()) + 1
             try:
-                self.permutation = (permutation[i] for i in range(self.dim))
+                self.permutation = tuple(permutation[i]\
+                                         for i in range(self.dim))
             except KeyError:
                 raise ValueError("Permutation dictionary is incomplete: "
                                  "{}".format(permutation))
@@ -668,13 +681,21 @@ class PermutationGroupElement(GroupElement):
         # Left action on an array
         elif isinstance(element, array_type):
 
-            if len(element) != self.dim:
-                raise TypeError("Cannot perform a permutation with dim "\
-                                "{} and array of length {}".format(
-                                                             self.rank, 
-                                                             len(element)))
-            
-            return [element[p] for p in self.permutation].astype(type(element))
+            if len(element) < self.dim:
+                raise Exception("Array must be of length at least {} "
+                                "in order to permute its elements.".format(
+                                                                    self.dim))
+
+            new_element = np.array(element)
+
+            for i in range(self.dim):
+                new_element[i] = element[self.permutation[i]]
+
+            if isinstance(element, np.ndarray):
+                return new_element
+
+            else:
+                return type(element)(new_element)
 
         # Left action on int
         elif isinstance(element, int):
@@ -712,7 +733,10 @@ class PermutationGroupElement(GroupElement):
         Returns inverse of self.permutation.
         """
 
-        permutation_inv = tuple(self * np.arange(self.dim)) 
+        permutation_inverse = np.zeros(self.dim,int) 
+            
+        for i in range(self.dim):
+            permutation_inverse[self.permutation[i]] = i
 
         return PermutationGroupElement(permutation_inverse)
 
@@ -809,13 +833,36 @@ class PointerGroupElement(GroupElement):
                           the list of generator cycle orders.
         """
 
+        check_type('pointer',pointer,list)
+
+        for p in pointer:
+            check_type('pointer components',p,tuple)
+
+        check_type('generators',generator_list,list,NoneType)
+
+        if _not_None(generator_list):
+            for g in generator_list:
+                if not issubclass(g.__class__, GroupElement):
+                    raise Exception("All generators must inherit from "
+                                    "GroupElement class.")
+
+                if isinstance(g, PointerGroupElement):
+                    raise Exception("PointerGroupElement is not a valid "
+                                    " generator type.")
+        
+        check_type('generator_order',generator_order,list,NoneType)
+
+        if _not_None(generator_order):
+            for o in generator_order:
+                check_type('generator order',o,int,NoneType)
+
         # Define the number of generators and the list of generator cycle orders
-        if not_None(generator_list):
+        if _not_None(generator_list):
             self.n_generators = len(generator_list)
             self.order = [g.order for g in generator_list]
 
         else:
-            if not_None(generator_order):
+            if _not_None(generator_order):
                 self.order = generator_order
                 self.n_generators = len(self.order)
 
@@ -856,7 +903,7 @@ class PointerGroupElement(GroupElement):
 
                 else:
                     if p[0] == new_pointer[counter][0]:
-                        new_power = mod(p[1] + new_pointer[counter][1], 
+                        new_power = _mod(p[1] + new_pointer[counter][1], 
                                         self.order[p[0]])
                         
                         if new_power == 0:
@@ -898,7 +945,7 @@ class PointerGroupElement(GroupElement):
                 ## power of the generator (extend the generator chain)
                 if g_left[0] == g_right[0]:
                     g_order = self.order[g_right[0]]
-                    g_power_new = mod(g_left[1]+g_right[1], g_order)
+                    g_power_new = _mod(g_left[1]+g_right[1], g_order)
                 
                     if g_power_new == 0:
                         g_extend = []
@@ -934,7 +981,7 @@ class PointerGroupElement(GroupElement):
                 ## power of the generator (extend the generator chain)
                 if g_left[0] == g_right[0]:
                     g_order = self.order[g_right[0]]
-                    g_power_new = mod(g_left[1]+g_right[1], g_order)
+                    g_power_new = _mod(g_left[1]+g_right[1], g_order)
                 
                     if g_power_new == 0:
                         g_extend = []
@@ -984,7 +1031,7 @@ class PointerGroupElement(GroupElement):
                 ## power of the generator (extend the generator chain)
                 if g_left[0] == g_right[0]:
                     g_order = self.order[g_right[0]]
-                    g_power_new = mod(g_left[1]+g_right[1], g_order)
+                    g_power_new = _mod(g_left[1]+g_right[1], g_order)
                 
                     if g_power_new == 0:
                         g_extend = []
@@ -1018,7 +1065,7 @@ class PointerGroupElement(GroupElement):
         Group element inverse for pointer representation.
         """
  
-        pointer_inv = [(p[0],mod(-p[1],self.order[p[0]])) for p in self.pointer]
+        pointer_inv = [(p[0],_mod(-p[1],self.order[p[0]])) for p in self.pointer]
 
         return PointerGroupElement(pointer_inv,
                                    generator_order=self.order)
@@ -1080,7 +1127,7 @@ Frequently used supplementary functions
 -------------------------------------------------------------------------------
 """
 
-def array_in_list(a, a_list):
+def _array_in_list(a, a_list):
     """
     Determines if a np.ndarray is included in a list of np.ndarrays. 
     """
@@ -1089,7 +1136,7 @@ def array_in_list(a, a_list):
     return any((np.isclose(a,p,eps)).all() for p in a_list)
 
 
-def element_in_list(g, g_list):
+def _element_in_list(g, g_list):
     """
     Determines if a GroupElement_type is included in a list of 
     GroupElement_types. 
@@ -1097,18 +1144,18 @@ def element_in_list(g, g_list):
     return any(g == p for p in g_list)
 
 
-def not_None(a):
+def _not_None(a):
     """
     Checks if a is of NoneType, returns True if it isn't.
     """
     return not isinstance(a,type(None))
 
 
-def mod(a,n):
+def _mod(a,n):
     """
     If n is not None, return a % n, otherwise return a.
     """
-    if not_None(n):
+    if _not_None(n):
         return a % n
     else:
         return a

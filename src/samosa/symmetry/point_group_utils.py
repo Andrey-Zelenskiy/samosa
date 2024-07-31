@@ -10,7 +10,7 @@ This program defines methods for defining and manipulating 3D point groups.
 """
 
 import numpy as np
-from symmetry_utils import Group, MatrixGroupElement, not_None
+from samosa.symmetry.symmetry_utils import Group, MatrixGroupElement, _not_None
 
 def point_group(pg_symbol, basis = None, *axes):
     """
@@ -41,7 +41,7 @@ def point_group(pg_symbol, basis = None, *axes):
 
     # Setup the coordinate system
 
-    if not_None(basis):
+    if _not_None(basis):
 
         basis = [_normalize_vector(b) for b in basis]
         basis = np.array(basis)
@@ -417,7 +417,7 @@ def _Cn_group(n, axis = None, basis = None):
     """
    
     ## Assign primary axis
-    if not_None(axis):
+    if _not_None(axis):
         
         if len(axis) != 1:
             raise Exception("Only one axis is required for "\
@@ -463,7 +463,7 @@ def _Cnv_group(n, axes = None, basis = None):
         raise ValueError("C1v point group is not defined!")
     
     ## Assign primary axes
-    if not_None(axes):
+    if _not_None(axes):
         if len(axes) != 2:
             raise Exception("Two axes are required for "\
                             "Cnv point groups ({} provided).".format(len(axes)))
@@ -510,7 +510,7 @@ def _Cnh_group(n, axis = None, basis = None):
     """
     
     ## Assign primary axis
-    if not_None(axis):
+    if _not_None(axis):
         
         if len(axis) != 1:
             raise Exception("Only one axis is required for "\
@@ -560,7 +560,7 @@ def _Sn_group(n, axis = None, basis = None):
                          "n = {}".format(n))
     
     ## Assign primary axis
-    if not_None(axis):
+    if _not_None(axis):
         
         if len(axis) != 1:
             raise Exception("Only one axis is required for "\
@@ -605,7 +605,7 @@ def _Dn_group(n, axes = None, basis = None):
         raise ValueError("D1 point group is not defined!")
     
     ## Assign primary axes
-    if not_None(axes):
+    if _not_None(axes):
         if len(axes) != 2:
             raise Exception("Two axes are required for "\
                             "Dn point groups ({} provided).".format(len(axes)))
@@ -657,7 +657,7 @@ def _Dnd_group(n, axes = None, basis = None):
         raise ValueError("D1d point group is not defined!")
     
     ## Assign primary axes
-    if not_None(axes):
+    if _not_None(axes):
         if len(axes) != 2:
             raise Exception("Two axes are required for "\
                             "Dnd point groups ({} provided).".format(len(axes)))
@@ -708,7 +708,7 @@ def _Dnh_group(n, axes = None, basis = None):
         raise ValueError("D1h point group is not defined!")
     
     ## Assign primary axes
-    if not_None(axes):
+    if _not_None(axes):
         if len(axes) != 2:
             raise Exception("Two axes are required for "\
                             "Dnh point groups ({} provided).".format(len(axes)))
@@ -785,7 +785,7 @@ def operator_C(axis, n, basis = None):
     rotation[2,1] = axis[2]*axis[1]*( 1 - cos_a ) + axis[0]*sin_a 
     rotation[2,2] = cos_a + axis[2]**2*(1-cos_a)
     
-    if not_None(basis):
+    if _not_None(basis):
         basis = basis.T
         basis_inv = np.linalg.inv(basis)
         rotation = basis_inv.dot(rotation.dot(basis))

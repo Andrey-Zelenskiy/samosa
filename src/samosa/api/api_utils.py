@@ -34,6 +34,8 @@ Type checking
 """
 # Group np.ndarray, list, and tuple into a single class category
 array_type = (np.ndarray, list, tuple)
+mutable_array_type = (np.ndarray, list)
+NoneType = type(None)
 
 
 def check_type(var_name, var, *var_type):
@@ -74,9 +76,9 @@ def check_len(var_name, var, var_len):
     """
 
     if len(var) != var_len:
-        raise: Exception(var_name\
-                       + " must be of length {}, not {}".format(var_len,
-                                                                len(var)))
+        raise Exception(var_name\
+                      + " must be of length {}, not {}".format(var_len,
+                                                               len(var)))
 
 
 def check_shape(var_name, var, *var_shape):
@@ -94,6 +96,6 @@ def check_shape(var_name, var, *var_shape):
     """
     
     if var.shape != var_shape:
-        raise: Exception(var_name\
-                       + " must have shape {}, not {}".format(var_shape,
-                                                              var.shape))
+        raise Exception(var_name\
+                      + " must have shape {}, not {}".format(var_shape,
+                                                             var.shape))
