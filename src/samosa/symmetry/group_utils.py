@@ -3,10 +3,10 @@
 
 """
 =================
-symmetry_utils.py
+group_utils.py
 =================
 
-This script defines the `Group` and GroupElement objects, which contain all
+This submodule defines the `Group` and GroupElement objects, which contain all
 of the necessary information and methods for symmetry analysis.
 """
 
@@ -306,7 +306,7 @@ class IdentityGroupElement(GroupElement):
     An object used to represent a universal identity element. 
     """
 
-    def __init__(dim = None):
+    def __init__(self, dim = None):
         """
         If given, initializes the dimension/trace of the identity.
         """
@@ -427,7 +427,7 @@ class MatrixGroupElement(GroupElement):
             self.order = cycle_order
             self.orthogonal_basis = _check_orthogonal(self.operator)
 
-        if _not_None(operator_inv):
+        if _not_None(operator_inv) and not self.orthogonal_basis:
 
             check_type('operator_inv',operator_inv,array_type)
 
@@ -638,12 +638,12 @@ class PermutationGroupElement(GroupElement):
         # Define identity if IdentityGroupElement is given
         if isinstance(permutation, IdentityGroupElement):
             if permutation.dim == None:
-                raise ValueError("Cannot initialize MatrixGroupElement from "
-                                 "IdentityGroupElement with a None type value"
-                                 "of dim.")
+                raise ValueError("Cannot initialize PermutationGroupElement "
+                                 "from IdentityGroupElement with a None type "
+                                 "value of dim.")
             
             self.dim = permutation.dim
-            self.permutation = (i for i in range(self.dim))
+            self.permutation = tuple(i for i in range(self.dim))
             self.order = 1
         
         elif isinstance(permutation, dict):
@@ -674,7 +674,7 @@ class PermutationGroupElement(GroupElement):
                                                                 self.dim, 
                                                                 element.dim))
             
-            product = (element.permutation[p] for p in self.permutation)
+            product = tuple(element.permutation[p] for p in self.permutation)
 
             return PermutationGroupElement(product)
 

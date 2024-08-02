@@ -3,9 +3,9 @@
 This sub-module provides core tools for working with symmetries in the context
 of group theory.
 
-- `symmetry_utils.py` is the main script, which defines a `Group` object, used
-as a container to store all relevant symmetry properties and methods for a 
-given problem.
+- `group_utils.py` is the main script, which defines a `Group` and 
+`GroupElement` objects, used as a container to store all relevant symmetry 
+properties and methods for a given problem.
 - `point_group_utils.py` is a collection of methods used to define and 
 manipulate 3D point groups.
 - `symmetric_group_utils.py` is similar to `point_group_utils.py`, but is 
@@ -14,7 +14,7 @@ focused on symmetric groups of permutations.
 
 ## Main classes
 
-## Group (in `symmetry_utils.py`)
+## Group (in `group_utils.py`)
 
 - [x] group generators;
 - [x] method to calculate an orbit of of a point;
@@ -27,17 +27,17 @@ orbit/stabilizer chain;
 - [ ] method for finding conjugate classes;
 - [ ] method for direct product of groups;
 
-## MatrixGroupElement (in `symmetry_utils.py`)
+## MatrixGroupElement (in `group_utils.py`)
 
 - [x] Clean up inverse-storage options;
 - [x] Type tests; 
 - [ ] Implement cycle order calculation method;
 
-## PointerGroupElement (in `symmetry_utils.py`)
+## PointerGroupElement (in `group_utils.py`)
 
 - [x] Type tests;
 
-## PermutationGroupElement (in `symmetry_utils.py`)
+## PermutationGroupElement (in `group_utils.py`)
 
 - [x] Group action;
 - [x] Inverse element;

@@ -10,7 +10,8 @@ This program defines methods for defining and manipulating 3D point groups.
 """
 
 import numpy as np
-from samosa.symmetry.symmetry_utils import Group, MatrixGroupElement, _not_None
+from samosa.symmetry.group_utils import Group, MatrixGroupElement, _not_None
+from samosa.api.api_utils import check_type, check_len, array_type
 
 def point_group(pg_symbol, basis = None, *axes):
     """
@@ -747,7 +748,7 @@ Symmetry operators in 3D
 -------------------------------------------------------------------------------
 """
 
-def operator_C(axis, n, basis = None):
+def operator_C(axis, angle, basis = None):
     """
     Defines a proper 3D rotation.
 
@@ -756,16 +757,33 @@ def operator_C(axis, n, basis = None):
 
     Arguments:
     axis  - np.1darray[3], rotation axis, not necesserally normalized;
-    n     - int, defines the angle of rotation as 2*pi/n;
+    angle - if float, defines the angle of rotation;
+            if int n, defines the angle of rotation as 2*pi/n;
+            if tuple of ints (k,n), defines the angle of rotation as 2*pi*k/n;
     basis - None or np.2darray[3][3], (optional, default None), if not None,
             defines the basis of the transformation.
 
     Returns:
     rotation - np.2darray[3][3], 3D proper rotation matrix.
     """
-    
+
+    check_type('axis',axis,array_type)
+    check_len('axis',axis,3)
+    check_type('angle',angle,float,int,tuple)
+
     axis = _normalize_vector(axis)
-    angle = 2*np.pi/n
+
+    if isinstance(angle,int):
+        n = angle
+        angle = 2*np.pi/n
+
+    elif isinstance(angle,tuple):
+        check_len('angle = (k,n)',angle,2)
+        check_type('k',angle[0],int)
+        check_type('n',angle[1],int)
+
+        k,n = angle
+        angle = 2*np.pi*k/n
     
     # Define trig functions
     cos_a = np.cos(angle)
@@ -812,6 +830,9 @@ def operator_M(axis, basis = None):
     reflection_matrix - np.2darray[3][3], 3D reflection matrix.
     """
 
+    check_type('axis',axis,array_type)
+    check_len('axis',axis,3)
+   
     axis = _normalize_vector(axis)
 
     reflection = -operator_C(axis,2,basis)
@@ -819,17 +840,19 @@ def operator_M(axis, basis = None):
     return reflection
 
 
-def operator_S(axis, n, basis = None):
+def operator_S(axis, angle, basis = None):
     """
     Defines an improper 3D rotation.
 
     Improper rotation is defined as
 
-    S(axis,n) = C(axis,n) * M(axis)
+    S(axis,angle) = C(axis,angle) * M(axis)
 
     Arguments:
     axis - np.1darray[3], rotation axis, not necesserally normalized;
-    n    - defines the angle of rotation as 2*pi/n;
+    angle - if float, defines the angle of rotation;
+            if int n, defines the angle of rotation as 2*pi/n;
+            if tuple of ints (k,n), defines the angle of rotation as 2*pi*k/n;
     basis - None or np.2darray[3][3], (optional, default None), if not None,
             defines the basis of the transformation.
 
@@ -837,10 +860,13 @@ def operator_S(axis, n, basis = None):
     rotoinversion - np.2darray[3][3], 3D improper rotation matrix.
     """
 
+    check_type('axis',axis,array_type)
+    check_len('axis',axis,3)
+    check_type('angle',angle,float,int,tuple)
+   
     axis = _normalize_vector(axis)
-    angle = 2*np.pi/n
 
-    rotoinversion = operator_C(axis,n,basis).dot(operator_M(axis,basis))
+    rotoinversion = operator_C(axis,angle,basis).dot(operator_M(axis,basis))
 
     return rotoinversion
 

@@ -1,3 +1,4 @@
+jupyterlab==3.*
 toml==0.10.*
 sympy==1.12.*
 numpy==2.0.*
