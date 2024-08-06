@@ -57,6 +57,27 @@ class Database:
                 self.__file_index += [self.path_to_database / file]
     
 
+    def load_file(self, *files):
+        """
+        Creates a dictionary from the database file.
+        """
+
+        for f in files:
+            # Check types
+            check_type('file',f,int,str,PosixPath)
+            
+            if isinstance(f,int):
+                file = self.available_files[f]
+            else:
+                file = f
+            
+            if file.name in self.file_list:
+                continue
+
+            self.__file_list += [file.name]
+            self.__data[file.name] = toml.load(file)
+
+
     @property
     def available_files(self):
         """
@@ -89,25 +110,19 @@ class Database:
         return self.__path
 
 
-    def load_file(self, *files):
-        """
-        Creates a dictionary from the database file.
-        """
+    def __str__(self):
 
-        for f in files:
-            # Check types
-            check_type('file',f,int,str,PosixPath)
-            
-            if isinstance(f,int):
-                file = self.available_files[f]
-            else:
-                file = f
-            
-            if file.name in self.file_list:
-                continue
+        if len(self.file_list) == 0:
+            return "Empty Database object"
 
-            self.__file_list += [file.name]
-            self.__data[file.name] = toml.load(file)
+        else:
+            files_str = [str(f) for f in self.file_list]
+            files_str = ", ".join(files_str)
+            return f"Database object containing files {files_str}"
+
+    def __repr__(self):
+        cls = self.__class__.__name__
+        return f"{cls}(file_list = {self.file_list!r})"
 
 
 class SpaceGroupDatabase(Database):
