@@ -12,7 +12,11 @@ of the necessary information and methods for symmetry analysis.
 
 import numpy as np
 from samosa.api.api_utils import array_type, NoneType 
-from samosa.api.api_utils import check_type, check_len, check_shape
+from samosa.api.api_utils import not_None, check_type, check_len, check_shape
+from samosa.api.api_utils import custom_format_warning 
+
+import warnings
+warnings.formatwarning = custom_format_warning
 """
 -------------------------------------------------------------------------------
 Group class
@@ -253,7 +257,7 @@ Interface for group elements representation
 -------------------------------------------------------------------------------
 """
 
-class GroupElement():
+class GroupElement:
     """
     Interface class for a group element object.
     """
@@ -427,7 +431,7 @@ class MatrixGroupElement(GroupElement):
             self.order = cycle_order
             self.orthogonal_basis = _check_orthogonal(self.operator)
 
-        if _not_None(operator_inv) and not self.orthogonal_basis:
+        if not_None(operator_inv) and not self.orthogonal_basis:
 
             check_type('operator_inv',operator_inv,array_type)
 
@@ -534,7 +538,7 @@ class MatrixGroupElement(GroupElement):
         check_type('store_inverse',store_inverse,bool)
 
         # Check if operator inverse is stored
-        if _not_None(self.operator_inv):
+        if not_None(self.operator_inv):
             return self.operator_inv
 
         else:
@@ -840,7 +844,7 @@ class PointerGroupElement(GroupElement):
 
         check_type('generators',generator_list,list,NoneType)
 
-        if _not_None(generator_list):
+        if not_None(generator_list):
             for g in generator_list:
                 if not issubclass(g.__class__, GroupElement):
                     raise Exception("All generators must inherit from "
@@ -852,17 +856,17 @@ class PointerGroupElement(GroupElement):
         
         check_type('generator_order',generator_order,list,NoneType)
 
-        if _not_None(generator_order):
+        if not_None(generator_order):
             for o in generator_order:
                 check_type('generator order',o,int,NoneType)
 
         # Define the number of generators and the list of generator cycle orders
-        if _not_None(generator_list):
+        if not_None(generator_list):
             self.n_generators = len(generator_list)
             self.order = [g.order for g in generator_list]
 
         else:
-            if _not_None(generator_order):
+            if not_None(generator_order):
                 self.order = generator_order
                 self.n_generators = len(self.order)
 
@@ -1144,18 +1148,11 @@ def _element_in_list(g, g_list):
     return any(g == p for p in g_list)
 
 
-def _not_None(a):
-    """
-    Checks if a is of NoneType, returns True if it isn't.
-    """
-    return not isinstance(a,type(None))
-
-
 def _mod(a,n):
     """
     If n is not None, return a % n, otherwise return a.
     """
-    if _not_None(n):
+    if not_None(n):
         return a % n
     else:
         return a

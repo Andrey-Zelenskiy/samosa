@@ -45,4 +45,5 @@ orbit/stabilizer chain;
 - [x] `__str__` magic;
 - [x] `__repr__` magic;
 - [x] Type tests;
+- [ ] Implement cycle order calculation method;
 
