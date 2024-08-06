@@ -10,8 +10,6 @@ This script defines useful methods for type checking and error handling.
 """
 
 import numpy as np
-import warnings
-
 
 """
 -------------------------------------------------------------------------------
@@ -24,18 +22,30 @@ def custom_format_warning(msg, *args, **kwargs):
     """
     return str(msg) + '\n'
 
-warnings.formatwarning = custom_format_warning
-
 
 """
 -------------------------------------------------------------------------------
-Type checking
+Argument checking
 -------------------------------------------------------------------------------
 """
 # Group np.ndarray, list, and tuple into a single class category
 array_type = (np.ndarray, list, tuple)
 mutable_array_type = (np.ndarray, list)
 NoneType = type(None)
+
+
+def is_None(var):
+    """
+    Checks if var is of NoneType, returns True if it is.
+    """
+    return isinstance(var,NoneType)
+
+
+def not_None(var):
+    """
+    Checks if var is of NoneType, returns True if it isn't.
+    """
+    return not isinstance(var,NoneType)
 
 
 def check_type(var_name, var, *var_type):
@@ -99,3 +109,21 @@ def check_shape(var_name, var, *var_shape):
         raise Exception(var_name\
                       + " must have shape {}, not {}".format(var_shape,
                                                              var.shape))
+
+def check_ifdef(var_name, var):
+    """
+    Checks if the specified argument has a value of None.
+
+    Arguments:
+    var_name  - str, name of the variable;
+    var       - generic type, variable of interest.
+
+    Returns:
+    None if the check is successful,
+    Exception if the check is failed.
+    """
+    
+    if not_None(var):
+        raise Exception(var_name + " is already set to {}, ".format(var)
+                                 + "use overwrite=True to force a new value.")
+    
