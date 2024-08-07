@@ -11,6 +11,7 @@ of the necessary information and methods for symmetry analysis.
 """
 
 import numpy as np
+
 from samosa.api.api_utils import array_type, NoneType 
 from samosa.api.api_utils import not_None, check_type, check_len, check_shape
 from samosa.api.api_utils import custom_format_warning 

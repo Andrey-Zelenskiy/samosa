@@ -126,4 +126,22 @@ def check_ifdef(var_name, var):
     if not_None(var):
         raise Exception(var_name + " is already set to {}, ".format(var)
                                  + "use overwrite=True to force a new value.")
+
+
+def check_in_list(var_name, var, var_list):
+    """
+    Checks that the variable is contained in a list.
+
+    Arguments:
+    var_name  - str, name of the variable;
+    var       - generic type, variable of interest;
+    var_list  - list, list that is required to contain var.
+
+    Returns:
+    None if the check is successful,
+    Exception if the check is failed.
+    """
     
+    if var not in var_list:
+        raise Exception(var_name\
+                      + " value {} is not a member of {}".format(var,var_list))
