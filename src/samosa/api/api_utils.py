@@ -65,10 +65,8 @@ def check_type(var_name, var, *var_type):
     if not isinstance(var, var_type):
         var_type_print = [str(t.__name__) for t in var_type]
         var_type_print = ", ".join(var_type_print)
-        raise TypeError(var_name\
-                      + " must be of type {}, not {}".format(
-                                                      var_type_print,
-                                                      type(var).__name__))
+        raise TypeError(f"{var_name} must be of type {var_type_print}, not "
+                        f"{type(var).__name__}")
 
 
 def check_len(var_name, var, var_len):
@@ -86,9 +84,8 @@ def check_len(var_name, var, var_len):
     """
 
     if len(var) != var_len:
-        raise Exception(var_name\
-                      + " must be of length {}, not {}".format(var_len,
-                                                               len(var)))
+        raise Exception(f"{var_name} must be of length {var_len}, not "
+                        f"{len(var)}")
 
 
 def check_shape(var_name, var, *var_shape):
@@ -106,9 +103,9 @@ def check_shape(var_name, var, *var_shape):
     """
     
     if var.shape != var_shape:
-        raise Exception(var_name\
-                      + " must have shape {}, not {}".format(var_shape,
-                                                             var.shape))
+        raise Exception(f"{var_name} must have shape {var_shape}, not "
+                        f"{var.shape}")
+
 
 def check_ifdef(var_name, var):
     """
@@ -124,8 +121,8 @@ def check_ifdef(var_name, var):
     """
     
     if not_None(var):
-        raise Exception(var_name + " is already set to {}, ".format(var)
-                                 + "use overwrite=True to force a new value.")
+        raise Exception(f"{var_name} is already set to {var}, "
+                        f"use overwrite=True to force a new value.")
 
 
 def check_in_list(var_name, var, var_list):
@@ -143,5 +140,4 @@ def check_in_list(var_name, var, var_list):
     """
     
     if var not in var_list:
-        raise Exception(var_name\
-                      + " value {} is not a member of {}".format(var,var_list))
+        raise Exception(f"{var_name} must be one of {var_list}, not {var}")

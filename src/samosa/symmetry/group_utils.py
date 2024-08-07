@@ -448,7 +448,7 @@ class MatrixGroupElement(GroupElement):
             if np.max(np.abs(identity_test)) > eps:
                 raise ValueError("Proposed inverse does not produce "\
                                  "identity under multiplication with the "\
-                                 "operator!")
+                                 "operator.")
 
             self.operator_inv = MatrixGroupElement(operator_inv)
 
@@ -465,10 +465,9 @@ class MatrixGroupElement(GroupElement):
         if isinstance(element, MatrixGroupElement):
             
             if element.rank != self.rank:
-                raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             self.rank, 
-                                                             element.rank))
+                raise TypeError("Cannot perform multiplication between "
+                               f"matrices of rank {self.rank} and "
+                               f"{element.rank}.")
             
             product = self.operator.dot(element.operator)
 
@@ -480,10 +479,9 @@ class MatrixGroupElement(GroupElement):
             element = np.array(element)
 
             if element.shape[0] != self.rank:
-                raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             self.rank, 
-                                                             element.shape[0]))
+                raise TypeError("Cannot perform multiplication between "
+                               f"matrices of rank {self.rank} and "
+                               f"{element.shape[0]}.")
             
             return self.operator.dot(element)
 
@@ -492,9 +490,9 @@ class MatrixGroupElement(GroupElement):
             return self
 
         else:
-            raise TypeError("Cannot multiply "\
-                          + self.__class__.__name__ + " and "\
-                          + type(element).__name__ + "!") 
+            raise TypeError("Cannot multiply objects of type "
+                           f"{self.__class__.__name__} and "
+                           f"{type(element).__name__}.") 
 
     
     def __rmul__(self, element):
@@ -509,9 +507,8 @@ class MatrixGroupElement(GroupElement):
 
             if element.shape[-1] != self.rank:
                 raise TypeError("Cannot perform multiplication between "\
-                                "matrices of rank {} and {}!".format(
-                                                             element.shape[-1],
-                                                             self.rank))
+                               f"matrices of rank {element.shape[-1]} and "
+                               f"{self.rank}.")
             
             return element.dot(self.operator)
 
@@ -520,8 +517,9 @@ class MatrixGroupElement(GroupElement):
             return self
 
         else:
-            raise TypeError("Cannot multiply " + type(element).__name__\
-                          + " and " + self.__class__.__name__ + "!") 
+            raise TypeError("Cannot multiply objects of type "
+                           f"{type(element).__name__} and "
+                           f"{self.__class__.__name__}.") 
 
     
     def inv(self, store_inverse = False):
@@ -589,9 +587,9 @@ class MatrixGroupElement(GroupElement):
 
         # Any other comparison yields False
         else:
-            warnings.warn("Comparison of " + self.__class__.__name__\
-                        + " with " + type(element).__name__\
-                        + " yields False by default.")
+            warnings.warn("Comparison of "
+                         f"{self.__class__.__name__} with "
+                         f"{type(element).__name__} yields False by default.")
             return False
 
     def __str__(self):
@@ -658,7 +656,7 @@ class PermutationGroupElement(GroupElement):
                                          for i in range(self.dim))
             except KeyError:
                 raise ValueError("Permutation dictionary is incomplete: "
-                                 "{}".format(permutation))
+                                f"{permutation}.")
         
         else:
             self.permutation = tuple(permutation)
@@ -675,9 +673,8 @@ class PermutationGroupElement(GroupElement):
             
             if element.dim != self.dim:
                 raise TypeError("Cannot perform multiplication between "\
-                                "permutations of dimension {} and {}!".format(
-                                                                self.dim, 
-                                                                element.dim))
+                                "permutations of dimension "
+                               f"{self.dim} and {element.dim}.")
             
             product = tuple(element.permutation[p] for p in self.permutation)
 
@@ -687,9 +684,8 @@ class PermutationGroupElement(GroupElement):
         elif isinstance(element, array_type):
 
             if len(element) < self.dim:
-                raise Exception("Array must be of length at least {} "
-                                "in order to permute its elements.".format(
-                                                                    self.dim))
+                raise Exception(f"Array must be of length at least {self.dim} "
+                                 "in order to permute its elements.")
 
             new_element = np.array(element)
 
@@ -714,9 +710,9 @@ class PermutationGroupElement(GroupElement):
             return self
 
         else:
-            raise TypeError("Cannot multiply "\
-                          + self.__class__.__name__ + " and "\
-                          + type(element).__name__ + "!") 
+            raise TypeError("Cannot multiply objects of type "
+                           f"{self.__class__.__name__} and "
+                           f"{type(element).__name__}.") 
 
     
     def __rmul__(self, element):
@@ -729,8 +725,9 @@ class PermutationGroupElement(GroupElement):
             return self
 
         else:
-            raise TypeError("Cannot multiply " + type(element).__name__\
-                          + " and " + self.__class__.__name__ + "!") 
+            raise TypeError("Cannot multiply objects of type "
+                           f"{type(element).__name__} and "
+                           f"{self.__class__.__name__}.") 
 
     
     def inv(self):
@@ -768,9 +765,9 @@ class PermutationGroupElement(GroupElement):
 
         # Any other comparison yields False
         else:
-            warnings.warn("Comparison of " + self.__class__.__name__\
-                        + " with " + type(element).__name__\
-                        + " yields False by default.")
+            warnings.warn("Comparison of "
+                         f"{self.__class__.__name__} with "
+                         f"{type(element).__name__} yields False by default.")
             return False
 
 
@@ -853,7 +850,7 @@ class PointerGroupElement(GroupElement):
 
                 if isinstance(g, PointerGroupElement):
                     raise Exception("PointerGroupElement is not a valid "
-                                    " generator type.")
+                                    "generator type.")
         
         check_type('generator_order',generator_order,list,NoneType)
 
@@ -883,9 +880,9 @@ class PointerGroupElement(GroupElement):
 
             for i, p in enumerate(pointer):
                 if p[0] >= self.n_generators:
-                    raise ValueError("Pointer value {} exceeds "
-                                     "the number of generators ".format(p[0])\
-                                   + "{}".format(self.n_generators))
+                    raise ValueError(f"Pointer value {p[0]} exceeds "
+                                      "the number of generators "
+                                     f"{self.n_generators}.")
 
             self.simplify()
 
@@ -1010,9 +1007,9 @@ class PointerGroupElement(GroupElement):
 
         # Left multiplication by other types is not defined
         else:
-            raise TypeError("Multiplication is not defined for types "\
-                            "{} and {}".format(self.__class__.__name__, 
-                                               type(element).__name__))
+            raise TypeError("Cannot multiply objects of type "
+                           f"{self.__class__.__name__} and "
+                           f"{type(element).__name__}.") 
 
 
     def __rmul__(self, element):
@@ -1060,9 +1057,9 @@ class PointerGroupElement(GroupElement):
 
         # Right multiplication by other types is not defined
         else:
-            raise TypeError("Multiplication is not defined for types "\
-                            "{} and {}".format(type(element).__name__), 
-                                               self.__class__.__name__)
+            raise TypeError("Cannot multiply objects of type "
+                           f"{type(element).__name__} and "
+                           f"{self.__class__.__name__}.") 
 
 
     def inv(self):
@@ -1104,9 +1101,9 @@ class PointerGroupElement(GroupElement):
 
         # Any other comparison yields False
         else:
-            warnings.warn("Comparison of " + self.__class__.__name__\
-                        + " with " + type(element).__name__\
-                        + " yields False by default.")
+            warnings.warn("Comparison of "
+                         f"{self.__class__.__name__} with "
+                         f"{type(element).__name__} yields False by default.")
             return False
 
 

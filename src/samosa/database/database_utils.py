@@ -306,7 +306,7 @@ class SpaceGroupDatabase(Database):
 
         # Both lattice type and point group symbol are given
         elif not_None(lattice_type) and not_None(point_group_symbol):
-            check_in_list('lattice_type',lattice_type,self.lattice_list)
+            self.__check_lattice_type(lattice_type)
         
             data = self.lattice_reference[lattice_type]
             allowed_pg = {k:data[k] for k in list(data.keys())[1:]}
@@ -320,7 +320,7 @@ class SpaceGroupDatabase(Database):
 
         # Only lattice type is specified
         elif not_None(lattice_type) and is_None(point_group_symbol):
-            check_in_list('lattice_type',lattice_type,self.lattice_list)
+           self.__check_lattice_type(lattice_type)
         
             data = self.lattice_reference[lattice_type]
             allowed_groups = {k:data[k] for k in list(data.keys())[1:]}
@@ -329,8 +329,7 @@ class SpaceGroupDatabase(Database):
 
         # Only point_group is specified
         elif is_None(lattice_type) and not_None(point_group_symbol):
-            check_in_list('point_group_symbol',point_group_symbol,
-                                               self.point_group_list)
+            self.__check_point_group_symbol(point_group_symbol)
         
             allowed_lattices = self.point_group_reference[point_group_symbol]
         
@@ -373,7 +372,6 @@ class SpaceGroupDatabase(Database):
                     message += "\n"
 
             elif output_type == 3:
-
                 message = []
                 for dim in range(3):
                     if len(allowed_groups[dim].keys()) == 0:
@@ -468,46 +466,35 @@ class SpaceGroupDatabase(Database):
         return allowed_groups
 
         
-
-
     # Methods for checking the values of the space group input
     def __check_dimension(self, dimension):
         if dimension < 1 or dimension > 3:
             raise ValueError("Lattice dimension must be 1, 2, or 3, not "
-                             "{}".format(dimension))
-    
-
-    def __check_space_group_index(self, space_group_index, dimension): 
-        if dimension == 1:
-            if space_group_index < 1 or space_group_index > 2:
-                raise ValueError("Space group index must be between 1 and 2 "
-                                 "for a 1D lattice, not "
-                                 "{}".format(space_group_index)) 
-        
-        elif dimension == 2:
-            if space_group_index < 1 or space_group_index > 17:
-                raise ValueError("Space group index must be between 1 and 17 "
-                                 "for a 2D lattice, not "
-                                 "{}".format(space_group_index)) 
-        
-        elif dimension == 3: 
-            if space_group_index < 1 or space_group_index > 230:
-                raise ValueError("Space group index must be between 1 and 230 "
-                                 "for a 3D lattice, not "
-                                 "{}".format(space_group_index)) 
-    
-        else: 
-            if space_group_index < 1 or space_group_index > 230:
-                raise ValueError("Space group index must be between 1 and 230, "
-                                 "not {}".format(space_group_index)) 
+                            f"{dimension}")
     
 
     def __check_lattice_type(self, lattice_type):
         if lattice_type not in self.lattice_list:
             raise ValueError("Lattice type must be one of "
-                             "{}, not {}".format(self.lattice_list,
-                                                 lattice_type))
+                            f"{self.lattice_list}, not "
+                            f"{lattice_type}")
 
+
+    def __check_point_group_symbol(self, point_group_symbol):
+        if point_group_symbol not in self.point_group_list:
+            raise ValueError("Point group symbol must be one of "
+                            f"{self.point_group_list}, not "
+                            f"{point_group_symbol}")
+
+
+    def __check_space_group_index(self, space_group_index, dimension): 
+        
+        max_index = self.n_space_groups[dimension]
+        
+        if space_group_index < 1 or space_group_index > max_index:
+            raise ValueError("Space group index must be between 1 and 2 "
+                            f"for a 1D lattice, not {space_group_index}") 
+        
 
     @property
     def lattice_list(self):

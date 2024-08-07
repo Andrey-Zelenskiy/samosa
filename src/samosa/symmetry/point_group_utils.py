@@ -37,7 +37,7 @@ def point_group(pg_symbol, basis = None, *axes):
     group, point group object.
     """
 
-    symbol_error = ValueError("Incorrect Schoenflies symbol: " + pg_symbol) 
+    symbol_error = ValueError(f"Incorrect Schoenflies symbol: {pg_symbol}.") 
 
     pg_type = pg_symbol[0]
 
@@ -50,12 +50,12 @@ def point_group(pg_symbol, basis = None, *axes):
         basis = np.array(basis)
 
         if len(basis.shape) != 2:
-            raise TypeError("Basis must consist of 3 vectors of length 3, "\
-                            "but has dimensions {}".format(basis.shape))
+            raise TypeError("Basis must consist of 3 vectors of length 3, "
+                           f"but has dimensions {basis.shape}.")
 
         if basis.shape[0] != 3 or basis.shape[1] != 3:
-            raise TypeError("Basis must consist of 3 vectors of length 3, "\
-                            "but has dimensions {}".format(basis.shape))
+            raise TypeError("Basis must consist of 3 vectors of length 3, "
+                           f"but has dimensions {basis.shape}.")
         
 
     # Test if the point group is polyhedral
@@ -423,8 +423,8 @@ def _Cn_group(n, axis = None, basis = None):
     if not_None(axis):
         
         if len(axis) != 1:
-            raise Exception("Only one axis is required for "\
-                            "Cn point groups ({} provided).".format(len(axis)))
+            raise Exception("Only one axis is required for "
+                           f"Cn point groups ({len(axis)} provided).")
 
         else:    
             axis = axis[0]
@@ -468,8 +468,8 @@ def _Cnv_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "\
-                            "Cnv point groups ({} provided).".format(len(axes)))
+            raise Exception("Two axes are required for "
+                            "Cnv point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -516,8 +516,8 @@ def _Cnh_group(n, axis = None, basis = None):
     if not_None(axis):
         
         if len(axis) != 1:
-            raise Exception("Only one axis is required for "\
-                            "Cnh point groups ({} provided).".format(len(axis)))
+            raise Exception("Only one axis is required for "
+                            "Cnh point groups ({len(axes)} provided).")
 
         else:    
             axis = axis[0]
@@ -560,14 +560,14 @@ def _Sn_group(n, axis = None, basis = None):
     ## Check that n is even
     if n%2 != 0:
         raise ValueError("Sn point group requires n to be an even interger!\n"
-                         "n = {}".format(n))
+                        f"n = {n}")
     
     ## Assign primary axis
     if not_None(axis):
         
         if len(axis) != 1:
-            raise Exception("Only one axis is required for "\
-                            "Sn point groups ({} provided).".format(len(axis)))
+            raise Exception("Only one axis is required for "
+                            "Sn point groups ({len(axes)} provided).")
 
         else:    
             axis = axis[0]
@@ -610,8 +610,8 @@ def _Dn_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "\
-                            "Dn point groups ({} provided).".format(len(axes)))
+            raise Exception("Two axes are required for "
+                            "Dn point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -662,8 +662,8 @@ def _Dnd_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "\
-                            "Dnd point groups ({} provided).".format(len(axes)))
+            raise Exception("Two axes are required for "
+                            "Dnd point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -713,8 +713,8 @@ def _Dnh_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "\
-                            "Dnh point groups ({} provided).".format(len(axes)))
+            raise Exception("Two axes are required for "
+                            "Dnh point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -927,9 +927,8 @@ def operator_to_symbol(operator):
     eps = 1e-10
     
     if abs(abs(operator_det) - 1.0) > eps:
-        raise ValueError("Cannot determine symmetry symbol: operator "\
-                         "{}".format(operator)\
-                       + " is a non-orthogonal matrix!")
+        raise ValueError("Cannot determine symmetry symbol: operator "
+                        f"{operator} is a non-orthogonal matrix!")
 
     # Calculate the angle of rotation
     cos_a = np.round(0.5*(operator_trace/operator_det - 1),log_eps)
@@ -994,7 +993,7 @@ def symbol_to_operator(symbol, basis = None):
             operator = operator_S(axis,n,basis)
 
         else:
-            raise ValueError("Incorrect symmetry symbol: " + symbol)
+            raise ValueError(f"Incorrect symmetry symbol: {symbol}.")
 
     return operator
 
