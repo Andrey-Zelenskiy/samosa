@@ -1,8 +1,14 @@
 # 1D lattice
 
-[chain]
+[chain_p]
 
 dimension = 1
+
+[chain_p.C1]
+space_groups = [1]
+
+[chain_p.Cs]
+space_groups = [2]
 
 # 5 2D lattices and the corresponding possible point groups
 
@@ -11,10 +17,10 @@ dimension = 1
 dimension = 2
 
 [oblique_p.C1]
-space_groups = [-1]
+space_groups = [1]
 
 [oblique_p.C2]
-space_groups = [-2]
+space_groups = [2]
 
 
 
@@ -23,10 +29,10 @@ space_groups = [-2]
 dimension = 2
 
 [rectangular_p.Cs]
-space_groups = [-3,-4]
+space_groups = [3,4]
 
 [rectangular_p.C2v]
-space_groups = [-6,-7,-8]
+space_groups = [6,7,8]
 
 
 [rectangular_c]
@@ -34,10 +40,10 @@ space_groups = [-6,-7,-8]
 dimension = 2
 
 [rectangular_c.Cs]
-space_groups = [-5]
+space_groups = [5]
 
 [rectangular_c.C2v]
-space_groups = [-9]
+space_groups = [9]
 
 
 
@@ -46,10 +52,10 @@ space_groups = [-9]
 dimension = 2
 
 [square_p.C4]
-space_groups = [-10]
+space_groups = [10]
 
 [square_p.C4v]
-space_groups = [-11,-12]
+space_groups = [11,12]
 
 
 
@@ -58,16 +64,16 @@ space_groups = [-11,-12]
 dimension = 2
 
 [hexagonal_p.C3]
-space_groups = [-13]
+space_groups = [13]
 
 [hexagonal_p.C3v]
-space_groups = [-14,-15]
+space_groups = [14,15]
 
 [hexagonal_p.C6]
-space_groups = [-16]
+space_groups = [16]
 
 [hexagonal_p.C6v]
-space_groups = [-17]
+space_groups = [17]
 
 
 # 14 Bravais lattices and corresponding possible point groups
