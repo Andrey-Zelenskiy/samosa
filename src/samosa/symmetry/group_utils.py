@@ -30,35 +30,53 @@ class Group:
     A container for storing the properties and methods of a symmetry group.
     """
 
-    def __init__(self, generators, filter_generators=False):
+    def __init__(self, 
+                 generators, 
+                 name=None,  
+                 order=None,
+                 elements=None,
+                 character_table=None,
+                 irreps=None,
+                 filter_generators=False):
         """
-        Defines the group generators.
+        Defines the basic group properties.
 
         Arguments:
-        generators - list of GroupElement_type, list of group generators;
+        generators        - list of objects derrived from GroupElement class,
+                            list of group generators;
 
-        filter     - bool, (optional, default = False) and option to perform
-                     filtering of generators to remove redundant operators.
+        name              - str, (default=None) user-specified name of the
+                            group;
+
+        order             - int, (default=None) order of the group (number of 
+                            elements);
+
+        elements          - list of objects derrived from GroupElement class,
+                            (default=None), list of group elements;
+
+        character_table   - 2d_ArrayType, (default=None) character table of the
+                            group;
+
+        irreps            - list of ArrayType, (default=None) list of 
+                            irreducible group representations;
+
+        filter_generators - bool, (default=False) and option to perform
+                            filtering of generators to remove redundant
+                            operators.
         """
-        check_type('generators', generators, list)
+        # Initialize group generators
+        self.generators = generators
+
         check_type('filter_generators', filter_generators, bool)
-
-        for g in generators:
-            if not issubclass(g.__class__, GroupElement):
-                raise Exception("All generators must inherit from GroupElement "
-                                "class.")
-
-            if isinstance(g, PointerGroupElement):
-                raise Exception("PointerGroupElement is not a valid generator "
-                                "type.")
-
-        if len(generators) == 0:
-            raise Exception("List of generators cannot be empty.")
-
-        self.__generators = generators
-
         if filter_generators == True:
             self.generator_filter()
+
+        # Initialize optional properties
+        self.name = name
+        self.order = order
+        self.elements = elements
+        self.character_table = character_table
+        self.irreps = irreps
 
     def generator_filter(self):
         """
@@ -74,11 +92,11 @@ class Group:
 
         # If the list is empty after sorting, the only generator is identity
         if len(candidate_list) == 0:
-            self.__generators = [IdentityGroupElement()]
+            self.generators = [IdentityGroupElement()]
 
         # If only one generator is provided, no need to perform the check
         elif len(candidate_list) == 1:
-            self.__generators = candidate_list
+            self.generators = candidate_list
 
         else:
             self.__generators = []
@@ -136,7 +154,7 @@ class Group:
         p0         - object for which multiplication GroupElement action is
                      supported, the 'seed' point of the orbit;
 
-        as_pointer - bool, (optional, default = False), when True, outputes the
+        as_pointer - bool, (default = False), when True, outputes the
                      group elements as pointers to the generating set.
 
 
@@ -235,9 +253,243 @@ class Group:
 
         return orbit, permutations, transporter_dict, stabilizer_list
 
+    # Methods for property checks
+    @staticmethod
+    def __check_conflicts(*checks,**kwargs):
+        """
+        Performs conflict checks between group generators, all elements, and
+        group order.
+
+        Arguments:
+        *checks    - str, instructs which checks to perform. Allowed values:
+                     "number_of_elements", 
+                     "generators_in_elements",
+                     "group_order";
+        
+        **kwargs   - depending on the checks, the key-word arguments:
+
+        generators - list of objects derrived from GroupElement class,
+                     a candidate list of generators;
+
+        elements   - list of objects derrived from GroupElement class,
+                     a candidate list of group elements;
+
+        order      - int, proposed group order.
+
+        Returns:
+        None if all checks are passed,
+        Exception if at least one of the checks is failed.
+        """
+        # Number of generators does not exceed the number of group elements
+        if checks["number_of_elements"]:
+            generators = kwargs["generators"]
+            elements = kwargs["elements"]
+            
+            if not_None(generators) and not_None(elements):
+                if len(elements) < len(generators]):
+                    raise Exception(f"List of generators cannot be smaller "
+                                    f"than the list of group generators:\n"
+                                    f"|generators| = {len(generators)}, "
+                                    f"|elements| = {len(elements)}.")
+
+        # Generators are included in the list of all group elements
+        if checks["generators_in_elements"]:
+            generators = kwargs["generators"]
+            elements = kwargs["elements"] 
+
+            if not_None(generators) and not_None(elements):
+                for g in generators:
+                    if g not in elements:
+                        elements_str = "\n".join([str(e) for e in elements])
+                        raise Exception(f"Input conflict: generator {g} is "
+                                        f"not a member of group elements list "
+                                        f"{elements_str}.")
+
+        # Group order is the same as the size of the elements list
+        if checks["group_order"]:
+            elements = kwargs["elements"]
+            order = kwargs["order"]
+
+            if not_None(elements) and not_None(order):
+                if len(elements) != order:
+                    raise Exception(f"Input conflict: group order {order} "
+                                    f"does not equal to the size of group "
+                                    f"elements list {len(elements)}.")
+
+    def __check_generators(self, generators)
+        """
+        Performs type and conflict checks for an input list of group 
+        generators.
+
+        Arguments:
+        generators - list of objects derrived from GroupElement class,
+                     a candidate list of generators.
+
+        Returns:
+        None if all checks are passed,
+        Exception if at least one of the checks is failed.
+        """
+        
+        # Type checks
+        check_type('generators', generators, list)
+
+        for g in generators:
+            if not issubclass(g.__class__, GroupElement):
+                raise Exception("All generators must inherit from "
+                                "GroupElement class.")
+
+            if isinstance(g, PointerGroupElement):
+                raise Exception("PointerGroupElement is not a valid generator "
+                                "type.")
+
+        # Non-zero length check
+        if len(generators) == 0:
+            raise Exception("List of generators cannot be empty.")
+
+        # Conflict checks
+        self.__check_conflicts("generators_in_elements",
+                               generators=generators,
+                               elements=self.elements)
+
+    def __check_order(self, order)
+        """
+        Performs type and conflict checks for an input value of group order.
+
+        Arguments:
+        order      - int, proposed group order.
+
+        Returns:
+        None if all checks are passed,
+        Exception if at least one of the checks is failed.
+        """
+        
+        # Type checks
+        check_type('order', order, int)
+
+        # Conflict checks
+        self.__check_conflicts("group_order",
+                               elements = self.elements,
+                               order = order)
+
+    def __check_elements(self, elements, generators, skip_type_check=False):
+        """
+        Performs type and conflict checks for an input list of group elements.
+
+        Arguments:
+        elements   - list of objects derrived from GroupElement class,
+                     a candidate list of group elements;
+
+        generators - list of objects derrived from GroupElement class,
+                     a candidate list of generators;
+
+        skip_type_check - bool, (default=False) instructs whether to skip the 
+                          type checking for group elements list.
+
+        Returns:
+        None if all checks are passed,
+        Exception if at least one of the checks is failed.
+        """
+        
+        # Type checks
+        check_type('elements', elements, list)
+
+        for e in elements:
+            if not issubclass(e.__class__, GroupElement):
+                raise Exception("All group elements must inherit from "
+                                "GroupElement class.")
+
+            if isinstance(e, PointerGroupElement):
+                raise Exception("PointerGroupElement is not a valid group "
+                                "element type.")
+
+        # Non-zero length check
+        if len(elements) == 0:
+            raise Exception("List of group elements cannot be empty.")
+
+        # Conflict checks
+        self.__check_conflicts("number_of_elements",
+                               "generators_in_elements",
+                               "group_order",
+                               generators = self.generators,
+                               elements = elements,
+                               order = self.order)
+
+    # Group properties
     @property
     def generators(self):
+        """
+        List of group generators.
+        """
         return self.__generators
+
+    @generators.setter
+    def generators(self, val):
+        self.__check_generators(val)
+        self.__generators = val
+
+    @property
+    def name(self):
+        """
+        User-specified name of the group.
+        """
+        return self.__name
+
+    @name.setter
+    def name(self, val):
+        check_type('name', val, str, NoneType)
+        self.__name = val
+
+    @name.deleter
+    def name(self):
+        self.__name = None
+
+    @property
+    def order(self):
+        """
+        Returns group order (number of group elements).
+        """
+        return self.__order
+
+    @order.setter
+    def order(self, val):
+         self.__check_order(val, self.elements)
+         self.__order = val
+
+    @property
+    def elements(self):
+        """
+        Returns a list of group elements.
+        """
+        return self.__elements
+
+    @elements.setter
+    def elements(self, val):
+        self.__check_elements(val, self.generators)
+        self.__elements = val
+
+        if is_None(self.order):
+            self.order = len(self.elements)
+
+    @property
+    def conjugate_classes(self):
+        """
+        Returns partition of group elements into conjugate classes. 
+        """
+        return self.__conjugate_classes
+
+    @property
+    def character_table(self):
+        """
+        Returns group character table.
+        """
+        return self.__character_table
+
+    @property
+    def irreps(self):
+        """
+        Returns irreducible representations of the group.
+        """
+        return self.__irreps
 
     def __str__(self):
         """
@@ -246,8 +498,20 @@ class Group:
 
         generators_str = "\n".join([str(g) for g in self.generators])
 
-        summary_string = f"Symmetry group defined by generators:\n"\
-                         f"{generators_str}"
+        summary_string = f"Symmetry group {self.name}"\
+                         f"\nGenerators: {generators_str};"
+        
+        if not_None(self.order):
+            summary_string += f"\nGroup order: {self.order};"
+
+        if not_None(self.elements):
+            summary_string += f"\nGroup elements: {self.elements};"
+
+        if not_None(self.character_table):
+            summary_string += f"\nGroup characters: {self.character_table};"
+        
+        if not_None(self.irreps):
+            summary_string += f"\nIrreducible representations: {self.irreps};"
 
         return summary_string
 
@@ -400,11 +664,11 @@ class MatrixGroupElement(GroupElement):
                        element or
                        IdentityGroupElement, defines an identity element;
 
-        cycle_order  - int, (optional, default = None), if not None, gives
+        cycle_order  - int, (default = None), if not None, gives
                        the cycle order of the operator, i.e. n for which
                        operator^n = identity;
 
-        operator_inv - 2dArrayType, (optional, default = None), if not
+        operator_inv - 2dArrayType, (default = None), if not
                        None, proposes an inverse of operator.
         """
 
@@ -528,7 +792,7 @@ class MatrixGroupElement(GroupElement):
         Returns matrix inverse of self.operator.
 
         Arguments:
-        store_inverse - bool, (optional, default = False), if True, also stores
+        store_inverse - bool, (default = False), if True, also stores
                         the original operator as the inverse of operator_inv.
 
         Returns:
@@ -824,9 +1088,9 @@ class PointerGroupElement(GroupElement):
         Arguments:
         pointer         - list of tuple, pointer representation of some group
                           element;
-        generator_list  - list of GroupElement_type (optional, default None),
+        generator_list  - list of GroupElement_type (default None),
                           if not None, provides a list of group generators;
-        generator_order - list (optional, default None), if not None, provides
+        generator_order - list (default None), if not None, provides
                           the list of generator cycle orders.
         """
 
