@@ -1,110 +1,281 @@
+#! /usr/bin/env python3
+# Andrey Zelenskiy, 2024
+
+"""
+=================
+lattice_utils.py
+=================
+
+This submodule defines Lattice class, which contains methods for working with
+space group symmetries.
+"""
+
 import numpy as np
 
-def get_rotation_matrix(axis, angle):
-    # Normalize the axis of rotation 
-    n = axis/np.linalg.norm(axis)
+from samosa.symmetry.group_utils import Group, MatrixGroupElement
+from samosa.symmetry.point_group_utils import point_group
+
+from samosa.database.database_utils import SpaceGroupDatabase
+
+
+from samosa.api.api_utils import array_type, NoneType 
+from samosa.api.api_utils import is_None, not_None
+from samosa.api.api_utils import check_type, check_in_list
+from samosa.api.api_utils import custom_format_warning 
+
+import warnings
+warnings.formatwarning = custom_format_warning
+"""
+-------------------------------------------------------------------------------
+Lattice class
+-------------------------------------------------------------------------------
+"""
+class Lattice:
+    """
+    Defines a container for storing all relevant spatial information about a
+    lattice. 
+    """
+
+    def __init__(self, dimension = None, space_group = None, 
+                       point_group = None, lattice_type = None):
+        """
+        """
+
+        self.__database = SpaceGroupDatabase()
+
+        self.dimension = dimension
+        
+        if self.dimension != 1: 
+            self.space_group = space_group
+
+            if is_None(self.space_group):
+                self.point_group = point_group
+                self.lattice_type = lattice_type
+
+
+    def update_symmetry(self, dimension = None, space_group_index = None, 
+                              point_group_symbol = None, lattice_type = None):
+        """
+        Checks if the input symmetry properties yield a correct space group
+        symmetry.
+
+        Optional arguments:
+        dimension           - int (= 1, 2, or 3), dimension of the lattice;
+        space_group_index   - int, index of the space group as per International
+                              Tables for Crystallography;
+        point_group_symbol  - str, Schoenflies symbol of the crystallographic
+                              point group;
+        lattice_type        - str, name of the lattice, as per 
+                              self.__database.lattice_list.
+
+        Returns:
+        None if no contridictions arise, otherwise raises an Exception.
+        """
+
+        # Type checks
+        check_type('dimension',dimension,int,NoneType)
+        check_type('space_group_index',space_group_index,int,NoneType)
+        check_type('point_group_symbol',point_group_symbol,str,NoneType)
+        check_type('lattice_type',lattice_type,str,NoneType)
     
-    # Calculate cos and sin of the angle
-    cos_a = np.cos(angle)
-    sin_a = np.sin(angle)
+        # Replace missing arguments with class members
+        if is_None(dimension):
+            dimension = self.dimension
 
-    # Populate rotation matrix
-    rotation_matrix = np.zeros((3,3))
+        if is_None(space_group_index):
+            space_group_index = self.space_group_index
+        
+        if is_None(point_group_symbol):
+            point_group_symbol = self.point_group_symbol
+        
+        if is_None(lattice_type):
+            lattice_type = self.lattice_type
+
+        # Attempt to create a (dimension, space_group_index) tuple
+        if is_None(dimension) and not_None(space_group_index):
+            warnings.warn("Lattice dimension not set: assuming 3D.")
+            dimension = 3
+
+        if not_None(dimension) and not_None(space_group_index):
+            self.__check_dimension(dimension)
+            self.__check_space_group_index(space_group_index, dimension)
+
+            sg_t = ( dimension, space_group_index )
+            pg, lat = self.__database.space_group_reference[sg_t]
+
+            if is_None(point_group_symbol):
+                point_group_symbol = pg
+
+            if is_None(lattice_type):
+                lattice_type = lat
+
+            if point_group_symbol != pg or lattice_type != lat:
+                raise ValueError(f"{dimension}D space group with index "
+                                 f"{space_group_index} must have point group "
+                                 f"{pg} and lattice type {lat}, not "
+                                 f"{point_group_symbol} and {lattice_type}.")
+
+        # Space group not set
+        else:
+            if not_None(dimension):
+
+            
+
+            # Attempt to set lattice dimension based on lattice type
+
+
+
+
+            if not_None(lattice_type):
+                self.__check_lattice_type(lattice_type)
+
+                lat_data = self.__database.lattice_reference[lattice_type]
+                dim = lat_data["dimension"]
+                pg_list = lat_data.keys()[1:]
+
+                if is_None(dimension):
+                    dimension = dim
+
+                if dimension != dim:
+                    raise ValueError(f"{lattice_type} lattice must have "
+                                     f"dimension {dim}, not{dimension}.")
+
+                if not_None(point_group_symbol):
+                    if point_group_symbol not in pg_list:
+                        raise ValueError(f"{lattice_type} lattice must have "
+                                         f"a point group in {pg_list}, "
+                                         f"not {point_group_symbol}.")
+                    
+                    #TODO This is incorrect, we need to output only the allowed
+                    #TODO space groups, not just the point groups
+                    message = self.__database.allowed_point_groups(lattice_type,
+                                                               as_str=True,
+                                                               include_sg=False)
+                    warnings.warn("Space group is not set.\n"
+                                 f"{message}")
+
+                else:
+                    message = self.__database.allowed_point_groups(lattice_type,
+                                                               as_str=True,
+                                                               include_sg=True)
+                    warnings.warn("Space group and point group are not set.\n"
+                                 f"{message}")
+
+            else:
+                # Space group and lattice type are not provided, attempt to 
+                # extract information from the point group
+
+                if not_None(point_group_symbol):
+                    pg_data = self.__database.point_group_reference[pg]
+                    
+                    dim_list = []
+
+                    for lat in pg_data.keys():
+                        for sg_t in pg_data[lat]:
+                            dim = sg_t[0]
+
+                            if dim not in dim_list:
+                                dim_list += [dim]
+
+                    if is_None(dimension):
+                        if len(dim_list) == 1:
+                            dimension = dim_list[0]
+                    
+                    else:
+                        if dimension not in dim_list:
+                            raise ValueError(f"{point_group_symbol} point "
+                                             f"group is incompatible with a "
+                                             f"{dimension}D lattice.")
+
+                        if len(dim_list) > 1:
+                        #TODO determine the allowed lattice types and space
+                        #TODO groups based on the point group and dimension 
+
+                    
+                
+                else:
+                    warnings.warn("No symmetry data provided!")
+
+
+    # Methods for checking the values of the space group input
+    def __check_dimension(self, dimension):
+        if dimension < 1 or dimension > 3:
+            raise ValueError("Lattice dimension must be 1, 2, or 3, not "
+                             "{}".format(dimension))
     
-    rotation_matrix[0,0] = cos_a + n[0]**2*( 1 - cos_a )
-    rotation_matrix[0,1] = n[0]*n[1]*( 1 - cos_a ) - n[2]*sin_a
-    rotation_matrix[0,2] = n[0]*n[2]*( 1 - cos_a ) + n[1]*sin_a
+
+    def __check_space_group_index(self, space_group_index, dimension): 
+        if dimension == 1:
+            if space_group_index < 1 or space_group_index > 2:
+                raise ValueError("Space group index must be between 1 and 2 "
+                                 "for a 1D lattice, not "
+                                 "{}".format(space_group_index)) 
+        
+        elif dimension == 2:
+            if space_group_index < 1 or space_group_index > 17:
+                raise ValueError("Space group index must be between 1 and 17 "
+                                 "for a 2D lattice, not "
+                                 "{}".format(space_group_index)) 
+        
+         elif dimension == 3: 
+            if space_group_index < 1 or space_group_index > 230:
+                raise ValueError("Space group index must be between 1 and 230 "
+                                 "for a 3D lattice, not "
+                                 "{}".format(space_group_index)) 
     
-    rotation_matrix[1,0] = n[0]*n[1]*( 1 - cos_a ) + n[2]*sin_a
-    rotation_matrix[1,1] = cos_a + n[1]**2*(1-cos_a)
-    rotation_matrix[1,2] = n[1]*n[2]*( 1 - cos_a ) - n[0]*sin_a
-
-    rotation_matrix[2,0] = n[2]*n[0]*( 1 - cos_a ) - n[1]*sin_a
-    rotation_matrix[2,1] = n[2]*n[1]*( 1 - cos_a ) + n[0]*sin_a
-    rotation_matrix[2,2] = cos_a + n[2]**2*(1-cos_a)
-
-    return rotation_matrix
-
-
-def get_orbit(point_0,generators):
+         else: 
+            if space_group_index < 1 or space_group_index > 230:
+                raise ValueError("Space group index must be between 1 and 230, "
+                                 "not {}".format(space_group_index)) 
     
-    ind = 0
 
-    point_index = {}
-    point_index[tuple(point_0)] = ind
+    def __check_lattice_type(self, lattice_type):
+        if lattice_type not in self.__database.lattice_list:
+            raise ValueError("Lattice type must be one of "
+                             "{}, not {}".format(self.__database.lattice_list,
+                                                 lattice_type))
 
-    operator_map = {}
-    operator_map[ind] = np.eye(3)
 
-    orbit = [tuple(point_0)]
+    @property
+    def dimension(self):
+        return self.__dimension
 
-    stabilizers = [np.eye(3)]
-
-    for point in orbit:
-        for g in generators:
-            axis, angle = g
-            g_mat = get_rotation_matrix(axis,angle)
-
-            image = tuple(np.round(g_mat.dot(point),4))
-
-            if image not in orbit:
-                ind += 1
-
-                orbit += [image]
-                point_index[image] = ind
-                operator_map[ind] = g_mat.dot(operator_map[point_index[point]])
-
-            elif point_index[image] == 0:
     
-                print(image)
-                print(np.round(g_mat.dot(operator_map[point_index[point]]),4))
-                stabilizers += [g_mat.dot(operator_map[point_index[point]])]
+    @dimension.setter
+    def dimension(self, val):
+        # Type check
+        check_type('dimension',val,int,NoneType)
+        
+        if not_None(val):
+            if val == 1:
+                self.__dimension = 1
+                self.__space_group = 1
+                self.__lattice_type = 'chain'
+
+            elif val == 2 or val == 3:
+                self.__dimension = val
+
+            else:
+                raise ValueError(f"Invalid lattice dimension: {val}")
 
 
-    return orbit, point_index, operator_map, stabilizers
+    @dimension.deleter
+    def dimension(self):
+        self.__dimension = None
 
-### Point group generators
 
-C2 = [ [ [ 0, 0, 1 ], np.pi ] ]
+    @property
+    def space_group_index(self):
+        pass
 
-C4 = [ [ [ 0, 0, 1 ], np.pi/2 ] ]
+    
+    @property
+    def point_group_symbol(self):
+        pass
 
-C6 = [ [ [ 0, 0, 1 ], 2*np.pi/3 ] ]
+    
+    @property
+    def lattice_type(self):
+        pass
 
-O  = [ [ [ 0, 0, 1 ],   np.pi/2 ],
-       [ [ 1, 1, 1 ], 2*np.pi/3 ] ] 
-
-### Lattice characteristics
-
-chain_l = {"dimension" : 1,
-           "basis" : 1
-           }
-
-square_l = {"dimension" : 2, 
-            "basis" : np.array([ [ 1, 0 ],
-                                 [ 0, 1 ] ])
-            }
-
-hexagonal_l = {"dimension" : 2, 
-               "basis" : np.array([ [  1.0,          0.0 ],
-                                    [ -0.5, np.sqrt(3)/2 ] ])
-               }
-
-simple_cubic_l = {"dimension" : 3, 
-                  "basis" : np.array([ [ 1, 0, 0 ],
-                                       [ 0, 1, 0 ],
-                                       [ 0, 0, 1 ] ])
-                  }
-
-base_centered_cubic_l = {"dimension" : 3, 
-                         "basis" : np.array([ [  0.5,  0.5, -0.5 ],
-                                              [ -0.5,  0.5,  0.5 ],
-                                              [  0.5, -0.5,  0.5 ] ])
-                         }
-
-face_centered_cubic_l = {"dimension" : 3,
-                         "basis" : np.array([ [ 0.0, 0.5, 0.5 ],
-                                              [ 0.5, 0.0, 0.5 ],
-                                              [ 0.5, 0.5, 0.0 ] ])
-                         }
 

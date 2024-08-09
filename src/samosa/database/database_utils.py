@@ -15,10 +15,10 @@ import toml
 import os
 from pathlib import Path, PosixPath
 
-from samosa.api.api_utils import array_type, NoneType 
+from samosa.api.api_utils import array_type, NoneType
 from samosa.api.api_utils import is_None, not_None
 from samosa.api.api_utils import check_type, check_len, check_in_list
-from samosa.api.api_utils import custom_format_warning 
+from samosa.api.api_utils import custom_format_warning
 
 import warnings
 warnings.formatwarning = custom_format_warning
@@ -29,7 +29,7 @@ Database classes
 """
 class Database:
     """
-    Container for methods that access and examine the data files in 
+    Container for methods that access and examine the data files in
     samosa/database.
     """
 
@@ -45,18 +45,16 @@ class Database:
         self.__file_list = []
         self.__data = {}
 
-    
     def get_file_index(self):
         """
         Creates an index of .toml files in samosa/database.
         """
-        self.__path = Path(__file__).parent 
+        self.__path = Path(__file__).parent
         self.__file_index = []
 
         for file in os.listdir(self.path_to_database):
             if file.endswith(".toml"):
                 self.__file_index += [self.path_to_database / file]
-    
 
     def load_file(self, *files):
         """
@@ -66,18 +64,17 @@ class Database:
         for f in files:
             # Check types
             check_type('file',f,int,str,PosixPath)
-            
+
             if isinstance(f,int):
                 file = self.available_files[f]
             else:
                 file = f
-            
+
             if file.name in self.file_list:
                 continue
 
             self.__file_list += [file.name]
             self.__data[file.name] = toml.load(file)
-
 
     @property
     def available_files(self):
@@ -86,7 +83,6 @@ class Database:
         """
         return self.__file_index
 
-
     @property
     def file_list(self):
         """
@@ -94,12 +90,10 @@ class Database:
         """
         return self.__file_list
 
-
     @file_list.deleter
     def file_list(self):
         self.__file_list = []
         self.__data = {}
-
 
     @property
     def data(self):
@@ -108,12 +102,10 @@ class Database:
         """
         return self.__data
 
-
     @data.deleter
     def data(self):
         self.__file_list = []
         self.__data = {}
-
 
     @property
     def path_to_database(self):
@@ -121,7 +113,6 @@ class Database:
         Absolute path to samosa/database
         """
         return self.__path
-
 
     def __str__(self):
 
@@ -145,7 +136,7 @@ class SpaceGroupDatabase(Database):
 
     def __init__(self):
         """
-        Uploads space group data files and creates lookup dictionaries. 
+        Uploads space group data files and creates lookup dictionaries.
         """
 
         Database.__init__(self)
@@ -155,7 +146,6 @@ class SpaceGroupDatabase(Database):
                        self.path_to_database / "space_group_generators.toml")
 
         self.get_lookup_dicts()
-        
 
     def get_lookup_dicts(self):
         """
@@ -167,22 +157,22 @@ class SpaceGroupDatabase(Database):
 
         # List of lattice types
         self.__lattice_list = list(data.keys())
-        
+
         # Lookup for allowed symmetry groups given lattice type
         self.__lattice_reference = {}      # { lattice : { "dimension" : dim,
-                                           #                        PG : [ SG, ] 
-                                           #             } 
-                                           # }  
+                                           #                        PG : [ SG, ]
+                                           #             }
+                                           # }
 
         # Lookup for allowed lattices given a point group
         self.__point_group_reference = {}  # { PG : { lattice : [ ( dim, SG ), ]
                                            #        }
                                            # }
-        
+
         # Lookup for point group and lattice type for a given space group
         self.__space_group_reference = {}  # { ( dim, SG ) : ( PG, lattice ) }
 
-        # Lookup for allowed lattice types and point groups given lattice 
+        # Lookup for allowed lattice types and point groups given lattice
         # dimension
         self.__dimension_reference = {}    # { dim : { "lattices"     : [ lat, ]
                                            #           "point groups" : [ PG, ]
@@ -193,27 +183,24 @@ class SpaceGroupDatabase(Database):
         for lat in self.__lattice_list:
             dim = data[lat]['dimension']
             pg_list = list(data[lat].keys())[1:]
-            
+
             for pg in pg_list:
                 sg_list = data[lat][pg]['space_groups']
 
-
-                
                 for sg in sg_list:
-                    # Storing the dimension and the space group index as a 
+                    # Storing the dimension and the space group index as a
                     # tuple removes ambiguity between 1d, 2d, and 3d space group
                     # indices
                     sg_t = ( dim, sg )
 
                     if lat not in self.__lattice_reference.keys():
-                        self.__lattice_reference[lat] = { "dimension" : dim, 
+                        self.__lattice_reference[lat] = { "dimension" : dim,
                                                            pg : [ sg ] }
                     else:
                         if pg not in self.__lattice_reference[lat].keys():
                             self.__lattice_reference[lat][pg] = [ sg ]
                         else:
                             self.__lattice_reference[lat][pg] += [ sg ]
-
 
                     if pg not in self.__point_group_reference.keys():
                         self.__point_group_reference[pg] = { lat : [ sg_t ] }
@@ -223,12 +210,10 @@ class SpaceGroupDatabase(Database):
                         else:
                             self.__point_group_reference[pg][lat] += [ sg_t ]
 
-
                     if sg_t not in self.__space_group_reference.keys():
                         self.__space_group_reference[sg_t] = ( pg, lat )
                     else:
                         self.__space_group_reference[sg_t] += ( pg, lat )
-
 
                     if dim not in self.__dimension_reference.keys():
                         self.__dimension_reference[dim] = \
@@ -260,7 +245,6 @@ class SpaceGroupDatabase(Database):
         for sg in data.keys():
             sg_t = tuple(int(n) for n in sg.split(','))
             self.__space_group_generators[sg_t] = data[sg]
-    
 
     def allowed_symmetry(self, lattice_type = None, point_group_symbol = None,
                                as_str = False):
@@ -271,22 +255,22 @@ class SpaceGroupDatabase(Database):
         Arguments:
         lattice_type       - str, (default = None), type of Bravais lattice, as
                              per self.lattice_list;
-        point_group_symbol - str, (default = None), Schoefiles point group 
+        point_group_symbol - str, (default = None), Schoefiles point group
                              symbol;
-        as_str             - bool, (default = False), return output as a 
+        as_str             - bool, (default = False), return output as a
                              string message.
 
         Returns:
         allowed_groups - dict PG : SG (point_group_symbol = None), allowed
                          point and space groups for a given lattice type;
-                         
+
                          dict lat : SG (lattice_type = None), allowed
                          lattices and space groups for a given point group;
-                         
-                         list (lattice_type != None, 
-                               point_group_symbol != None), allowed space 
-                         groups for a given lattice type and point group; 
-                         
+
+                         list (lattice_type != None,
+                               point_group_symbol != None), allowed space
+                         groups for a given lattice type and point group;
+
                          str (as_str = True), string message with allowed point/
                          space groups;
         """
@@ -301,16 +285,16 @@ class SpaceGroupDatabase(Database):
             allowed_groups = []
             for i in range(1,4):
                 allowed_groups += [j for j in range(1,self.n_space_groups[i])]
-            
+
             output_type = 0
 
         # Both lattice type and point group symbol are given
         elif not_None(lattice_type) and not_None(point_group_symbol):
             self.__check_lattice_type(lattice_type)
-        
+
             data = self.lattice_reference[lattice_type]
             allowed_pg = {k:data[k] for k in list(data.keys())[1:]}
-        
+
             check_in_list('point_group_symbol',point_group_symbol,
                                                allowed_pg.keys())
 
@@ -321,22 +305,22 @@ class SpaceGroupDatabase(Database):
         # Only lattice type is specified
         elif not_None(lattice_type) and is_None(point_group_symbol):
            self.__check_lattice_type(lattice_type)
-        
-            data = self.lattice_reference[lattice_type]
-            allowed_groups = {k:data[k] for k in list(data.keys())[1:]}
-        
-            output_type = 2
+
+           data = self.lattice_reference[lattice_type]
+           allowed_groups = {k:data[k] for k in list(data.keys())[1:]}
+
+           output_type = 2
 
         # Only point_group is specified
         elif is_None(lattice_type) and not_None(point_group_symbol):
             self.__check_point_group_symbol(point_group_symbol)
-        
+
             allowed_lattices = self.point_group_reference[point_group_symbol]
-        
+
             allowed_groups = [{},{},{}]
             for lat in allowed_lattices.keys():
                 dim = self.lattice_reference[lat]["dimension"] - 1
-                    
+
                 sg_list = []
                 for sg_t in allowed_lattices[lat]:
                     sg_list += [sg_t[1]]
@@ -344,9 +328,9 @@ class SpaceGroupDatabase(Database):
                 if lat not in allowed_groups[dim].keys():
 
                     allowed_groups[dim][lat] = sg_list
-                else:  
+                else:
                     allowed_groups[dim][lat] += sg_list
-            
+
             output_type = 3
 
         if as_str:
@@ -354,7 +338,7 @@ class SpaceGroupDatabase(Database):
                 m =  "All {n}D space groups with indices 1 - {NS} are allowed."
                 message = [m.format(n = dim, NS = self.n_space_groups[dim])\
                            for dim in range(1,4)]
-                            
+
             elif output_type == 1:
                 message = "The allowed space groups for lattice type "\
                           f"{lattice_type} and point group "\
@@ -391,9 +375,8 @@ class SpaceGroupDatabase(Database):
         else:
             return allowed_groups
 
-
-    def find_space_group(self, dimension = None, point_group_symbol = None, 
-                               lattice_type = None, as_str = False):
+    def find_space_group(self, dimension=None, point_group_symbol=None,
+                               lattice_type=None, as_str=False):
         """
         Return all possible space groups for a given set of constraints.
 
@@ -401,24 +384,24 @@ class SpaceGroupDatabase(Database):
         dimension           - int (= 1, 2, or 3), dimension of the lattice;
         point_group_symbol  - str, Schoenflies symbol of the crystallographic
                               point group;
-        lattice_type        - str, name of the lattice, as per 
+        lattice_type        - str, name of the lattice, as per
                               self.lattice_list;
-        as_str              - bool, (default = False), return output as a 
+        as_str              - bool, (default = False), return output as a
                               string message.
 
         Returns:
         space_group_list - list (as_str = False), list of allowed space group
                            indices satisfying the constraints;
-                           str (as_str = True), string message with allowed 
+                           str (as_str = True), string message with allowed
                            point/space groups;
                            Exception, if constraints can't be satisfied.
         """
 
         # Type checks
-        check_type('dimension',dimension,int,NoneType)
-        check_type('point_group_symbol',point_group_symbol,str,NoneType)
-        check_type('lattice_type',lattice_type,str,NoneType)
-    
+        check_type('dimension', dimension, int, NoneType)
+        check_type('point_group_symbol', point_group_symbol, str, NoneType)
+        check_type('lattice_type', lattice_type, str, NoneType)
+
         if not_None(dimension):
             self.__check_dimension(dimension)
 
@@ -431,7 +414,7 @@ class SpaceGroupDatabase(Database):
                     raise Exception(f"In {dimension}D, the allowed lattice "
                                     f"types are {allowed_lat}, "
                                     f"not {lattice_type}")
-                
+
             if not_None(point_group_symbol):
                 if point_group_symbol not in allowed_pg:
                     raise Exception(f"In {dimension}D, the allowed point "
@@ -442,7 +425,7 @@ class SpaceGroupDatabase(Database):
                                                    point_group_symbol,
                                                    as_str)
 
-            if isinstance(allowed_groups,list):
+            if isinstance(allowed_groups, list):
                 if len(allowed_groups) == 3:
                     allowed_groups = allowed_groups[dimension-1]
 
@@ -453,11 +436,11 @@ class SpaceGroupDatabase(Database):
             allowed_groups = self.allowed_symmetry(lattice_type,
                                                    point_group_symbol,
                                                    as_str)
-            if isinstance(allowed_groups,list):
+            if isinstance(allowed_groups, list):
                 if len(allowed_groups) == 3:
                     if as_str:
                         message = ""
-                        for dim in range(1,4):
+                        for dim in range(1, 4):
                             if len(allowed_groups[dim-1]) != 0:
                                 message += f"In {dim}D, "
                                 message += allowed_groups[dim-1] + "\n"
@@ -465,13 +448,11 @@ class SpaceGroupDatabase(Database):
 
         return allowed_groups
 
-        
     # Methods for checking the values of the space group input
     def __check_dimension(self, dimension):
         if dimension < 1 or dimension > 3:
             raise ValueError("Lattice dimension must be 1, 2, or 3, not "
                             f"{dimension}")
-    
 
     def __check_lattice_type(self, lattice_type):
         if lattice_type not in self.lattice_list:
@@ -479,53 +460,44 @@ class SpaceGroupDatabase(Database):
                             f"{self.lattice_list}, not "
                             f"{lattice_type}")
 
-
     def __check_point_group_symbol(self, point_group_symbol):
         if point_group_symbol not in self.point_group_list:
             raise ValueError("Point group symbol must be one of "
                             f"{self.point_group_list}, not "
                             f"{point_group_symbol}")
 
+    def __check_space_group_index(self, space_group_index, dimension):
 
-    def __check_space_group_index(self, space_group_index, dimension): 
-        
         max_index = self.n_space_groups[dimension]
-        
+
         if space_group_index < 1 or space_group_index > max_index:
             raise ValueError("Space group index must be between 1 and 2 "
-                            f"for a 1D lattice, not {space_group_index}") 
-        
+                            f"for a 1D lattice, not {space_group_index}")
 
     @property
     def lattice_list(self):
         return self.__lattice_list
 
-
     @property
     def lattice_reference(self):
         return self.__lattice_reference
-
 
     @property
     def point_group_list(self):
         return self.__point_group_list
 
-
     @property
     def point_group_reference(self):
         return self.__point_group_reference
-
 
     @property
     def space_group_reference(self):
         return self.__space_group_reference
 
-    
     @property
     def space_group_generators(self):
         return self.__space_group_generators
 
-    
     @property
     def dimension_reference(self):
         return self.__dimension_reference

@@ -1,16 +1,17 @@
-### Symmetry database
+# `samosa/database`
 
-Databases to add:
+## Comments
 
-- Space group generators;
-- Space group Wyckoff positions;
-- Generic 2D and 3D point groups;
+- `SpaceGroupDatabase` should be made as a tool to explore crystal structures.
 
-There should be a separate module for extracting information from the databases
-in `frusa_symmetry/database/`.
-
-- Given the name of the group in the database, define a group object;
-- Convert between operator symbols and matrix representations (currently in 
-`symmetry_utils`);
+- It will be helpful to visualize the unit cells of the lattices, as well as 
+the atoms inside of them (for a clearer visualization of space group actions).
 
 
+
+## TODO 
+
+[x] Research tools: given constraints (dimension, lattice type, point group
+symbol), return allowed space groups;
+[ ] Space group symmetries: provide a full list of symmetries for a given space
+group;

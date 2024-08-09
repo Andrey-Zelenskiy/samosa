@@ -13,7 +13,7 @@ import numpy as np
 
 from samosa.symmetry.group_utils import Group, MatrixGroupElement
 
-from samosa.api.api_utils import not_None, check_type, check_len, array_type
+from samosa.api.api_utils import not_None, check_type, check_len, ArrayType
 
 def point_group(pg_symbol, basis = None, *axes):
     """
@@ -21,10 +21,10 @@ def point_group(pg_symbol, basis = None, *axes):
     
     Arguments:
     pg_symbol     - str, Schoenflies symbol of the point group;
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis;
-    axes          - array_type, in the case of axial groups, provides the 
+    axes          - ArrayType, in the case of axial groups, provides the 
                     primary and secondary transformation axes:
                     if a single axis is given, it defines the primary rotation 
                     axis;
@@ -181,7 +181,7 @@ def _T_group(basis = None):
     Selected generators are C3,[111], and C2,[001].
     
     Arguments:
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -212,7 +212,7 @@ def _Td_group(basis = None):
     Selected generators are S4,[001], and S4,[100].
     
     Arguments:
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -243,7 +243,7 @@ def _Th_group(basis = None):
     Selected generators are C3,[111], and Mh,[001]. 
     
     Arguments:
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -274,7 +274,7 @@ def _O_group(basis = None):
     Selected generators are C4,[001], and C4,[100].
     
     Arguments:
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -305,7 +305,7 @@ def _Oh_group(basis = None):
     Selected generators are S6,[111], and S4,[001].
     
     Arguments:
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -340,7 +340,7 @@ def _I_group(basis = None):
     is the golden ratio.
     
     Arguments:
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -376,7 +376,7 @@ def _Ih_group(basis = None):
     is the golden ratio.
     
     Arguments:
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -409,9 +409,9 @@ def _Cn_group(n, axis = None, basis = None):
 
     Arguments:
     n             - int, cycle order of the rotations; 
-    axis          - array_type, (optional, default = None), defines the primary
+    axis          - ArrayType, (optional, default = None), defines the primary
                     rotation axis. If None, assumes [0,0,1]; 
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -450,10 +450,10 @@ def _Cnv_group(n, axes = None, basis = None):
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - array_type, (optional, default = None), defines the primary
+    axes          - ArrayType, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -502,9 +502,9 @@ def _Cnh_group(n, axis = None, basis = None):
 
     Arguments:
     n             - int, cycle order of the rotations; 
-    axis          - array_type, (optional, default = None), defines the primary
+    axis          - ArrayType, (optional, default = None), defines the primary
                     rotation axis. If None, assumes [0,0,1]; 
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -547,9 +547,9 @@ def _Sn_group(n, axis = None, basis = None):
     Arguments:
     n             - int, cycle order of the improper rotations, must be an even
                     integer; 
-    axis          - array_type, (optional, default = None), defines the primary
+    axis          - ArrayType, (optional, default = None), defines the primary
                     rotation axis. If None, assumes [0,0,1]; 
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -592,10 +592,10 @@ def _Dn_group(n, axes = None, basis = None):
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - array_type, (optional, default = None), defines the primary
+    axes          - ArrayType, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -644,10 +644,10 @@ def _Dnd_group(n, axes = None, basis = None):
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - array_type, (optional, default = None), defines the primary
+    axes          - ArrayType, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -695,10 +695,10 @@ def _Dnh_group(n, axes = None, basis = None):
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - array_type, (optional, default = None), defines the primary
+    axes          - ArrayType, (optional, default = None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
                     If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - array_type (optional, default None), if not None, specifies
+    basis         - ArrayType (optional, default None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -769,7 +769,7 @@ def operator_C(axis, angle, basis = None):
     rotation - np.2darray[3][3], 3D proper rotation matrix.
     """
 
-    check_type('axis',axis,array_type)
+    check_type('axis',axis,ArrayType)
     check_len('axis',axis,3)
     check_type('angle',angle,float,int,tuple)
 
@@ -832,7 +832,7 @@ def operator_M(axis, basis = None):
     reflection_matrix - np.2darray[3][3], 3D reflection matrix.
     """
 
-    check_type('axis',axis,array_type)
+    check_type('axis',axis,ArrayType)
     check_len('axis',axis,3)
    
     axis = _normalize_vector(axis)
@@ -862,7 +862,7 @@ def operator_S(axis, angle, basis = None):
     rotoinversion - np.2darray[3][3], 3D improper rotation matrix.
     """
 
-    check_type('axis',axis,array_type)
+    check_type('axis',axis,ArrayType)
     check_len('axis',axis,3)
     check_type('angle',angle,float,int,tuple)
    
@@ -1009,7 +1009,7 @@ def _normalize_vector(v):
     Shortcut normalization function with checks for unit and zero vectors.
 
     Arguments:
-    v - array_type, vector to normalize.
+    v - ArrayType, vector to normalize.
 
     Returns:
     v - if |v| > 0, np.1darray, v = v/|v| normalized vector;

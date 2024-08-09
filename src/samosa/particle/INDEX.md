@@ -15,11 +15,23 @@ the faces of the particle into inequivalent sub-faces.
 The point group symmetry operations then permute these subfaces, leading to 
 distinct particle images.
 
-
 In the most symmetric case, an anisotropic particle has the same symmetry as 
 the site point group, which implies that all faces are identical.
 Correspondingly, the most anisotropic case refers to a particle for which all 
 faces (and subfaces) are distinct.
+
+The characteristics of an anisotropic particle can be separated into two 
+categories: those that describe the properties of the particle on its own, and
+those that describe the particle in some environment.
+For example, the symmetry of the particle, number of faces, number and 
+distribution of distinct faces are independent of particle's environment, 
+whereas the specific particle shape and face coloring are determined by the 
+Voronization of the lattice and therefore are determined by the nvironment.
+We can distinguish these intrinsic and extrinsic properties as __topological__ 
+and __geometrical__. 
+
+
+
 
 - Given a vertex and bond stabilizers, determine possible particle 
 orientations;

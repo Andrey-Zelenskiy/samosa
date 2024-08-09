@@ -16,6 +16,8 @@ import numpy as np
 Only show the message of the warning
 -------------------------------------------------------------------------------
 """
+
+
 def custom_format_warning(msg, *args, **kwargs):
     """
     When throwing a warning, only throw the message
@@ -28,9 +30,9 @@ def custom_format_warning(msg, *args, **kwargs):
 Argument checking
 -------------------------------------------------------------------------------
 """
-# Group np.ndarray, list, and tuple into a single class category
-array_type = (np.ndarray, list, tuple)
-mutable_array_type = (np.ndarray, list)
+# Group np.ndarray, list, and tuple into a type categories
+ArrayType = (np.ndarray, list, tuple)
+MutableArrayType = (np.ndarray, list)
 NoneType = type(None)
 
 
@@ -38,14 +40,14 @@ def is_None(var):
     """
     Checks if var is of NoneType, returns True if it is.
     """
-    return isinstance(var,NoneType)
+    return isinstance(var, NoneType)
 
 
 def not_None(var):
     """
     Checks if var is of NoneType, returns True if it isn't.
     """
-    return not isinstance(var,NoneType)
+    return not isinstance(var, NoneType)
 
 
 def check_type(var_name, var, *var_type):
@@ -75,7 +77,7 @@ def check_len(var_name, var, var_len):
 
     Arguments:
     var_name - str, name of the variable;
-    var      - array_type, array variable of interest;
+    var      - ArrayType, array variable of interest;
     var_len  - int, required length of the array.
 
     Returns:
@@ -101,7 +103,7 @@ def check_shape(var_name, var, *var_shape):
     None if the check is successful,
     Exception if the check is failed.
     """
-    
+
     if var.shape != var_shape:
         raise Exception(f"{var_name} must have shape {var_shape}, not "
                         f"{var.shape}")
@@ -119,7 +121,7 @@ def check_ifdef(var_name, var):
     None if the check is successful,
     Exception if the check is failed.
     """
-    
+
     if not_None(var):
         raise Exception(f"{var_name} is already set to {var}, "
                         f"use overwrite=True to force a new value.")
@@ -138,6 +140,6 @@ def check_in_list(var_name, var, var_list):
     None if the check is successful,
     Exception if the check is failed.
     """
-    
+
     if var not in var_list:
         raise Exception(f"{var_name} must be one of {var_list}, not {var}")
