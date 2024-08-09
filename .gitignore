@@ -1,9 +1,7 @@
-*.sh
-*.o
+*.pyc
 *.swp
-*.json
 
-/build*/
-/input*/
+**/.venv/
 **/__pycache__/
 *checkpoints*
+tutorials/.virtual_documents/
