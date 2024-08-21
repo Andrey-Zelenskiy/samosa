@@ -13,7 +13,8 @@ of the necessary information and methods for symmetry analysis.
 import numpy as np
 
 from samosa.api.api_utils import ArrayType, NoneType
-from samosa.api.api_utils import not_None, check_type, check_len, check_shape
+from samosa.api.api_utils import is_None, not_None
+from samosa.api.api_utils import check_type, check_len, check_shape
 from samosa.api.api_utils import custom_format_warning
 
 import warnings
@@ -65,6 +66,7 @@ class Group:
                             operators.
         """
         # Initialize group generators
+        self.__elements = None
         self.generators = generators
 
         check_type('filter_generators', filter_generators, bool)
@@ -177,11 +179,9 @@ class Group:
         """
         check_type("as_pointer", as_pointer, bool)
 
-        p0 = np.array(p0)
-
         # Initialize the orbit and orbit member index
         orbit = [p0]
-        p_ind = {tuple(p0) : 0}
+        p_ind = {self.__hashed(p0) : 0}
 
         if as_pointer:
             eye_element = PointerGroupElement([],
@@ -190,7 +190,7 @@ class Group:
             eye_element = IdentityGroupElement()
 
         permutations = [{} for i in range(len(self.generators))]
-        transporter_dict = {tuple(p0) : eye_element}
+        transporter_dict = {self.__hashed(p0) : eye_element}
         stabilizer_list = [eye_element]
 
         for p in orbit:
@@ -198,19 +198,22 @@ class Group:
                 # Calculate a new point
                 q = g*p
 
+                p_h = self.__hashed(p)
+                q_h = self.__hashed(q)
+
                 # If the new point is not in the orbit, add it and update
                 # generators/permutations and transporters
                 if not _array_in_list(q, orbit):
                     orbit += [q]
-                    p_ind[tuple(q)] = len(orbit) - 1
+                    p_ind[q_h] = len(orbit) - 1
 
                     if as_pointer:
-                        transporter_dict[tuple(q)] = \
-                                (ind_g, 1)*transporter_dict[tuple(p)]
+                        transporter_dict[q_h] = \
+                                (ind_g, 1)*transporter_dict[p_h]
 
                     else:
-                        transporter_dict[tuple(q)] = \
-                                g*transporter_dict[tuple(p)]
+                        transporter_dict[q_h] = \
+                                g*transporter_dict[p_h]
 
                 # If the new point is already in the orbit, record the operation
                 # as a stabilizer
@@ -235,8 +238,8 @@ class Group:
                     Since we are interested in generators, we only need s_1.
                     """
 
-                    g_10 = transporter_dict[tuple(p)]
-                    g_20 = transporter_dict[tuple(q)]
+                    g_10 = transporter_dict[p_h]
+                    g_20 = transporter_dict[q_h]
                     g_20_inv = g_20.inv()
 
                     if as_pointer:
@@ -247,11 +250,24 @@ class Group:
                     if not _element_in_list(stabilizer, stabilizer_list):
                         stabilizer_list += [stabilizer]
 
-                permutations[ind_g][p_ind[tuple(p)]] = p_ind[tuple(q)]
+                permutations[ind_g][p_ind[p_h]] = p_ind[q_h]
 
         permutations = [PermutationGroupElement(p) for p in permutations]
 
         return orbit, permutations, transporter_dict, stabilizer_list
+
+    # Hashing for orbit calculation
+    @staticmethod
+    def __hashed(val):
+        """
+        If the input value is of ArrayType, changes the type to tuple, 
+        otherwise returns the value itself.
+        """
+        if type(val) in ArrayType:
+            return tuple(val)
+
+        else:
+            return val
 
     # Methods for property checks
     @staticmethod
@@ -281,19 +297,19 @@ class Group:
         Exception if at least one of the checks is failed.
         """
         # Number of generators does not exceed the number of group elements
-        if checks["number_of_elements"]:
+        if "number_of_elements" in checks:
             generators = kwargs["generators"]
             elements = kwargs["elements"]
             
             if not_None(generators) and not_None(elements):
-                if len(elements) < len(generators]):
+                if len(elements) < len(generators):
                     raise Exception(f"List of generators cannot be smaller "
                                     f"than the list of group generators:\n"
                                     f"|generators| = {len(generators)}, "
                                     f"|elements| = {len(elements)}.")
 
         # Generators are included in the list of all group elements
-        if checks["generators_in_elements"]:
+        if "generators_in_elements" in checks:
             generators = kwargs["generators"]
             elements = kwargs["elements"] 
 
@@ -306,7 +322,7 @@ class Group:
                                         f"{elements_str}.")
 
         # Group order is the same as the size of the elements list
-        if checks["group_order"]:
+        if "group_order" in checks:
             elements = kwargs["elements"]
             order = kwargs["order"]
 
@@ -316,7 +332,7 @@ class Group:
                                     f"does not equal to the size of group "
                                     f"elements list {len(elements)}.")
 
-    def __check_generators(self, generators)
+    def __check_generators(self, generators):
         """
         Performs type and conflict checks for an input list of group 
         generators.
@@ -351,7 +367,7 @@ class Group:
                                generators=generators,
                                elements=self.elements)
 
-    def __check_order(self, order)
+    def __check_order(self, order):
         """
         Performs type and conflict checks for an input value of group order.
 
@@ -364,26 +380,21 @@ class Group:
         """
         
         # Type checks
-        check_type('order', order, int)
+        check_type('order', order, int, NoneType)
 
-        # Conflict checks
-        self.__check_conflicts("group_order",
-                               elements = self.elements,
-                               order = order)
+        if not_None(order):
+            # Conflict checks
+            self.__check_conflicts("group_order",
+                                   elements = self.elements,
+                                   order = order)
 
-    def __check_elements(self, elements, generators, skip_type_check=False):
+    def __check_elements(self, elements):
         """
         Performs type and conflict checks for an input list of group elements.
 
         Arguments:
         elements   - list of objects derrived from GroupElement class,
-                     a candidate list of group elements;
-
-        generators - list of objects derrived from GroupElement class,
-                     a candidate list of generators;
-
-        skip_type_check - bool, (default=False) instructs whether to skip the 
-                          type checking for group elements list.
+                     a candidate list of group elements.
 
         Returns:
         None if all checks are passed,
@@ -391,28 +402,29 @@ class Group:
         """
         
         # Type checks
-        check_type('elements', elements, list)
+        check_type('elements', elements, list, NoneType)
 
-        for e in elements:
-            if not issubclass(e.__class__, GroupElement):
-                raise Exception("All group elements must inherit from "
-                                "GroupElement class.")
+        if not_None(elements):
+            for e in elements:
+                if not issubclass(e.__class__, GroupElement):
+                    raise Exception("All group elements must inherit from "
+                                    "GroupElement class.")
 
-            if isinstance(e, PointerGroupElement):
-                raise Exception("PointerGroupElement is not a valid group "
-                                "element type.")
+                if isinstance(e, PointerGroupElement):
+                    raise Exception("PointerGroupElement is not a valid group "
+                                    "element type.")
 
-        # Non-zero length check
-        if len(elements) == 0:
-            raise Exception("List of group elements cannot be empty.")
+            # Non-zero length check
+            if len(elements) == 0:
+                raise Exception("List of group elements cannot be empty.")
 
-        # Conflict checks
-        self.__check_conflicts("number_of_elements",
-                               "generators_in_elements",
-                               "group_order",
-                               generators = self.generators,
-                               elements = elements,
-                               order = self.order)
+            # Conflict checks
+            self.__check_conflicts("number_of_elements",
+                                   "generators_in_elements",
+                                   "group_order",
+                                   generators = self.generators,
+                                   elements = elements,
+                                   order = self.order)
 
     # Group properties
     @property
@@ -452,7 +464,7 @@ class Group:
 
     @order.setter
     def order(self, val):
-         self.__check_order(val, self.elements)
+         self.__check_order(val)
          self.__order = val
 
     @property
@@ -464,10 +476,10 @@ class Group:
 
     @elements.setter
     def elements(self, val):
-        self.__check_elements(val, self.generators)
+        self.__check_elements(val)
         self.__elements = val
 
-        if is_None(self.order):
+        if not_None(val) and is_None(self.order):
             self.order = len(self.elements)
 
     @property
@@ -484,12 +496,20 @@ class Group:
         """
         return self.__character_table
 
+    @character_table.setter
+    def character_table(self, val):
+        self.__character_table = val
+
     @property
     def irreps(self):
         """
         Returns irreducible representations of the group.
         """
         return self.__irreps
+
+    @irreps.setter
+    def irreps(self, val):
+        self.__irreps = val
 
     def __str__(self):
         """
@@ -940,7 +960,7 @@ class PermutationGroupElement(GroupElement):
                                 f"permutations of dimension "
                                 f"{self.dim} and {element.dim}.")
 
-            product = tuple(element.permutation[p] for p in self.permutation)
+            product = tuple(self.permutation[p] for p in element.permutation)
 
             return PermutationGroupElement(product)
 

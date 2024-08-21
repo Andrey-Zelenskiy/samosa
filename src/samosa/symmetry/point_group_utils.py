@@ -64,10 +64,10 @@ def point_group(pg_symbol, basis = None, *axes):
         if len(pg_symbol) == 1:
             return _T_group(basis)
         
-        elif len(pg_symbol) == 2 and pg_type[1] == 'd':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == 'd':
             return _Td_group(basis)
         
-        elif len(pg_symbol) == 2 and pg_type[1] == 'h':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == 'h':
             return _Th_group(basis)
         
         else:
@@ -78,7 +78,7 @@ def point_group(pg_symbol, basis = None, *axes):
         if len(pg_symbol) == 1:
             return _O_group(basis)
         
-        elif len(pg_symbol) == 2 and pg_type[1] == 'h':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == 'h':
             return _Oh_group(basis)
         
         else:
@@ -89,7 +89,7 @@ def point_group(pg_symbol, basis = None, *axes):
         if len(pg_symbol) == 1:
             return _I_group(basis)
         
-        elif len(pg_symbol) == 2 and pg_type[1] == 'h':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == 'h':
             return _Ih_group(basis)
         
         else:
