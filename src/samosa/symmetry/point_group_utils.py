@@ -202,7 +202,7 @@ def _T_group(basis = None):
     
     generators = [C3,C2]
 
-    return Group(generators) 
+    return Group(generators,name='T',order=12) 
 
 
 def _Td_group(basis = None):
@@ -233,7 +233,7 @@ def _Td_group(basis = None):
     
     generators = [S4_1,S4_2]
 
-    return Group(generators) 
+    return Group(generators,name='Td',order=24) 
 
 
 def _Th_group(basis = None):
@@ -264,7 +264,7 @@ def _Th_group(basis = None):
     
     generators = [C3,Mh]
 
-    return Group(generators) 
+    return Group(generators,name='Th',order=24) 
 
 
 def _O_group(basis = None):
@@ -295,7 +295,7 @@ def _O_group(basis = None):
     
     generators = [C4_1,C4_2]
 
-    return Group(generators) 
+    return Group(generators,name='O',order=24) 
 
 
 def _Oh_group(basis = None):
@@ -326,7 +326,7 @@ def _Oh_group(basis = None):
     
     generators = [S6,S4]
 
-    return Group(generators) 
+    return Group(generators,name='Oh',order=48) 
 
 
 def _I_group(basis = None):
@@ -362,7 +362,7 @@ def _I_group(basis = None):
     
     generators = [C5_1,C5_2]
 
-    return Group(generators) 
+    return Group(generators,name='I',order=60) 
 
 
 def _Ih_group(basis = None):
@@ -398,7 +398,7 @@ def _Ih_group(basis = None):
     
     generators = [S10_1,S10_2]
 
-    return Group(generators) 
+    return Group(generators,name='Ih',order=120) 
 
 
 # Axial point groups
@@ -439,8 +439,10 @@ def _Cn_group(n, axis = None, basis = None):
                             cycle_order = n)
 
     generators = [Cn]
+    name = f'C{n}'
+    order = n
 
-    return Group(generators) 
+    return Group(generators,name=name,order=order) 
 
 
 def _Cnv_group(n, axes = None, basis = None):
@@ -491,8 +493,10 @@ def _Cnv_group(n, axes = None, basis = None):
                             cycle_order = 2)
 
     generators = [Cn, Mv]
+    name = f'C{n}v'
+    order = 2*n
 
-    return Group(generators) 
+    return Group(generators,name=name,order=order) 
 
 
 def _Cnh_group(n, axis = None, basis = None):
@@ -536,8 +540,10 @@ def _Cnh_group(n, axis = None, basis = None):
                             cycle_order = 2)
 
     generators = [Cn, Mh]
+    name = f'C{n}h'
+    order = 2*n
 
-    return Group(generators) 
+    return Group(generators,name=name,order=order) 
 
 
 def _Sn_group(n, axis = None, basis = None):
@@ -582,8 +588,10 @@ def _Sn_group(n, axis = None, basis = None):
                             cycle_order = n)
 
     generators = [Sn]
+    name = f'S{n}'
+    order = n
 
-    return Group(generators) 
+    return Group(generators,name=name,order=order) 
 
 
 def _Dn_group(n, axes = None, basis = None):
@@ -633,8 +641,10 @@ def _Dn_group(n, axes = None, basis = None):
                             cycle_order = 2)
 
     generators = [Cn, C2]
+    name = f'D{n}'
+    order = 2*n
 
-    return Group(generators) 
+    return Group(generators,name=name,order=order) 
 
 
 def _Dnd_group(n, axes = None, basis = None):
@@ -685,8 +695,10 @@ def _Dnd_group(n, axes = None, basis = None):
                             cycle_order = 2)
 
     generators = [S2n, Mv]
+    name = f'D{n}d'
+    order = 4*n
 
-    return Group(generators) 
+    return Group(generators,name=name,order=order) 
 
 
 def _Dnh_group(n, axes = None, basis = None):
@@ -740,8 +752,10 @@ def _Dnh_group(n, axes = None, basis = None):
                             cycle_order = 2)
 
     generators = [Cn, Mv, Mh]
+    name = f'D{n}h'
+    order = 4*n
 
-    return Group(generators) 
+    return Group(generators,name=name,order=order) 
 
 
 """

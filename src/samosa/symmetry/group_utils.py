@@ -67,11 +67,12 @@ class Group:
         """
         # Initialize group generators
         self.__elements = None
-        self.generators = generators
 
         check_type('filter_generators', filter_generators, bool)
         if filter_generators == True:
-            self.generator_filter()
+            generators = self.generator_filter(generators)
+
+        self.generators = generators
 
         # Initialize optional properties
         self.name = name
@@ -80,46 +81,13 @@ class Group:
         self.character_table = character_table
         self.irreps = irreps
 
-    def generator_filter(self):
-        """
-        Removes redundant operators from the generator list.
-        """
-
-        candidate_list = []
-
-        # Remove potential duplicates and identity elements
-        for g in self.generators:
-            if not _element_in_list(g, candidate_list) and not g.is_identity():
-                candidate_list += [g]
-
-        # If the list is empty after sorting, the only generator is identity
-        if len(candidate_list) == 0:
-            self.generators = [IdentityGroupElement()]
-
-        # If only one generator is provided, no need to perform the check
-        elif len(candidate_list) == 1:
-            self.generators = candidate_list
-
-        else:
-            self.__generators = []
-            blacklist = [IdentityGroupElement()]
-
-            for g in candidate_list:
-                # Check if the generator is related to the known generators
-                if not _element_in_list(g, blacklist):
-
-                    # Update self.__generators and blacklist
-                    extended_element = [IdentityGroupElement()]\
-                                         + self.__generators
-
-                    for h in extended_element:
-                        g_head = h*g
-                        g_chain = g_head
-                        while not _element_in_list(g_chain, blacklist):
-                            blacklist += [g_chain]
-                            g_chain = g_chain*g_head
-
-                    self.__generators += [g]
+    #TODO
+    def calculate_elements(self):
+        pass
+    
+    #TODO
+    def calculate_classes(self):
+        pass
 
     def calculate_orbit(self, p0, as_pointer=False):
         """
@@ -255,6 +223,65 @@ class Group:
         permutations = [PermutationGroupElement(p) for p in permutations]
 
         return orbit, permutations, transporter_dict, stabilizer_list
+
+    #TODO
+    def as_permutations(self, point):
+        """
+        Changes the basis of the group elements to permutations of the 
+        members of an orbit formed from a single point.
+
+        point - object for which multiplication GroupElement action is
+                supported, seed of the orbit used for the permutation basis.
+
+        Returns:
+        None, updates group attributes to the new permutation basis.
+        """
+        pass
+
+    # Method for filtering out redundant generators
+    @staticmethod
+    def generator_filter(generators):
+        """
+        Removes redundant operators from the candidate generator list.
+        """
+
+        candidate_list = []
+        filtered_generators = []
+
+        # Remove potential duplicates and identity elements
+        for g in generators:
+            if not _element_in_list(g, candidate_list) and not g.is_identity():
+                candidate_list += [g]
+
+        # If the list is empty after sorting, the only generator is identity
+        if len(candidate_list) == 0:
+            filtered_generators = [IdentityGroupElement()]
+
+        # If only one generator is provided, no need to perform the check
+        elif len(candidate_list) == 1:
+            filtered_generators = candidate_list
+
+        else:
+            blacklist = [IdentityGroupElement()]
+
+            for g in candidate_list:
+                # Check if the generator is related to the known generators
+                if not _element_in_list(g, blacklist):
+
+                    # Update self.__generators and blacklist
+                    extended_element = [IdentityGroupElement()]\
+                                         + filtered_generators
+
+                    for h in extended_element:
+                        g_head = h*g
+                        g_chain = g_head
+                        while not _element_in_list(g_chain, blacklist):
+                            blacklist += [g_chain]
+                            g_chain = g_chain*g_head
+
+                    filtered_generators += [g]
+
+        return filtered_generators
 
     # Hashing for orbit calculation
     @staticmethod
@@ -518,20 +545,23 @@ class Group:
 
         generators_str = "\n".join([str(g) for g in self.generators])
 
-        summary_string = f"Symmetry group {self.name}"\
-                         f"\nGenerators: {generators_str};"
+        summary_string = ""
+        if not_None(self.name):
+            summary_string += f"Symmetry group {self.name}\n\n"
+        
+        summary_string += f"Generators:\n{generators_str};"
         
         if not_None(self.order):
-            summary_string += f"\nGroup order: {self.order};"
+            summary_string += f"\n\nGroup order: {self.order};"
 
         if not_None(self.elements):
-            summary_string += f"\nGroup elements: {self.elements};"
+            summary_string += f"\n\nGroup elements: {self.elements};"
 
         if not_None(self.character_table):
-            summary_string += f"\nGroup characters: {self.character_table};"
+            summary_string += f"\n\nGroup characters: {self.character_table};"
         
         if not_None(self.irreps):
-            summary_string += f"\nIrreducible representations: {self.irreps};"
+            summary_string += f"\n\nIrreducible representations: {self.irreps};"
 
         return summary_string
 
