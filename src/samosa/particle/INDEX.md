@@ -31,11 +31,14 @@ We can distinguish these intrinsic and extrinsic properties as __topological__
 and __geometrical__. 
 
 
-
-
 - Given a vertex and bond stabilizers, determine possible particle 
 orientations;
 - Patchy particles: given a patch location, determine the number of unique
 faces and orientations;
 
+## Comments
 
+To avoid a large number of conflict checks, it makes sense to define the
+`Particle` class based only on the point group.
+Afterwards, we can define several class methods that define a particle object
+from other quantities.

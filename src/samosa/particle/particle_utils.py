@@ -176,7 +176,7 @@ class Particle:
         pass
 
 
-    def _print_property(self, val_name, val):
+    def __print_property(self, val_name, val):
         """
         String output for class properties.
         """
@@ -192,7 +192,7 @@ class Particle:
         """
 
         return "Particle object:\n"\
-             + self._print_property('particle_symmetry',self.particle_symmetry)\
-             + self._print_property('coloring_symmetry',self.coloring_symmetry)\
-             + self._print_property('n_faces',self.n_faces)\
-             + self._print_property('face_coloring',self.face_coloring)
+             + self.__print_property('particle_symmetry',self.particle_symmetry)\
+             + self.__print_property('coloring_symmetry',self.coloring_symmetry)\
+             + self.__print_property('n_faces',self.n_faces)\
+             + self.__print_property('face_coloring',self.face_coloring)
