@@ -21,6 +21,7 @@ focused on symmetric groups of permutations.
 - [x] method to remove redundant operators from the generator list;
 - [x] method to define a permutation representation for group generators from an
 orbit/stabilizer chain;
+- [ ] Change `is_identity` to a class property;
 - [ ] method to convert from pointers to group elements;
 - [ ] method to change generator representation to permutations;
 - [ ] group character table;
