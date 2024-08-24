@@ -100,9 +100,19 @@ class IdentityGroupElement(GroupElement):
     @property
     def inv(self):
         """
-        Returns itself
+        Returns itself.
         """
         return self
+
+    def trace(self):
+        """
+        Returns the dimension of the identity.
+        """
+        if is_None(self.dim):
+            raise ValueError("Cannot calculate trace for an "
+                             "IdentityGroupElement with unknown "
+                             "dimensionality")
+        return self.dim
 
     def __mul__(self, element):
         """
@@ -179,48 +189,72 @@ class MatrixGroupElement(GroupElement):
 
         GroupElement.__init__(self)
 
-        check_type('operator', operator, ArrayType, IdentityGroupElement)
+        # Numerical precision for rounding error
+        self.__eps_r = 1e-10
+        self.__log_eps_r = 10
 
-        # Define numerical precision for the matrix values
-        eps = 1e-10
-        log_eps = 10
+        # Numerical precision for printing
+        self.__log_eps_p = 4
 
-        # Define identity if IdentityGroupElement is given
+        # By default, all object's properties are calculated from the matrix
+        # operator
+        self.args_calculated = True
+        
+        # Initialize the properties
+        self.__cycle_order = None
+        self.__orthogonal_basis = None
+        self.__operator_inverse = None
+        self.__trace = None
+
         if isinstance(operator, IdentityGroupElement):
+            if operator.dim == None:
+                raise ValueError("Cannot initialize MatrixGroupElement from "
+                                 "IdentityGroupElement with a None type value"
+                                 "of dim.")
+
+            self.__dim = operator.dim
+            self.__is_identity = True
+            self.__operator = np.eye(self.dim)
+            self.__cycle_order = 1
+            self.__orthogonal_basis = True
+            self.__operator_inverse = None
+            self.__trace = self.dim
 
         else:
-            operator = np.round(np.array(operator), log_eps)
+            # Type checks
+            check_type('operator', operator, ArrayType)
+
+            operator = np.round(np.array(operator), self.__log_eps_r)
             self.__dim = len(operator)
+
+            check_shape('operator', operator, self.dim, self.dim)
+            
             self.__is_identity = _array_equal(self.operator,
                                               np.eye(self.dim),
-                                              eps)
-            check_shape('operator', operator, self.dim, self.dim)
+                                              self.__eps_r)
 
-            self.operator = operator
-            self.order = cycle_order
-            self.orthogonal_basis = _check_orthogonal(self.operator)
+            self.__operator = operator
 
-        if not_None(operator_inv) and not self.orthogonal_basis:
+    @classmethod
+    def input_args(cls, 
+                   operator,
+                   cycle_order = None,
+                   orthogonal_basis = None,
+                   operator_inverse = None,
+                   trace = None):
+        """
+        Initializes the properties of the MatrixGroupElement from user input.
+        """
+        element = cls(operator)
 
-            check_type('operator_inv', operator_inv, ArrayType)
+        element.args_calculated = False
 
-            # Test that the proposed inverse yields identity when multiplied
-            # by self.operator
-            operator_inv = np.array(operator_inv)
+        elements.cycle_order = cycle_order
+        elements.orthogonal_basis = orthogonal_basis
+        elements.inv = operator_inverse
+        elements.trace = trace
 
-            check_shape('operator_inv', operator_inv, self.dim, self.dim)
-
-            identity_test = operator_inv.dot(self.operator) - np.eye(self.dim)
-
-            if np.max(np.abs(identity_test)) > eps:
-                raise ValueError("Proposed inverse does not produce "\
-                                 "identity under multiplication with the "\
-                                 "operator.")
-
-            self.operator_inv = MatrixGroupElement(operator_inv)
-
-        else:
-            self.operator_inv = None
+        return element
 
     # Object's properties
     @property
@@ -236,7 +270,23 @@ class MatrixGroupElement(GroupElement):
         Returns the cycle order of the matrix operator 
         (n for which operator^n = identity).
         """
+        if is_None():
+            self.__cycle_order = self.calculate_cycle_order(self.operator, 
+                                                            self.__eps_r)
+
         return self.__cycle_order
+
+    @cycle_order.setter
+    def cycle_order(self, val):
+        if self.args_calculated:
+            raise Exception("cycle_order cannot be modified!")
+        else:
+            check_type('cycle_order', val, int, NoneType)
+            self.__cycle_order = val
+
+    @cycle_order.deleter
+    def cycle_order(self):
+        self.__cycle_order = None
 
     @property
     def orthogonal_basis(self):
@@ -244,7 +294,22 @@ class MatrixGroupElement(GroupElement):
         Returns True if the matrix operator is defined in the orthogonal
         basis, otherwise returns False.
         """
+        if is_None(self.__orthogonal_basis):
+            self.__orthogonal_basis = _check_orthogonal(self.operator)
+
         return self.__orthogonal_basis
+
+    @orthogonal_basis.setter
+    def orthogonal_basis(self, val):
+        if self.args_calculated:
+            raise Exception("orthogonal_basis cannot be modified!")
+        else:
+            check_type('orthogonal_basis', val, bool, NoneType)
+            self.__orthogonal_basis = val
+
+    @orthogonal_basis.deleter
+    def orthogonal_basis(self):
+        self.__orthogonal_basis = None
 
     # Common operations
     @property
@@ -252,24 +317,59 @@ class MatrixGroupElement(GroupElement):
         """
         Returns the inverse of the matrix group element.
         """
-
-        check_type('store_inverse', store_inverse, bool)
-
-        # Check if operator inverse is stored
-        if not_None(self.operator_inv):
-            return self.operator_inv
-
-        else:
+        if is_None(self.__operator_inverse):
             # If the operator is orthogonal, return the transpose
             if self.orthogonal_basis:
-                operator_inverse = self.operator.T
-            # If we have to calculate matrix inverse, it's good to store it
-            # for future calculations
+                self.__operator_inverse = self.operator.T
             else:
-                operator_inverse = np.linalg.inv(self.operator)
-                self.operator_inv = MatrixGroupElement(operator_inverse)
+                self.__operator_inverse = np.linalg.inv(self.operator)
 
-            return MatrixGroupElement(operator_inverse)
+        return MatrixGroupElement(self.__operator_inverse)
+
+    @inv.setter
+    def inv(self, val):
+        if self.args_calculated:
+            raise Exception("operator_inverse cannot be modified!")
+        else:
+            check_type('operator_inverse', val, ArrayType, NoneType)
+            operator_inverse = np.round(np.array(val), self.__log_eps_r)
+            
+            check_shape('operator_inv', operator_inverse, self.dim, self.dim)
+
+            id_test = operator_inverse.dot(self.operator) - np.eye(self.dim)
+
+            if np.max(np.abs(id_test)) > self.__eps_r:
+                raise ValueError("Proposed inverse does not produce "\
+                                 "identity under multiplication with the "\
+                                 "operator.")
+
+            self.__operator_inverse = operator_inverse
+
+    @inv.deleter
+    def inv(self):
+        self.__operator_inverse = None
+
+    @property
+    def trace(self):
+        """
+        Returns the trace of the matrix operator.
+        """
+        if is_None(self.__trace):
+            self.__trace = np.linalg.trace(self.operator)
+
+        return self.__trace
+
+    @trace.setter
+    def trace(self, val):
+        if self.args_calculated:
+            raise Exception("trace cannot be modified!")
+        else:
+            check_type('trace', val, int, NoneType)
+            self.__trace = val
+
+    @trace.deleter
+    def trace(self):
+        self.__trace = None
 
     def __mul__(self, element):
         """
@@ -360,62 +460,35 @@ class MatrixGroupElement(GroupElement):
             return False
 
     # Supplementary functions
-    def calculate_cycle_order(self):
+    @staticmethod
+    def calculate_cycle_order(operator, eps):
         """
-        Returns the integer cycle order of the matrix operator.
+        Calculates the cycle of the matrix operator via iterative matrix 
+        multiplication.
         """
-        if not_None(self.cycle_order):
-            return self.cycle_order
+        matrix = np.copy(operator)
+        cycle_order = 1
         
-        else:
-            # Define numerical precision
-            eps = 1e-10
+        while not _array_equal(matrix, np.eye(len(operator)), eps):
+            matrix = matrix.dot(operator)
+            cycle_order += 1
 
-            mat = self.operator
-            cycle = 1
-            while not _array_equal(mat,np.eye(self.dim),eps):
-                mat = mat.dot(self.operator)
-                cycle += 1
-
-            self.__cycle_order = cycle_order
-        
-        return self.cycle_order
-
-    def __initialize_from_identity(self, operator):
-        """
-        Initializes object's attributes assuming the operator is an identity
-        matrix.
-        """
-        if operator.dim == None:
-            raise ValueError("Cannot initialize MatrixGroupElement from "
-                             "IdentityGroupElement with a None type value"
-                             "of dim.")
-
-        self.__dim = operator.dim
-        self.__operator = np.eye(self.dim)
-        self.__cycle_order = 1
-        self.__orthogonal_basis = True
-        self.__operator_inv = None
-
-    #TODO add initialization from operator
+        return cycle_order
 
     # Output summary functions
     def __str__(self):
         """
         User-friendly output of the group element.
         """
-
-        # Define float precision for output
-        log_eps = 4
-
-        return str(np.round(self.operator, log_eps))
+        return str(np.round(self.operator, self.__log_eps_p))
 
     def __repr__(self):
         """
         Provedes useful print output.
         """
         cls = self.__class__.__name__
-        return f"{cls}(operator = {np.round(self.operator, 4)!r})"
+        operator_p = np.round(self.operator, self.__log_eps_p)
+        return f"{cls}(operator = {operator_p!r})"
 
 
 """
