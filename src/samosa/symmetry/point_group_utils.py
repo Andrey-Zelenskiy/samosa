@@ -11,7 +11,8 @@ This program defines methods for defining and manipulating 3D point groups.
 
 import numpy as np
 
-from samosa.symmetry.group_utils import Group, MatrixGroupElement
+from samosa.symmetry.group_utils import Group
+from samosa.symmetry.representations import MatrixGroupElement
 
 from samosa.api.api_utils import not_None, check_type, check_len, ArrayType
 

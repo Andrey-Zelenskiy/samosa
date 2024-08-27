@@ -340,7 +340,8 @@ class MatrixGroupElement(GroupElement):
         basis, otherwise returns False.
         """
         if is_None(self.__orthogonal_basis):
-            self.__orthogonal_basis = _check_orthogonal(self.operator)
+            self.__orthogonal_basis = _check_orthogonal(self.operator, 
+                                                        self.__eps_r)
 
         return self.__orthogonal_basis
 
@@ -875,62 +876,66 @@ class PointerGroupElement(GroupElement):
     """
 
     # Object initialization
-    def __init__(self, pointer, generator_list=None, generator_order=None):
+    def __init__(self, 
+                 pointer, 
+                 dim, 
+                 n_generators, 
+                 generator_cycles, 
+                 skip_checks=False):
         """
         Initializes a group element in the pointer representation.
 
         Arguments:
-        pointer         - list of tuple, pointer representation of some group
-                          element;
-        generator_list  - list of GroupElement_type (default None),
-                          if not None, provides a list of group generators;
-        generator_order - list (default None), if not None, provides
-                          the list of generator cycle orders.
+        pointer          - list of tuple (int, int), pointer representation of
+                           a group element;
+
+        dim              - int, dimension of the generator representation basis;
+
+        n_generators     - int, number of generators;
+
+        generator_cycles - list of int, cycle orders of the generators;
+
+        skip_checks      - bool, (default=False), if True, skips type checks for
+                           n_generators and generator_cycles.
         """
+        
+        GroupElement.__init__(self)
+        
+        # Initialize the properties
+        self.__pointer = None
+        self.__n_generators = None
+        self.__generator_cycles = None
+        self.__pointer_inverse = None
+        
         # Type checks
-        check_type('pointer', pointer, list)
+        check_type('pointer', pointer, list, IdentityGroupElement)
+        
+        if skip_checks == False:
+            check_type('dim', dim, int, np.int64)
+            check_type('n_generators', n_generators, int, np.int64)
+            check_type('generator_cycles', generator_cycles, list)
+            check_len('generator_cycles', generator_cycles, n_generators)
 
-        for p in pointer:
-            check_type('pointer components', p, tuple)
+            for c in generator_cycles:
+                check_type('generator cycle orders', c, int)
 
-        check_type('generators', generator_list, list, NoneType)
+        # Initialize generator data
+        self.__dim = dim
+        self.__n_generators = n_generators
+        self.__generator_cycles = generator_cycles
 
-        if not_None(generator_list):
-            for g in generator_list:
-                if not issubclass(g.__class__, GroupElement):
-                    raise Exception("All generators must inherit from "
-                                    "GroupElement class.")
-
-                if isinstance(g, PointerGroupElement):
-                    raise Exception("PointerGroupElement is not a valid "
-                                    "generator type.")
-
-        check_type('generator_order', generator_order, list, NoneType)
-
-        if not_None(generator_order):
-            for o in generator_order:
-                check_type('generator order', o, int, NoneType)
-
-        # Define the number of generators and the list of generator 
-        # cycle orders
-        if not_None(generator_list):
-            self.n_generators = len(generator_list)
-            self.order = [g.order for g in generator_list]
-
-        else:
-            if not_None(generator_order):
-                self.order = generator_order
-                self.n_generators = len(self.order)
-
-            else:
-                raise Exception("Generator data not provided!")
-
+        # Initialize the pointer
         if isinstance(pointer, IdentityGroupElement):
-            self.pointer = []
+            self.__pointer = []
+            self.__is_identity = True
 
         else:
             # Test the validity of the pointer
-            self.pointer = pointer
+            for p in pointer:
+                check_type('pointer components', p, tuple)
+                check_type('pointer components', p[0], int, np.int64)
+                check_type('pointer components', p[1], int, np.int64)
+                check_len('pointer components', p, 2) 
 
             for i, p in enumerate(pointer):
                 if p[0] >= self.n_generators:
@@ -938,42 +943,100 @@ class PointerGroupElement(GroupElement):
                                      f"the number of generators "
                                      f"{self.n_generators}.")
 
-            self.simplify()
+            self.__pointer = self.simplify(pointer, self.generator_cycles)
+            # WARNING: identity test below only accounts for trivial identity
+            # (empty pointer)
+            self.__is_identity = len(self.pointer) == 0
+
+    @classmethod
+    def from_generators(cls, pointer, generator_list):
+        """
+        Initializes pointer representation from a list of generators.
+
+        Arguments:
+        pointer         - list of tuple, pointer representation of some group
+                          element;
+
+        generator_list  - list of GroupElement_type, provides a list of group
+                          generators.
+        """
+        # Type checks
+        check_type('generator_list', generator_list, list)
+
+        for g in generator_list:
+            if not issubclass(g.__class__, GroupElement):
+                raise Exception("All generators must inherit from "
+                                "GroupElement class.")
+
+            if isinstance(g, PointerGroupElement):
+                raise Exception("PointerGroupElement is not a valid "
+                                "generator type.")
+        
+        dim = generator_list[0].dim
+        n_generators = len(generator_list)
+        generator_cycles = [g.cycle_order for g in generator_list]
+
+        return cls(pointer, dim, n_generators, generator_cycles, True)
+
+    @classmethod
+    def from_element(cls, pointer, element):
+        """
+        Initializes pointer representation from another PointerGroupElement
+        object.
+
+        Arguments:
+        pointer         - list of tuple, pointer representation of some group
+                          element;
+
+        element         - PointerGroupElement, element from which the data is
+                          inherited.
+        """
+        # Type checks
+        check_type('element', element, PointerGroupElement)
+
+        dim = element.dim
+        n_generators = element.n_generators
+        generator_cycles = element.generator_cycles
+
+        return cls(pointer, dim, n_generators, generator_cycles, True)
+
+    # Object's properties
+    @property
+    def pointer(self):
+        """
+        Returns the pointer tuples.
+        """
+        return self.__pointer
+
+    @property
+    def n_generators(self):
+        """
+        Returns the number of generators that define the pointer.
+        """
+        return self.__n_generators
+
+    @property
+    def generator_cycles(self):
+        """
+        Returns the cycle orders of the generators.
+        """
+        return self.__generator_cycles
 
     # Common operations
-    def simplify(self):
+    @property
+    def inv(self):
         """
-        Attempts to simplify a pointer chain by contracting pointers to the
-        same generators.
+        Returns the inverse of the group element in pointer representation.
         """
+        if is_None(self.__pointer_inverse):
+            pointer_inverse = []
+            for p in self.pointer:
+                pointer_inverse += [(p[0], \
+                                     _mod(-p[1], self.generator_cycles[p[0]]))]
 
-        if len(self.pointer) > 0:
+            self.__pointer_inverse = pointer_inverse
 
-            new_pointer = [self.pointer[0]]
-
-            counter = 0
-
-            for p in self.pointer[1:]:
-                if counter == -1:
-                    new_pointer = [p]
-
-                else:
-                    if p[0] == new_pointer[counter][0]:
-                        new_power = _mod(p[1] + new_pointer[counter][1],
-                                         self.order[p[0]])
-
-                        if new_power == 0:
-                            new_pointer = new_pointer[:counter]
-                            counter -= 1
-
-                        else:
-                            new_pointer[counter] = (p[0], new_power)
-
-                    else:
-                        new_pointer += [p]
-                        counter += 1
-
-            self.pointer = new_pointer
+        return PointerGroupElement.from_element(self.__pointer_inverse, self)
 
     def __mul__(self, element):
         """
@@ -982,6 +1045,15 @@ class PointerGroupElement(GroupElement):
 
         # Product of two pointers
         if isinstance(element, PointerGroupElement):
+            # Check that the pointers have the same generator data
+            test_dim = self.dim != element.dim 
+            test_n = self.n_generators != element.n_generators
+            test_cycles = self.generator_cycles != element.generator_cycles
+
+            if test_dim or test_n or test_cycles:
+                raise Exception(f"PointerGroupElements {self} and {element} "
+                                f"have different generator data!")
+
             # Special case where self or element correspond to the identity,
             # represented by an empty pointer []
             if len(self.pointer) == 0:
@@ -999,7 +1071,7 @@ class PointerGroupElement(GroupElement):
                 # If g_left and g_right are the same, we need to increase the
                 # power of the generator (extend the generator chain)
                 if g_left[0] == g_right[0]:
-                    g_order = self.order[g_right[0]]
+                    g_order = self.generator_cycles[g_right[0]]
                     g_power_new = _mod(g_left[1] + g_right[1], g_order)
 
                     if g_power_new == 0:
@@ -1017,16 +1089,14 @@ class PointerGroupElement(GroupElement):
                 else:
                     new_pointer = self.pointer + element.pointer
 
-                return PointerGroupElement(new_pointer,
-                                           generator_order=self.order)
+                return PointerGroupElement.from_element(new_pointer, self)
 
         # (Left) product between a pointer and a tuple
         elif isinstance(element, tuple) and len(element) == 2:
             # Special case where self corresponds to the identity,
             # represented by an empty pointer []
             if len(self.pointer) == 0:
-                return PointerGroupElement([element],
-                                           generator_order=self.order)
+                return PointerGroupElement.from_element([element], self)
 
             else:
                 # Determine the rightmost generator of the left operator (self)
@@ -1036,7 +1106,7 @@ class PointerGroupElement(GroupElement):
                 # If g_left and g_right are the same, we need to increase the
                 # power of the generator (extend the generator chain)
                 if g_left[0] == g_right[0]:
-                    g_order = self.order[g_right[0]]
+                    g_order = self.generator_cycles[g_right[0]]
                     g_power_new = _mod(g_left[1] + g_right[1], g_order)
 
                     if g_power_new == 0:
@@ -1052,12 +1122,7 @@ class PointerGroupElement(GroupElement):
                 else:
                     new_pointer = self.pointer + [element]
 
-                return PointerGroupElement(new_pointer,
-                                           generator_order=self.order)
-
-        # Left action on Identity object
-        elif isinstance(element, IdentityGroupElement):
-            return self
+                return PointerGroupElement.from_element(new_pointer, self)
 
         # Left multiplication by other types is not defined
         else:
@@ -1069,13 +1134,12 @@ class PointerGroupElement(GroupElement):
         """
         Right group action is only defined for tuples.
         """
-        # (Left) product between a pointer and a tuple
+        # (Right) product between a pointer and a tuple
         if isinstance(element, tuple) and len(element) == 2:
             # Special case where self corresponds to the identity,
             # represented by an empty pointer []
             if len(self.pointer) == 0:
-                return PointerGroupElement([element],
-                                           generator_order=self.order)
+                return PointerGroupElement.from_element([element], self)
 
             else:
                 # Determine the leftmost generator of the right operator (self)
@@ -1085,7 +1149,7 @@ class PointerGroupElement(GroupElement):
                 # If g_left and g_right are the same, we need to increase the
                 # power of the generator (extend the generator chain)
                 if g_left[0] == g_right[0]:
-                    g_order = self.order[g_right[0]]
+                    g_order = self.generator_cycles[g_right[0]]
                     g_power_new = _mod(g_left[1] + g_right[1], g_order)
 
                     if g_power_new == 0:
@@ -1101,40 +1165,14 @@ class PointerGroupElement(GroupElement):
                 else:
                     new_pointer = [element] + self.pointer
 
-                return PointerGroupElement(new_pointer,
-                                           generator_order=self.order)
-
-        # Right action on Identity object
-        elif isinstance(element, IdentityGroupElement):
-            return self
+                return PointerGroupElement.from_element(new_pointer, self)
 
         # Right multiplication by other types is not defined
         else:
             raise TypeError(f"Cannot multiply objects of type "
                             f"{type(element).__name__} and "
                             f"{self.__class__.__name__}.")
-
-    def inv(self):
-        """
-        Group element inverse for pointer representation.
-        """
-
-        pointer_inv = []
-        for p in self.pointer:
-            pointer_inv += [(p[0], _mod(-p[1], self.order[p[0]]))]
-
-        return PointerGroupElement(pointer_inv,
-                                   generator_order=self.order)
-
-    def is_identity(self):
-        """
-        Returns True if the pointer is empty.
-        """
-        if len(self.pointer) == 0:
-            return True
-        else:
-            return False
-
+    
     def __eq__(self, element):
         """
         Pointer comparison.
@@ -1145,11 +1183,19 @@ class PointerGroupElement(GroupElement):
 
         # Comparison of two pointers
         if isinstance(element, PointerGroupElement):
-            return self.pointer == element.pointer
+            # Check that the pointers have the same generator data
+            test_dim = self.dim != element.dim 
+            test_n = self.n_generators != element.n_generators
+            test_cycles = self.generator_cycles != element.generator_cycles
+            
+            # Check if two pointers have the same expression
+            test_pointer = self.pointer == element.pointer
+
+            return test_dim*test_n*test_cycles*test*pointer
 
         # Comparison with IdentityGroupElement
         elif isinstance(element, IdentityGroupElement):
-            return self.is_identity()
+            return self.is_identity
 
         # Any other comparison yields False
         else:
@@ -1158,6 +1204,82 @@ class PointerGroupElement(GroupElement):
                           f"{type(element).__name__} yields False by default.")
             return False
 
+    # Supplementary functions
+    @staticmethod
+    def simplify(pointer, cycles):
+        """
+        Attempts to simplify a pointer chain by contracting pointers to the
+        same generators.
+        """
+        new_pointer = []
+
+        if len(pointer) > 0:
+            new_pointer = [pointer[0]]
+            counter = 0
+
+            for p in pointer[1:]:
+                if counter == -1:
+                    new_pointer = [p]
+
+                else:
+                    if p[0] == new_pointer[counter][0]:
+                        new_power = _mod(p[1] + new_pointer[counter][1],
+                                         cycles[p[0]])
+
+                        if new_power == 0:
+                            new_pointer = new_pointer[:counter]
+                            counter -= 1
+
+                        else:
+                            new_pointer[counter] = (p[0], new_power)
+                    
+                    else:
+                        new_pointer += [p]
+                        counter += 1
+
+        return new_pointer
+
+    def pointer_to_element(self, generator_list, skip_checks=False):
+        """
+        Converts pointer to group element in the given representation.
+
+        Arguments:
+        generator_list  - list of GroupElement_type, provides a list of group
+                          generators;
+
+        skip_checks      - bool, (default=False), if True, skips type checks for
+                           n_generators and generator_cycles.
+        """
+        if skip_checks == False:
+            # Type checks
+            check_type('generator_list', generator_list, list)
+            check_len('generator_list', generator_list, self.n_generators)
+
+            for i, g in enumerate(generator_list):
+                if not issubclass(g.__class__, GroupElement):
+                    raise Exception("All generators must inherit from "
+                                    "GroupElement class.")
+
+                if isinstance(g, PointerGroupElement):
+                    raise Exception("PointerGroupElement is not a valid "
+                                    "generator type.")
+
+                if g.dim != self.dim:
+                    raise Exception("Generator dimension does not match the "
+                                    "dimension of the PointerGroupElement.")
+
+                if g.cycle_order != self.generator_cycles[i]:
+                    raise Exception("Generator cycle order does not match "
+                                    "generator_cycles data in "
+                                    "PointerGroupElement.")
+
+        element = IdentityGroupElement(self.dim)
+        for p in self.pointer:
+            for i in range(p[1]):
+                element = element * generator_list[p[0]]
+
+        return element
+        
     # Output summary functions
     def __str__(self):
         """
@@ -1171,7 +1293,9 @@ class PointerGroupElement(GroupElement):
         Provedes useful print output.
         """
         cls = self.__class__.__name__
-        return f"{cls}(pointer = {self.pointer!r})"
+        return f"{cls}(pointer = {self.pointer!r}, dim = {self.dim}, " +\
+               f"n_generators = {self.n_generators}, " +\
+               f"generator_cycles = {self.generator_cycles})"
 
 
 """
@@ -1195,15 +1319,6 @@ def _array_in_list(a, a_list):
     eps = 1e-10
     return any(_array_equal(a,p,eps) for p in a_list)
 
-
-def _element_in_list(g, g_list):
-    """
-    Determines if a GroupElement_type is included in a list of
-    GroupElement_types.
-    """
-    return any(g == p for p in g_list)
-
-
 def _mod(a, n):
     """
     If n is not None, return a % n, otherwise return a.
@@ -1213,21 +1328,14 @@ def _mod(a, n):
     else:
         return a
 
-
-def _check_orthogonal(operator):
+def _check_orthogonal(operator, eps):
     """
     Checks if the operator is orthogonal.
     """
 
     operator = np.array(operator)
 
-    # Define numerical precision required
-    eps = 1e-10
-
     # Check if O * O.T = identity
     diff = np.max(np.abs(operator.dot(operator.T) - np.eye(len(operator))))
 
-    if diff < eps:
-        return True
-    else:
-        return False
+    return diff < eps
