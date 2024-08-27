@@ -21,7 +21,7 @@ focused on symmetric groups of permutations.
 - [x] method to remove redundant operators from the generator list;
 - [x] method to define a permutation representation for group generators from an
 orbit/stabilizer chain;
-- [ ] Change `is_identity` to a class property;
+- [x] Change `is_identity` to a class property;
 - [ ] method to convert from pointers to group elements;
 - [ ] method to change generator representation to permutations;
 - [ ] group character table;
@@ -33,7 +33,7 @@ orbit/stabilizer chain;
 
 - [x] Clean up inverse-storage options;
 - [x] Type tests; 
-- [ ] Implement cycle order calculation method;
+- [x] Implement cycle order calculation method;
 
 ## PointerGroupElement (in `group_utils.py`)
 
@@ -47,5 +47,5 @@ orbit/stabilizer chain;
 - [x] `__str__` magic;
 - [x] `__repr__` magic;
 - [x] Type tests;
-- [ ] Implement cycle order calculation method;
+- [x] Implement cycle order calculation method;
 

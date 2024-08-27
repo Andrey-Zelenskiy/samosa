@@ -45,6 +45,18 @@ class GroupElement:
         """
         return self.__dim
 
+    @dim.setter
+    def dim(self, val):
+        if not_None(self.dim):
+            raise Exception("dim cannot be modified!")
+        else:
+            check_type('dim', val, int, np.int64, NoneType)
+            self.__dim = val
+
+    @dim.deleter
+    def dim(self):
+        self.__dim = None
+
     @property
     def is_identity(self):
         """
@@ -52,6 +64,18 @@ class GroupElement:
         otherewise returns False.
         """
         return self.__is_identity
+
+    @is_identity.setter
+    def is_identity(self, val):
+        if not_None(self.__is_identity):
+            raise Exception("is_identity cannot be modified!")
+        else:
+            check_type('is_identity', val, bool, np.bool_, NoneType)
+            self.__is_identity = val
+
+    @is_identity.deleter
+    def is_identity(self):
+        self.__is_identity = None
 
     def __mul__(self, element):
         """
@@ -91,10 +115,8 @@ class IdentityGroupElement(GroupElement):
         """
         GroupElement.__init__(self)
 
-        check_type('dim', dim, int, NoneType)
-        
-        self.__dim = dim
-        self.__is_identity = True
+        self.dim = dim
+        self.is_identity = True
 
     # Common operations
     @property
@@ -104,6 +126,7 @@ class IdentityGroupElement(GroupElement):
         """
         return self
 
+    @property
     def trace(self):
         """
         Returns the dimension of the identity.
@@ -132,7 +155,7 @@ class IdentityGroupElement(GroupElement):
         precision.
         """
         if isinstance(element, IdentityGroupElement):
-            return element.dim == self.dim:
+            return element.dim == self.dim
         else:
             return False
 
@@ -170,21 +193,13 @@ class MatrixGroupElement(GroupElement):
     """
 
     # Object initialization
-    def __init__(self, operator, cycle_order=None, operator_inv=None):
+    def __init__(self, operator):
         """
-        Defines the matrix operator and, optionally, its inverse.
+        Initializes the matrix operator of the group representation.
 
         Arguments:
-        operator     - 2dArrayType, matrix operator defining the group
-                       element or
-                       IdentityGroupElement, defines an identity element;
-
-        cycle_order  - int, (default = None), if not None, gives
-                       the cycle order of the operator, i.e. n for which
-                       operator^n = identity;
-
-        operator_inv - 2dArrayType, (default = None), if not
-                       None, proposes an inverse of operator.
+        operator - 2dArrayType, matrix operator defining the group element or 
+                   IdentityGroupElement, defines an identity element.
         """
 
         GroupElement.__init__(self)
@@ -201,19 +216,23 @@ class MatrixGroupElement(GroupElement):
         self.args_calculated = True
         
         # Initialize the properties
+        self.__operator = None
         self.__cycle_order = None
         self.__orthogonal_basis = None
         self.__operator_inverse = None
         self.__trace = None
 
+        # Type checks
+        check_type('operator', operator, ArrayType, IdentityGroupElement)
+
         if isinstance(operator, IdentityGroupElement):
             if operator.dim == None:
-                raise ValueError("Cannot initialize MatrixGroupElement from "
-                                 "IdentityGroupElement with a None type value"
-                                 "of dim.")
+                raise ValueError("Cannot initialize MatrixGroupElement "
+                                 "from IdentityGroupElement with unknown "
+                                 "dimension.")
 
-            self.__dim = operator.dim
-            self.__is_identity = True
+            self.dim = operator.dim
+            self.is_identity = True
             self.__operator = np.eye(self.dim)
             self.__cycle_order = 1
             self.__orthogonal_basis = True
@@ -221,19 +240,15 @@ class MatrixGroupElement(GroupElement):
             self.__trace = self.dim
 
         else:
-            # Type checks
-            check_type('operator', operator, ArrayType)
-
             operator = np.round(np.array(operator), self.__log_eps_r)
-            self.__dim = len(operator)
+            self.dim = len(operator)
 
             check_shape('operator', operator, self.dim, self.dim)
             
-            self.__is_identity = _array_equal(self.operator,
-                                              np.eye(self.dim),
-                                              self.__eps_r)
-
             self.__operator = operator
+            self.is_identity = _array_equal(self.operator,
+                                            np.eye(self.dim),
+                                            self.__eps_r)
 
     @classmethod
     def input_args(cls, 
@@ -244,8 +259,38 @@ class MatrixGroupElement(GroupElement):
                    trace = None):
         """
         Initializes the properties of the MatrixGroupElement from user input.
+        
+        WARNING: this initialization method does not check the input values,
+        which could lead to incompatible properties. Only use this method 
+        when you are certain about the input!
+
+        Arguments:
+        operator         - 2dArrayType, matrix operator defining the group
+                           element or
+                           IdentityGroupElement, defines an identity element;
+
+        cycle_order      - int, (default=None), gives the cycle order of the
+                           operator, i.e. n for which operator^n = identity;
+
+        orthogonal_basis - bool or np.bool_, (default=None) True if the basis
+                           of the matrix operator is orthonormal, otherwise
+                           False;
+
+        operator_inverse - 2dArrayType, (default=None), proposes an inverse
+                           of operator;
+
+        trace            - float, (default=None), trace of the matrix 
+                           operator.
+
+        Returns:
+        MatrixGroupElement object.
         """
         element = cls(operator)
+
+        if isinstance(operator, IdentityGroupElement):
+            raise Exception("Please use "
+                            "MatrixGroupElement(IdentityGroupElement(dim)) "
+                            "as the initializer.")
 
         element.args_calculated = False
 
@@ -271,7 +316,7 @@ class MatrixGroupElement(GroupElement):
         (n for which operator^n = identity).
         """
         if is_None():
-            self.__cycle_order = self.calculate_cycle_order(self.operator, 
+            self.__cycle_order = self.get_cycle_order(self.operator, 
                                                             self.__eps_r)
 
         return self.__cycle_order
@@ -281,7 +326,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("cycle_order cannot be modified!")
         else:
-            check_type('cycle_order', val, int, NoneType)
+            check_type('cycle_order', val, int, np.int64, NoneType)
             self.__cycle_order = val
 
     @cycle_order.deleter
@@ -304,7 +349,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("orthogonal_basis cannot be modified!")
         else:
-            check_type('orthogonal_basis', val, bool, NoneType)
+            check_type('orthogonal_basis', val, bool, np.bool_, NoneType)
             self.__orthogonal_basis = val
 
     @orthogonal_basis.deleter
@@ -355,7 +400,7 @@ class MatrixGroupElement(GroupElement):
         Returns the trace of the matrix operator.
         """
         if is_None(self.__trace):
-            self.__trace = np.linalg.trace(self.operator)
+            self.__trace = np.trace(self.operator)
 
         return self.__trace
 
@@ -364,7 +409,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("trace cannot be modified!")
         else:
-            check_type('trace', val, int, NoneType)
+            check_type('trace', val, int, np.int64, NoneType)
             self.__trace = val
 
     @trace.deleter
@@ -399,11 +444,7 @@ class MatrixGroupElement(GroupElement):
                                 f"{element.shape[0]}.")
 
             return self.operator.dot(element)
-
-        # Left action on Identity object
-        elif isinstance(element, IdentityGroupElement):
-            return self
-
+        
         else:
             raise TypeError(f"Cannot multiply objects of type "
                             f"{self.__class__.__name__} and "
@@ -426,10 +467,6 @@ class MatrixGroupElement(GroupElement):
 
             return element.dot(self.operator)
 
-        # Right action on Identity object
-        elif isinstance(element, IdentityGroupElement):
-            return self
-
         else:
             raise TypeError(f"Cannot multiply objects of type "
                             f"{type(element).__name__} and "
@@ -441,12 +478,9 @@ class MatrixGroupElement(GroupElement):
         precision.
         """
 
-        # Define numerical tolerance
-        eps = 1e-10
-
         # Comparison of two MatrixGroupElements
         if isinstance(element, MatrixGroupElement):
-            return _array_equal(self.operator, element.operator, eps)
+            return _array_equal(self.operator, element.operator, self.__eps_r)
 
         # Comparison with IdentityGroupElement
         elif isinstance(element, IdentityGroupElement):
@@ -461,7 +495,7 @@ class MatrixGroupElement(GroupElement):
 
     # Supplementary functions
     @staticmethod
-    def calculate_cycle_order(operator, eps):
+    def get_cycle_order(operator, eps):
         """
         Calculates the cycle of the matrix operator via iterative matrix 
         multiplication.
@@ -488,7 +522,8 @@ class MatrixGroupElement(GroupElement):
         """
         cls = self.__class__.__name__
         operator_p = np.round(self.operator, self.__log_eps_p)
-        return f"{cls}(operator = {operator_p!r})"
+        return f"{cls}(operator={operator_p!r}, "\
+               f"args_calculated={self.args_calculated})"
 
 
 """
@@ -505,57 +540,145 @@ class PermutationGroupElement(GroupElement):
     """
 
     # Object initialization
-    def __init__(self, permutation, cycle_order=None):
+    def __init__(self, permutation):
         """
-        Defines the permutation tuple.
+        Initializes the permutation tuple of the group representation.
 
         Arguments:
-        permutation - ArrayType or dict int : int or IdentityGroupElement,
-                      Permutations in the 'ordered' representation:
-                      if ArrayType, assume map n : permutation[n];
-                      if dict, assume a map n : m, where n and m are in the
-                      same (closed) set;
-                      if IdentityGroupElement, return cycle (1, 2, ..., dim).
-
-        cycle_order  - int, (default = None), if not None, gives
-                       the cycle order of the permutation.
+        permutation - ArrayType of int, assume map n -> permutation[n], or
+                      dict int : int, assume a map n -> m, where n and m are
+                      in the same (closed) set, or
+                      IdentityGroupElement, return cycle (1, 2, ..., dim).
         """
 
+        GroupElement.__init__(self)
+        
+        # Initialize the properties
+        self.__permutation = None
+        self.__permutation_cycles = None
+        self.__permutation_dict = None
+        self.__cycle_order = None
+        self.__permutation_inverse = None
+        self.__trace = None
+
+        # Type checks
         check_type('permutation', permutation, dict, ArrayType,
                    IdentityGroupElement)
 
-        # Define identity if IdentityGroupElement is given
         if isinstance(permutation, IdentityGroupElement):
             if permutation.dim == None:
                 raise ValueError("Cannot initialize PermutationGroupElement "
-                                 "from IdentityGroupElement with a None type "
-                                 "value of dim.")
+                                 "from IdentityGroupElement with unknown "
+                                 "dimension.")
 
-            self.__dim = permutation.dim
-            self.__is_identity = True
-            self.permutation = tuple(i for i in range(self.dim))
-            self.order = 1
+            self.dim = permutation.dim
+            self.is_identity = True
+            self.__permutation = tuple(i+1 for i in range(self.dim))
+            self.__cycle_order = 1
+            self.__permutation_inverse = self.__permutation
+            self.__trace = self.dim
 
         elif isinstance(permutation, dict):
-            self.__dim = max(permutation.keys()) + 1
+            if min(permutation.keys()) < 1:
+                raise ValueError("Permutation values must not be smaller "
+                                 "than 1.")
+
+            self.dim = max(permutation.keys())
+
             try:
-                self.permutation = tuple(permutation[i]\
-                                         for i in range(self.dim))
+                self.__permutation = \
+                        tuple(permutation[n+1] for n in range(self.dim))
+
             except KeyError:
-                raise ValueError(f"Permutation dictionary is incomplete: "
-                                 f"{permutation}.")
+                raise TypeError("Permutation dictionary must contain "
+                                "transformations of all points in a closed "
+                                "set.")
 
-            self.__is_identity = self.permutation == tuple(np.arange(self.dim))
-            self.order = cycle_order
-
+            test_id = self.permutation == tuple(i+1 for i in range(self.dim))
+            self.is_identity = test_id
 
         else:
-            self.permutation = tuple(permutation)
-            self.__dim = len(permutation)
+            # Type check
+            for n in permutation:
+                check_type('permutation values', n, int, np.int64)
+
+            if min(permutation) < 1:
+                raise ValueError("Permutation values must not be smaller "
+                                 "than 1.")
+
+            self.__permutation = tuple(permutation)
+            self.dim = len(permutation)
+
+            test_id = self.permutation == tuple(i+1 for i in range(self.dim))
+            self.is_identity = test_id
+
+    # Object's properties
+    @property
+    def permutation(self):
+        """
+        Returns the permutation tuple.
+        """
+        return self.__permutation
+
+    @property
+    def permutation_cycles(self):
+        """
+        Returns the permutation in cycle representation.
+        """
+        if is_None(self.__permutation_cycles):
+            self.__permutation_cycles = \
+                    self.get_permutation_cycles(self.permutation) 
+
+        return self.__permutation_cycles
+
+    @property
+    def permutation_dict(self):
+        """
+        Returns the permutation in dictionary map (int : int) representation.
+        """
+        if is_None(self.__permutation_dict):
+            self.__permutation_dict = \
+                    self.get_permutation_dict(self.permutation)
+
+        return self.__permutation_dict
+
+    @property
+    def cycle_order(self):
+        """
+        Returns the cycle order of the permutation tuple 
+        (n for which operator^n = identity).
+        """
+        if is_None(self.__cycle_order):
+            self.__cycle_order = self.get_cycle_order(self.permutation_cycles)
+
+        return self.__cycle_order
 
     # Common operations
     @property
-    def inv():
+    def inv(self):
+        """
+        Returns inverse of self.permutation.
+        """
+        if is_None(self.__permutation_inverse):
+            self.__permutation_inverse = np.zeros(self.dim, int)
+
+            for i in range(self.dim):
+                self.__permutation_inverse[self.permutation[i]-1] = i+1
+
+        return PermutationGroupElement(self.__permutation_inverse)
+
+    @property
+    def trace(self):
+        """
+        Returns the trace of the corresponding permutation matrix.
+        """
+        if is_None(self.__trace):
+            self.__trace = 0
+            for n in range(self.dim):
+                if self.permutation[n] == n+1:
+                    self.__trace += 1
+
+        return self.__trace
 
     def __mul__(self, element):
         """
@@ -570,7 +693,7 @@ class PermutationGroupElement(GroupElement):
                                 f"permutations of dimension "
                                 f"{self.dim} and {element.dim}.")
 
-            product = tuple(self.permutation[p] for p in element.permutation)
+            product = tuple(self.permutation[p-1] for p in element.permutation)
 
             return PermutationGroupElement(product)
 
@@ -584,7 +707,7 @@ class PermutationGroupElement(GroupElement):
             new_element = np.array(element)
 
             for i in range(self.dim):
-                new_element[i] = element[self.permutation[i]]
+                new_element[i] = element[self.permutation[i]-1]
 
             if isinstance(element, np.ndarray):
                 return new_element
@@ -594,14 +717,10 @@ class PermutationGroupElement(GroupElement):
 
         # Left action on int
         elif isinstance(element, int):
-            if element <= self.dim:
-                return self.permutation[element]
+            if element > 0 and element <= self.dim:
+                return self.permutation[element-1]
             else:
                 return element
-
-        # Left action on Identity object
-        elif isinstance(element, IdentityGroupElement):
-            return self
 
         else:
             raise TypeError(f"Cannot multiply objects of type "
@@ -613,32 +732,9 @@ class PermutationGroupElement(GroupElement):
         Right permutation action is only defined for Identity.
         """
 
-        # Right action on Identity object
-        if isinstance(element, IdentityGroupElement):
-            return self
-
-        else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{type(element).__name__} and "
-                            f"{self.__class__.__name__}.")
-
-    def inv(self):
-        """
-        Returns inverse of self.permutation.
-        """
-
-        permutation_inverse = np.zeros(self.dim, int)
-
-        for i in range(self.dim):
-            permutation_inverse[self.permutation[i]] = i
-
-        return PermutationGroupElement(permutation_inverse)
-
-    def is_identity(self):
-        """
-        Returns True if none of the elements are permuted.
-        """
-        return self.permutation == tuple(np.arange(self.dim))
+        raise TypeError(f"Cannot multiply objects of type "
+                        f"{type(element).__name__} and "
+                        f"{self.__class__.__name__}.")
 
     def __eq__(self, element):
         """
@@ -660,19 +756,85 @@ class PermutationGroupElement(GroupElement):
                           f"{type(element).__name__} yields False by default.")
             return False
 
+    # Supplementary functions
+    @staticmethod
+    def get_permutation_cycles(permutation):
+        """
+        Returns the permutation in cycle representation.
+        """
+        # Type check
+        check_type('permutation', permutation, tuple)
+        for n in permutation:
+            check_type('permutation values', n, int, np.int64)
+
+        permutation_list = list(permutation)
+        permutation_cycles = []
+        for n in range(len(permutation_list)):
+            if permutation_list[n] not in (0, n+1):
+                x = n + 1
+                cycle = []
+                while True:
+                    cycle.append(x)
+                    permutation_list[x-1], x = 0, permutation_list[x-1]
+                    if x == n + 1:
+                        break
+
+                permutation_cycles.append(tuple(cycle))
+        if len(permutation_cycles) == 0:
+            permutation_cycles.append(tuple())
+
+        return permutation_cycles
+
+    @staticmethod
+    def get_permutation_dict(permutation):
+        """
+        Returns the permutation in dictionary map (int : int) representation.
+        """
+        # Type check
+        check_type('permutation', permutation, tuple)
+        for n in permutation:
+            check_type('permutation values', n, int, np.int64)
+
+        permutation_dict = {}
+        for n in range(len(permutation)):
+            if permutation[n] != n+1:
+                permutation_dict[n+1] = permutation[n]
+        
+        return permutation_dict
+
+    @staticmethod
+    def get_cycle_order(permutation_cycles):
+        """
+        Calculates the cycle of the permutation by finding the lowest common
+        multiple of the permutation cycle lengths.
+        """
+        # Type checks
+        check_type('permutation_cycles', permutation_cycles, list)
+        for cycle in permutation_cycles:
+            check_type('cycle', cycle, tuple)
+            for n in cycle:
+                check_type('permutation value', n, int, np.int64)
+
+        cycle_len = [len(n) for n in permutation_cycles]
+
+        cycle_order = np.lcm.reduce(cycle_len)
+
+        return cycle_order
+    
     # Output summary functions
     def __str__(self):
         """
         User-friendly output of the group element.
         """
-        return str(self.permutation)
+        str_cycles = [str(cycle) for cycle in self.permutation_cycles]
+        return "".join(str_cycles)
 
     def __repr__(self):
         """
         Provedes useful print output.
         """
         cls = self.__class__.__name__
-        return f"{cls}(permutation = {self.permutation})"
+        return f"{cls}(permutation_cycles = {self.permutation_cycles})"
 
 
 """
@@ -725,7 +887,7 @@ class PointerGroupElement(GroupElement):
         generator_order - list (default None), if not None, provides
                           the list of generator cycle orders.
         """
-
+        # Type checks
         check_type('pointer', pointer, list)
 
         for p in pointer:
@@ -749,7 +911,8 @@ class PointerGroupElement(GroupElement):
             for o in generator_order:
                 check_type('generator order', o, int, NoneType)
 
-        # Define the number of generators and the list of generator cycle orders
+        # Define the number of generators and the list of generator 
+        # cycle orders
         if not_None(generator_list):
             self.n_generators = len(generator_list)
             self.order = [g.order for g in generator_list]
