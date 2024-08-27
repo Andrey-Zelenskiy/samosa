@@ -15,6 +15,10 @@ This tutorial illustrates the properties of two most common classes that are
 used to represent group elements: `MatrixGroupElement` and 
 `PermutationGroupElement`.
 
+#### TODOs
+- [ ] Element dimension;
+- [ ] Element trace;
+
 ### `point_group.ipynb` - create and interact with 3D point groups.
 ### STATUS: NOT IMPLEMENTED
 

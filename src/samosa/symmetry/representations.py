@@ -445,6 +445,14 @@ class MatrixGroupElement(GroupElement):
                                 f"{element.shape[0]}.")
 
             return self.operator.dot(element)
+
+        elif isinstance(element, IdentityGroupElement):
+            if is_None(element.dim) or self.dim == element.dim:
+                return self
+
+            else:
+                raise TypeError(f"IdentityGroupElement must have dimension "
+                                f"{self.dim} or None, not {element.dim}.")
         
         else:
             raise TypeError(f"Cannot multiply objects of type "
@@ -485,7 +493,7 @@ class MatrixGroupElement(GroupElement):
 
         # Comparison with IdentityGroupElement
         elif isinstance(element, IdentityGroupElement):
-            return self.is_identity()
+            return self.is_identity
 
         # Any other comparison yields False
         else:
@@ -722,6 +730,14 @@ class PermutationGroupElement(GroupElement):
                 return self.permutation[element-1]
             else:
                 return element
+        
+        elif isinstance(element, IdentityGroupElement):
+            if is_None(element.dim) or self.dim == element.dim:
+                return self
+
+            else:
+                raise TypeError(f"IdentityGroupElement must have dimension "
+                                f"{self.dim} or None, not {element.dim}.")
 
         else:
             raise TypeError(f"Cannot multiply objects of type "
@@ -748,7 +764,7 @@ class PermutationGroupElement(GroupElement):
 
         # Comparison with IdentityGroupElement
         elif isinstance(element, IdentityGroupElement):
-            return self.is_identity()
+            return self.is_identity
 
         # Any other comparison yields False
         else:
@@ -1124,6 +1140,14 @@ class PointerGroupElement(GroupElement):
 
                 return PointerGroupElement.from_element(new_pointer, self)
 
+        elif isinstance(element, IdentityGroupElement):
+            if is_None(element.dim) or self.dim == element.dim:
+                return self
+
+            else:
+                raise TypeError(f"IdentityGroupElement must have dimension "
+                                f"{self.dim} or None, not {element.dim}.")
+        
         # Left multiplication by other types is not defined
         else:
             raise TypeError(f"Cannot multiply objects of type "

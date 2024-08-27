@@ -192,14 +192,10 @@ def _T_group(basis = None):
    
     ## Define generators
     axis_1 = [1,1,1]
-    C3 = MatrixGroupElement(operator_C(axis_1,3,basis),
-                            operator_inv = operator_C(axis_1,-3,basis),
-                            cycle_order = 3)
+    C3 = MatrixGroupElement(operator_C(axis_1,3,basis))
 
     axis_2 = [0,0,1]
-    C2 = MatrixGroupElement(operator_C(axis_2,2,basis),
-                            operator_inv = operator_C(axis_2,2,basis),
-                            cycle_order = 2)
+    C2 = MatrixGroupElement(operator_C(axis_2,2,basis))
     
     generators = [C3,C2]
 
@@ -223,14 +219,10 @@ def _Td_group(basis = None):
    
     ## Define generators
     axis_1 = [0,0,1]
-    S4_1 = MatrixGroupElement(operator_S(axis_1,4,basis),
-                              operator_inv = operator_S(axis_1,-4,basis),
-                              cycle_order = 4)
+    S4_1 = MatrixGroupElement(operator_S(axis_1,4,basis))
 
     axis_2 = [1,0,0]
-    S4_2 = MatrixGroupElement(operator_S(axis_2,4,basis),
-                              operator_inv = operator_S(axis_2,-4,basis),
-                              cycle_order = 4)
+    S4_2 = MatrixGroupElement(operator_S(axis_2,4,basis))
     
     generators = [S4_1,S4_2]
 
@@ -254,14 +246,10 @@ def _Th_group(basis = None):
    
     ## Define generators
     axis_1 = [1,1,1]
-    C3 = MatrixGroupElement(operator_C(axis_1,3,basis),
-                            operator_inv = operator_S(axis_1,-3,basis),
-                            cycle_order = 3)
+    C3 = MatrixGroupElement(operator_C(axis_1,3,basis))
 
     axis_2 = [0,0,1]
-    Mh = MatrixGroupElement(operator_M(axis_2,basis),
-                            operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2)
+    Mh = MatrixGroupElement(operator_M(axis_2,basis))
     
     generators = [C3,Mh]
 
@@ -285,14 +273,10 @@ def _O_group(basis = None):
    
     ## Define generators
     axis_1 = [0,0,1]
-    C4_1 = MatrixGroupElement(operator_C(axis_1,4,basis),
-                              operator_inv = operator_C(axis_1,-4,basis),
-                              cycle_order = 4)
+    C4_1 = MatrixGroupElement(operator_C(axis_1,4,basis))
 
     axis_2 = [1,0,0]
-    C4_2 = MatrixGroupElement(operator_C(axis_2,4,basis),
-                              operator_inv = operator_C(axis_2,4,basis),
-                              cycle_order = 4)
+    C4_2 = MatrixGroupElement(operator_C(axis_2,4,basis))
     
     generators = [C4_1,C4_2]
 
@@ -316,14 +300,10 @@ def _Oh_group(basis = None):
    
     ## Define generators
     axis_1 = [1,1,1]
-    S6 = MatrixGroupElement(operator_S(axis_1,6,basis),
-                            operator_inv = operator_S(axis_1,-6,basis),
-                            cycle_order = 6)
+    S6 = MatrixGroupElement(operator_S(axis_1,6,basis))
 
     axis_2 = [0,0,1]
-    S4 = MatrixGroupElement(operator_S(axis_2,4,basis),
-                            operator_inv = operator_S(axis_2,4,basis),
-                            cycle_order = 4)
+    S4 = MatrixGroupElement(operator_S(axis_2,4,basis))
     
     generators = [S6,S4]
 
@@ -352,14 +332,10 @@ def _I_group(basis = None):
     ## Define generators
     phi = (1 + np.sqrt(5))/2
     axis_1 = [0,1,phi]
-    C5_1 = MatrixGroupElement(operator_C(axis_1,5,basis),
-                              operator_inv = operator_C(axis_1,-5,basis),
-                              cycle_order = 5)
+    C5_1 = MatrixGroupElement(operator_C(axis_1,5,basis))
 
     axis_2 = [phi,0,1]
-    C5_2 = MatrixGroupElement(operator_C(axis_2,5,basis),
-                              operator_inv = operator_C(axis_2,5,basis),
-                              cycle_order = 5)
+    C5_2 = MatrixGroupElement(operator_C(axis_2,5,basis))
     
     generators = [C5_1,C5_2]
 
@@ -388,14 +364,10 @@ def _Ih_group(basis = None):
     ## Define generators
     phi = (1 + np.sqrt(5))/2
     axis_1 = [0,1,phi]
-    S10_1 = MatrixGroupElement(operator_S(axis_1,10,basis),
-                               operator_inv = operator_S(axis_1,-10,basis),
-                               cycle_order = 10)
+    S10_1 = MatrixGroupElement(operator_S(axis_1,10,basis))
 
     axis_2 = [phi,0,1]
-    S10_2 = MatrixGroupElement(operator_S(axis_2,10,basis),
-                               operator_inv = operator_S(axis_2,10,basis),
-                               cycle_order = 10)
+    S10_2 = MatrixGroupElement(operator_S(axis_2,10,basis))
     
     generators = [S10_1,S10_2]
 
@@ -435,9 +407,7 @@ def _Cn_group(n, axis = None, basis = None):
         axis = [0,0,1]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis,n,basis),
-                            operator_inv = operator_C(axis,-n,basis),
-                            cycle_order = n)
+    Cn = MatrixGroupElement(operator_C(axis,n,basis))
 
     generators = [Cn]
     name = f'C{n}'
@@ -485,13 +455,9 @@ def _Cnv_group(n, axes = None, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
-                            operator_inv = operator_C(axis_1,-n,basis),
-                            cycle_order = n)
+    Cn = MatrixGroupElement(operator_C(axis_1,n,basis))
 
-    Mv = MatrixGroupElement(operator_M(axis_2,basis),
-                            operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2)
+    Mv = MatrixGroupElement(operator_M(axis_2,basis))
 
     generators = [Cn, Mv]
     name = f'C{n}v'
@@ -532,13 +498,9 @@ def _Cnh_group(n, axis = None, basis = None):
         axis = [0,0,1]
     
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis,n,basis),
-                            operator_inv = operator_C(axis,-n,basis),
-                            cycle_order = n)
+    Cn = MatrixGroupElement(operator_C(axis,n,basis))
 
-    Mh = MatrixGroupElement(operator_M(axis,basis),
-                            operator_inv = operator_M(axis,basis),
-                            cycle_order = 2)
+    Mh = MatrixGroupElement(operator_M(axis,basis))
 
     generators = [Cn, Mh]
     name = f'C{n}h'
@@ -584,9 +546,7 @@ def _Sn_group(n, axis = None, basis = None):
         axis = [0,0,1]
 
     ## Define generators
-    Sn = MatrixGroupElement(operator_S(axis,n,basis),
-                            operator_inv = operator_S(axis,-n,basis),
-                            cycle_order = n)
+    Sn = MatrixGroupElement(operator_S(axis,n,basis))
 
     generators = [Sn]
     name = f'S{n}'
@@ -633,13 +593,9 @@ def _Dn_group(n, axes = None, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
-                            operator_inv = operator_C(axis_1,-n,basis),
-                            cycle_order = n)
+    Cn = MatrixGroupElement(operator_C(axis_1,n,basis))
 
-    C2 = MatrixGroupElement(operator_C(axis_2,2,basis),
-                            operator_inv = operator_C(axis_2,2,basis),
-                            cycle_order = 2)
+    C2 = MatrixGroupElement(operator_C(axis_2,2,basis))
 
     generators = [Cn, C2]
     name = f'D{n}'
@@ -687,13 +643,9 @@ def _Dnd_group(n, axes = None, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    S2n = MatrixGroupElement(operator_S(axis_1,2*n,basis),
-                             operator_inv = operator_S(axis_1,-2*n,basis),
-                             cycle_order = 2*n)
+    S2n = MatrixGroupElement(operator_S(axis_1,2*n,basis))
 
-    Mv = MatrixGroupElement(operator_M(axis_2,basis),
-                            operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2)
+    Mv = MatrixGroupElement(operator_M(axis_2,basis))
 
     generators = [S2n, Mv]
     name = f'D{n}d'
@@ -740,17 +692,11 @@ def _Dnh_group(n, axes = None, basis = None):
         axis_2 = [0,1,0]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis_1,n,basis),
-                            operator_inv = operator_C(axis_1,-n,basis),
-                            cycle_order = n)
+    Cn = MatrixGroupElement(operator_C(axis_1,n,basis))
 
-    Mv = MatrixGroupElement(operator_M(axis_2,basis),
-                            operator_inv = operator_M(axis_2,basis),
-                            cycle_order = 2)
+    Mv = MatrixGroupElement(operator_M(axis_2,basis))
 
-    Mh = MatrixGroupElement(operator_M(axis_1,basis),
-                            operator_inv = operator_M(axis_1,basis),
-                            cycle_order = 2)
+    Mh = MatrixGroupElement(operator_M(axis_1,basis))
 
     generators = [Cn, Mv, Mh]
     name = f'D{n}h'

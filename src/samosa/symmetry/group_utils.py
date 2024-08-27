@@ -17,6 +17,9 @@ from samosa.api.api_utils import is_None, not_None
 from samosa.api.api_utils import check_type, check_len, check_shape
 from samosa.api.api_utils import custom_format_warning
 
+from samosa.symmetry.representations import GroupElement, IdentityGroupElement
+from samosa.symmetry.representations import PointerGroupElement
+
 import warnings
 warnings.formatwarning = custom_format_warning
 """
@@ -81,30 +84,55 @@ class Group:
         self.character_table = character_table
         self.irreps = irreps
 
-    #TODO
     def calculate_elements(self):
         """
         Calculates all group elements from the list of generators.
         """
+        dim = self.generators[0].dim
+        self.__elements = [IdentityGroupElement(dim=dim)]
 
-        if not_None(self.elements): 
-            return self.elements
+        for e in self.__elements:
+            for g in self.generators:
+                new_element = g*e
+                if not _element_in_list(new_element, self.__elements) and\
+                   not new_element.is_identity:
+                    self.__elements += [new_element]
 
-        else:
-            element_list = [IdentityGroupElement(dim=self.generators[0].dim)]
+        self.order = len(self.elements)
 
-            for e in element_list:
-                for g in generator_list:
-                    new_element = g*e
-                    if not _element_in_list(new_element,element_list) and\
-                       not new_element.is_identity:
-                        element_list += [new_element]
-
-            return element_list
+        return self.elements
     
     #TODO
     def calculate_classes(self):
-        pass
+        """
+        Sorts group elements into conjugate classes.
+        """
+        if is_None(self.elements):
+            element_list = list(self.calculate_elements())
+        else:
+            element_list = list(self.elements)
+
+        self.__conjugate_classes = []
+        
+        for i in range(self.order):
+            e = element_list[i]
+            
+            if e == 0:
+                continue
+            else:
+                class_ = [e]
+                element_list[i] = 0
+
+                for h in self.elements:
+                    e_h = h.inv*e*h
+
+                    if not i in class_:
+                        class_ += [i]
+                        element_list[i] = 0
+
+            self.__conjugate_classes += [class_]
+
+        return self.conjugate_classes
 
     def calculate_orbit(self, p0, as_pointer=False):
         """
@@ -515,7 +543,7 @@ class Group:
     def elements(self):
         """
         Returns a list of group elements.
-        """
+        """    
         return self.__elements
 
     @elements.setter
@@ -523,7 +551,7 @@ class Group:
         self.__check_elements(val)
         self.__elements = val
 
-        if not_None(val) and is_None(self.order):
+        if not_None(val):
             self.order = len(self.elements)
 
     @property
