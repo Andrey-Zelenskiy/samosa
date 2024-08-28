@@ -136,6 +136,14 @@ class IdentityGroupElement(GroupElement):
                              "IdentityGroupElement with unknown "
                              "dimensionality")
         return self.dim
+    
+    @property
+    def sign(self):
+        """
+        Returns +1.
+        """
+        return 1 
+
 
     def __mul__(self, element):
         """
@@ -158,6 +166,12 @@ class IdentityGroupElement(GroupElement):
             return element.dim == self.dim
         else:
             return False
+
+    def __hash__(self):
+        """
+        Allows to hash the object.
+        """
+        return hash(str(self))
 
     # Output summary functions
     def __str__(self):
@@ -205,8 +219,8 @@ class MatrixGroupElement(GroupElement):
         GroupElement.__init__(self)
 
         # Numerical precision for rounding error
-        self.__eps_r = 1e-10
-        self.__log_eps_r = 10
+        self.__eps_r = 1e-8
+        self.__log_eps_r = 8
 
         # Numerical precision for printing
         self.__log_eps_p = 4
@@ -221,6 +235,7 @@ class MatrixGroupElement(GroupElement):
         self.__orthogonal_basis = None
         self.__operator_inverse = None
         self.__trace = None
+        self.__sign = None
 
         # Type checks
         check_type('operator', operator, ArrayType, IdentityGroupElement)
@@ -238,6 +253,7 @@ class MatrixGroupElement(GroupElement):
             self.__orthogonal_basis = True
             self.__operator_inverse = None
             self.__trace = self.dim
+            self.__sign = 1
 
         else:
             operator = np.round(np.array(operator), self.__log_eps_r)
@@ -315,9 +331,9 @@ class MatrixGroupElement(GroupElement):
         Returns the cycle order of the matrix operator 
         (n for which operator^n = identity).
         """
-        if is_None():
+        if is_None(self.__cycle_order):
             self.__cycle_order = self.get_cycle_order(self.operator, 
-                                                            self.__eps_r)
+                                                      self.__eps_r)
 
         return self.__cycle_order
 
@@ -417,6 +433,16 @@ class MatrixGroupElement(GroupElement):
     def trace(self):
         self.__trace = None
 
+    @property
+    def sign(self):
+        """
+        Returns +1 if the operation is proper and -1 if it is improper.
+        """
+        if is_None(self.__sign):
+            self.__sign = np.sign(np.linalg.det(self.operator))
+
+        return self.__sign
+
     def __mul__(self, element):
         """
         Shortcut for calculating (left) group element action.
@@ -502,6 +528,12 @@ class MatrixGroupElement(GroupElement):
                           f"{type(element).__name__} yields False by default.")
             return False
 
+    def __hash__(self):
+        """
+        Allows to hash the object.
+        """
+        return hash(tuple(np.round(self.operator.flatten(), self.__log_eps_p)))
+
     # Supplementary functions
     @staticmethod
     def get_cycle_order(operator, eps):
@@ -569,6 +601,7 @@ class PermutationGroupElement(GroupElement):
         self.__cycle_order = None
         self.__permutation_inverse = None
         self.__trace = None
+        self.__sign = None
 
         # Type checks
         check_type('permutation', permutation, dict, ArrayType,
@@ -586,6 +619,7 @@ class PermutationGroupElement(GroupElement):
             self.__cycle_order = 1
             self.__permutation_inverse = self.__permutation
             self.__trace = self.dim
+            self.__sign = 1
 
         elif isinstance(permutation, dict):
             if min(permutation.keys()) < 1:
@@ -689,6 +723,19 @@ class PermutationGroupElement(GroupElement):
 
         return self.__trace
 
+    @property
+    def sign(self):
+        """
+        Returns +1 if the permutation is even and -1 if it is odd.
+        """
+        if is_None(self.__sign):
+            if sum((len(c) - 1 for c in self.permutation_cycles), 0) % 2:
+                self.__sign = -1
+            else:
+                self.__sign = 1
+
+        return self.__sign
+
     def __mul__(self, element):
         """
         Shortcut for calculating (left) group element action.
@@ -748,7 +795,6 @@ class PermutationGroupElement(GroupElement):
         """
         Right permutation action is only defined for Identity.
         """
-
         raise TypeError(f"Cannot multiply objects of type "
                         f"{type(element).__name__} and "
                         f"{self.__class__.__name__}.")
@@ -757,7 +803,6 @@ class PermutationGroupElement(GroupElement):
         """
         Determines if two permutations are the same.
         """
-
         # Comparison of two PermutationGroupElements
         if isinstance(element, PermutationGroupElement):
             return self.permutation == element.permutation
@@ -772,6 +817,12 @@ class PermutationGroupElement(GroupElement):
                           f"{self.__class__.__name__} with "
                           f"{type(element).__name__} yields False by default.")
             return False
+
+    def __hash__(self):
+        """
+        Allows to hash the object.
+        """
+        return hash(self.permutation)
 
     # Supplementary functions
     @staticmethod

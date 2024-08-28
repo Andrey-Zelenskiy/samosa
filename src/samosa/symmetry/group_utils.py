@@ -83,54 +83,70 @@ class Group:
         self.elements = elements
         self.character_table = character_table
         self.irreps = irreps
+        
+        self.__conjigate_classes = None
+        self.__n_classes = None
 
     def calculate_elements(self):
         """
         Calculates all group elements from the list of generators.
         """
         dim = self.generators[0].dim
-        self.__elements = [IdentityGroupElement(dim=dim)]
+        self.__elements = list(self.generators) 
 
         for e in self.__elements:
             for g in self.generators:
                 new_element = g*e
-                if not _element_in_list(new_element, self.__elements) and\
-                   not new_element.is_identity:
+                if not _element_in_list(new_element, self.__elements):
                     self.__elements += [new_element]
 
         self.order = len(self.elements)
 
         return self.elements
     
-    #TODO
     def calculate_classes(self):
         """
         Sorts group elements into conjugate classes.
         """
         if is_None(self.elements):
-            element_list = list(self.calculate_elements())
-        else:
-            element_list = list(self.elements)
+            self.calculate_elements()
 
-        self.__conjugate_classes = []
+        element_list = list(self.elements)
+        element_index = dict(zip(element_list, np.arange(self.order)))
         
-        for i in range(self.order):
-            e = element_list[i]
-            
-            if e == 0:
-                continue
+        order_list = [[], []]
+        conjugate_classes = [[], []]
+
+        while len(element_list) > 0:
+            e = element_list[0]
+            e_sign = e.sign
+            e_order = e.cycle_order
+
+            class_ = [element_index[e]]
+            element_list.remove(e)
+
+            for h in self.elements:
+                e_h = h.inv*e*h
+
+                if not element_index[e_h] in class_:
+                    class_ += [element_index[e_h]]
+                    element_list.remove(e_h)
+
+            if e_sign == 1:
+                order_list[0] += [e_order]
+                conjugate_classes[0] += [class_]
             else:
-                class_ = [e]
-                element_list[i] = 0
+                order_list[1] += [e_order]
+                conjugate_classes[1] += [class_]
 
-                for h in self.elements:
-                    e_h = h.inv*e*h
+        self.__n_classes = len(conjugate_classes[0]) + len(conjugate_classes[1])
+        self.__conjugate_classes = []
 
-                    if not i in class_:
-                        class_ += [i]
-                        element_list[i] = 0
+        for i, class_list in enumerate(conjugate_classes):
+            sort_ind = np.argsort(np.array(order_list[i]))
 
-            self.__conjugate_classes += [class_]
+            for j in range(len(class_list)):
+                self.__conjugate_classes += [conjugate_classes[i][sort_ind[j]]]
 
         return self.conjugate_classes
 
@@ -560,6 +576,13 @@ class Group:
         Returns partition of group elements into conjugate classes. 
         """
         return self.__conjugate_classes
+
+    @property
+    def n_classes(self):
+        """
+        Returns the number of conjugate classes.
+        """
+        return self.__n_classes
 
     @property
     def character_table(self):

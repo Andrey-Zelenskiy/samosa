@@ -172,7 +172,8 @@ def point_group(pg_symbol, basis = None, *axes):
 3D point groups
 -------------------------------------------------------------------------------
 """
-
+#TODO group elements should be initialized from input data to reduce the amount
+# of calculations (cycle orders, inverses, etc)
 # Polyhedral point groups
 
 def _T_group(basis = None):
