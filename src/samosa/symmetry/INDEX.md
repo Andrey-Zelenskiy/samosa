@@ -25,8 +25,8 @@ orbit/stabilizer chain;
 - [ ] method to convert from pointers to group elements;
 - [ ] method to change generator representation to permutations;
 - [ ] group character table;
-- [ ] method for generating all group elements;
-- [ ] method for finding conjugate classes;
+- [x] method for generating all group elements;
+- [x] method for finding conjugate classes;
 - [ ] method for direct product of groups;
 
 ## MatrixGroupElement (in `group_utils.py`)
