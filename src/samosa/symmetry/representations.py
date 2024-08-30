@@ -746,7 +746,9 @@ class PermutationGroupElement(GroupElement):
         Returns +1 if the permutation is even and -1 if it is odd.
         """
         if is_None(self.__sign):
-            if sum((len(c) - 1 for c in self.permutation_cycles), 0) % 2:
+            if self.is_identity:
+                self.__sign = 1
+            elif sum((len(c) - 1 for c in self.permutation_cycles), 0) % 2:
                 self.__sign = -1
             else:
                 self.__sign = 1
@@ -1114,7 +1116,7 @@ class PointerGroupElement(GroupElement):
         """
         if is_None(self.__pointer_inverse):
             pointer_inverse = []
-            for p in self.pointer:
+            for p in self.pointer[::-1]:
                 pointer_inverse += [(p[0], \
                                      _mod(-p[1], self.generator_cycles[p[0]]))]
 
@@ -1283,7 +1285,7 @@ class PointerGroupElement(GroupElement):
             # Check if two pointers have the same expression
             test_pointer = self.pointer == element.pointer
 
-            return test_dim*test_n*test_cycles*test*pointer
+            return test_dim*test_n*test_cycles*test_pointer
 
         # Comparison with IdentityGroupElement
         elif isinstance(element, IdentityGroupElement):

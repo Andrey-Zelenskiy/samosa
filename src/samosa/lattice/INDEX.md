@@ -11,24 +11,13 @@ like with the point groups, we can define a quick reference to some familiar
 lattices (chain, square, hexagonal, cubic, bcc, fcc).
 
 
-## TODO
+## General structure of the class
 
-[ ] Space group symmetry is provided either as an integer (as per ITC vol. A) or
-as a combination of lattice type and point group.
-[ ] Wyckoff position is either calculated from a single coordinate or selected 
-from the list.
-[ ] 
-
-
-We would like to implement adjacency function in the `lattice` class in order 
-to calculate the coordinates of the nearest-neighbour bonds. 
-To do this properly, one has to know the generators of the space group.
-Rather than tabulating them, the easier thing is to just require them as input.
-From there the procedure is
-
-- Calculate the stabilizer of a single point: this is the point group of the 
-site;
-- Determine nearest-neighbours along the principle lattice directions;
-- Calculate all nearest neighbours using orbit/stabilizer search;
-- Separate independent neighbour groups and determine bond point groups.
-
+- The default initializer for the `Lattice` object takes in the space group 
+number and a single coordinate of the lattice site;
+- Additionally, we should have `classmethod` initializers that allow us to
+initialize the class from Wyckoff position symbol, ...;
+- The initializer should determine the site stabilizer point group, positions 
+of nearest-neighbours, and bond stabilizer point group;
+- For simulations, we need methods that generate sites inside of a single unit
+cell, as well as a lattice of a prescribed size;

@@ -18,6 +18,7 @@ from samosa.api.api_utils import check_type, check_len, check_shape
 from samosa.api.api_utils import custom_format_warning
 
 from samosa.symmetry.representations import GroupElement, IdentityGroupElement
+from samosa.symmetry.representations import PermutationGroupElement
 from samosa.symmetry.representations import PointerGroupElement
 
 import warnings
@@ -220,11 +221,11 @@ class Group:
         orbit = [p0]
         p_ind = {self.__hashed(p0) : 0}
 
+        eye_element = IdentityGroupElement(self.generators[0].dim)
+
         if as_pointer:
-            eye_element = PointerGroupElement([],
-                                              generator_list=self.generators)
-        else:
-            eye_element = IdentityGroupElement()
+            eye_element = PointerGroupElement.from_generators(eye_element, 
+                                                              self.generators)
 
         permutations = [{} for i in range(len(self.generators))]
         transporter_dict = {self.__hashed(p0) : eye_element}
@@ -287,13 +288,12 @@ class Group:
                     if not _element_in_list(stabilizer, stabilizer_list):
                         stabilizer_list += [stabilizer]
 
-                permutations[ind_g][p_ind[p_h]] = p_ind[q_h]
+                permutations[ind_g][p_ind[p_h] + 1] = p_ind[q_h] + 1
 
         permutations = [PermutationGroupElement(p) for p in permutations]
 
         return orbit, permutations, transporter_dict, stabilizer_list
 
-    #TODO
     def as_permutations(self, point):
         """
         Changes the basis of the group elements to permutations of the 
@@ -305,7 +305,15 @@ class Group:
         Returns:
         None, updates group attributes to the new permutation basis.
         """
-        pass
+        out = self.calculate_orbit(point)
+
+        if not_None(self.elements):
+            del self.elements
+            self.generators = out[1]
+            element_list = self.calculate_elements(store_data=True)
+
+        else:
+            self.generators = out[1]
 
     # Method for filtering out redundant generators
     @staticmethod
@@ -331,14 +339,15 @@ class Group:
             filtered_generators = candidate_list
 
         else:
-            blacklist = [IdentityGroupElement()]
+            dim = generators[0].dim
+            blacklist = [IdentityGroupElement(dim)]
 
             for g in candidate_list:
                 # Check if the generator is related to the known generators
                 if not _element_in_list(g, blacklist):
 
                     # Update self.__generators and blacklist
-                    extended_element = [IdentityGroupElement()]\
+                    extended_element = [IdentityGroupElement(dim)]\
                                          + filtered_generators
 
                     for h in extended_element:
@@ -563,6 +572,10 @@ class Group:
          self.__check_order(val)
          self.__order = val
 
+    @order.deleter
+    def order(self):
+        self.__order = None
+
     @property
     def elements(self):
         """
@@ -577,6 +590,10 @@ class Group:
 
         if not_None(val):
             self.order = len(self.elements)
+
+    @elements.deleter
+    def elements(self):
+        self.__elements = None
 
     @property
     def conjugate_classes(self):
@@ -603,6 +620,10 @@ class Group:
     def character_table(self, val):
         self.__character_table = val
 
+    @character_table.deleter
+    def character_table(self):
+        self.__character_table = None
+
     @property
     def irreps(self):
         """
@@ -613,6 +634,10 @@ class Group:
     @irreps.setter
     def irreps(self, val):
         self.__irreps = val
+
+    @irreps.deleter
+    def irreps(self):
+        self.__irreps = None
 
     def __str__(self):
         """
@@ -639,10 +664,10 @@ class Group:
                               f"\n{self.conjugate_classes};"
 
         if not_None(self.character_table):
-            summary_string += f"\n\nCharacter table: {self.character_table};"
+            summary_string += f"\n\nCharacter table:\n{self.character_table};"
         
         if not_None(self.irreps):
-            summary_string += f"\n\nIrreducible representations: {self.irreps};"
+            summary_string += f"\n\nIrreducible representations:\n{self.irreps};"
 
         return summary_string
 
