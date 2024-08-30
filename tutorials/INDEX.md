@@ -20,16 +20,22 @@ used to represent group elements: `MatrixGroupElement` and
 - [ ] Element trace;
 
 ### `point_group.ipynb` - create and interact with 3D point groups.
-### STATUS: NOT IMPLEMENTED
+### STATUS: IMPLEMENTED
 
 This notebook demonstrates the properties of a `Group` object using familiar 
 3D point groups.
 
+### TODOs
+- [ ] Representation theory;
+- [ ] Orbit/stabilizers calculations;
+
 ### `custom_group.ipynb` - create your own group.
-### STATUS: NOT IMPLEMENTED
+### STATUS: IMPLEMENTED
 
 This tutorial shows a procedure for initializing a new `Group` object from 
 scratch.
+
+### TO BE MERGED WITH `point_group.ipynb`
 
 ## `samosa.database` module tutorials
 

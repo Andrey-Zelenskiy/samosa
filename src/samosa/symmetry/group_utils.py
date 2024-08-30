@@ -84,71 +84,79 @@ class Group:
         self.character_table = character_table
         self.irreps = irreps
         
-        self.__conjigate_classes = None
+        self.__conjugate_classes = None
         self.__n_classes = None
 
-    def calculate_elements(self):
+    def calculate_elements(self, store_data=False):
         """
         Calculates all group elements from the list of generators.
+
+        Arguments:
+        store_data - bool, (default=False), if True, stores the calculated 
+                     elements as self.elements.
         """
         dim = self.generators[0].dim
-        self.__elements = list(self.generators) 
+        element_list = list(self.generators) 
 
-        for e in self.__elements:
+        for e in element_list:
             for g in self.generators:
                 new_element = g*e
-                if not _element_in_list(new_element, self.__elements):
-                    self.__elements += [new_element]
+                if not _element_in_list(new_element, element_list):
+                    element_list += [new_element]
 
-        self.order = len(self.elements)
+        if store_data == True:
+            self.__elements = element_list
+            self.order = len(self.elements)
+            return self.elements
 
-        return self.elements
+        else:
+            return element_list
     
-    def calculate_classes(self):
+    def calculate_classes(self, store_data=False):
         """
         Sorts group elements into conjugate classes.
+
+        Arguments:
+        store_data - bool, (default=False), if True, stores the calculated 
+                     elements as self.elements.
         """
         if is_None(self.elements):
-            self.calculate_elements()
+            element_list = self.calculate_elements(store_data)
+        else:
+            element_list = list(self.elements)
 
-        element_list = list(self.elements)
-        element_index = dict(zip(element_list, np.arange(self.order)))
+        order = len(element_list)
+
+        members = list(element_list)
+        element_index = dict(zip(element_list, np.arange(order)))
         
-        order_list = [[], []]
-        conjugate_classes = [[], []]
+        conjugate_classes = {}
 
-        while len(element_list) > 0:
-            e = element_list[0]
+        while len(members) > 0:
+            e = members[0]
             e_sign = e.sign
-            e_order = e.cycle_order
+            e_trace = e.trace
 
             class_ = [element_index[e]]
-            element_list.remove(e)
+            members.remove(e)
 
-            for h in self.elements:
+            for h in element_list:
                 e_h = h.inv*e*h
 
                 if not element_index[e_h] in class_:
                     class_ += [element_index[e_h]]
-                    element_list.remove(e_h)
+                    members.remove(e_h)
 
-            if e_sign == 1:
-                order_list[0] += [e_order]
-                conjugate_classes[0] += [class_]
-            else:
-                order_list[1] += [e_order]
-                conjugate_classes[1] += [class_]
+            conjugate_classes[tuple(class_)] = {"sign" : e_sign, 
+                                                "trace" : e_trace}
+        
+        if store_data == True:
+            self.__conjugate_classes = conjugate_classes
+            self.__n_classes = len(self.conjugate_classes.keys())
+            return self.elements, self.conjugate_classes
 
-        self.__n_classes = len(conjugate_classes[0]) + len(conjugate_classes[1])
-        self.__conjugate_classes = []
-
-        for i, class_list in enumerate(conjugate_classes):
-            sort_ind = np.argsort(np.array(order_list[i]))
-
-            for j in range(len(class_list)):
-                self.__conjugate_classes += [conjugate_classes[i][sort_ind[j]]]
-
-        return self.conjugate_classes
+        else:
+            return element_list, conjugate_classes
 
     def calculate_orbit(self, p0, as_pointer=False):
         """
@@ -611,7 +619,7 @@ class Group:
         Provides user-friendly summary of the group container.
         """
 
-        generators_str = "\n".join([str(g) for g in self.generators])
+        generators_str = "\n\n".join([str(g) for g in self.generators])
 
         summary_string = ""
         if not_None(self.name):
@@ -623,10 +631,15 @@ class Group:
             summary_string += f"\n\nGroup order: {self.order};"
 
         if not_None(self.elements):
-            summary_string += f"\n\nGroup elements: {self.elements};"
+            elements_str = "\n\n".join([str(e) for e in self.elements])
+            summary_string += f"\n\nGroup elements:\n{elements_str};"
+
+        if not_None(self.conjugate_classes):
+            summary_string += f"\n\nConjugate classes:" +\
+                              f"\n{self.conjugate_classes};"
 
         if not_None(self.character_table):
-            summary_string += f"\n\nGroup characters: {self.character_table};"
+            summary_string += f"\n\nCharacter table: {self.character_table};"
         
         if not_None(self.irreps):
             summary_string += f"\n\nIrreducible representations: {self.irreps};"

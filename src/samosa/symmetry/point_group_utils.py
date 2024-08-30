@@ -16,15 +16,17 @@ from samosa.symmetry.representations import MatrixGroupElement
 
 from samosa.api.api_utils import not_None, check_type, check_len, ArrayType
 
-def point_group(pg_symbol, basis = None, *axes):
+def point_group(pg_symbol, *axes, basis=None):
     """
     Returns the 3D point group given its Schoenflies symbol.   
     
     Arguments:
     pg_symbol     - str, Schoenflies symbol of the point group;
-    basis         - ArrayType (optional, default None), if not None, specifies
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis;
+
     axes          - ArrayType, in the case of axial groups, provides the 
                     primary and secondary transformation axes:
                     if a single axis is given, it defines the primary rotation 
@@ -131,13 +133,13 @@ def point_group(pg_symbol, basis = None, *axes):
         if pg_type == 'C':
             ## Cyclic proper rotation point groups
             if pg_symbol_tail == '':
-                return _Cn_group(n,axes,basis)
+                return _Cn_group(n, axes, basis)
             
             elif pg_symbol_tail == 'v':
-                return _Cnv_group(n,axes,basis)
+                return _Cnv_group(n, axes, basis)
 
             elif pg_symbol_tail == 'h':
-                return _Cnh_group(n,axes,basis)
+                return _Cnh_group(n, axes, basis)
 
             else:
                 raise symbol_error
@@ -145,7 +147,7 @@ def point_group(pg_symbol, basis = None, *axes):
         elif pg_type == 'S':
             ## Cyclic improper rotation point groups
             if pg_symbol_tail == '':
-                return _Sn_group(n,axes,basis)
+                return _Sn_group(n, axes, basis)
 
             else:
                 raise symbol_error
@@ -153,13 +155,13 @@ def point_group(pg_symbol, basis = None, *axes):
         elif pg_type == 'D':
             ## Dihedral point groups
             if pg_symbol_tail == '':
-                return _Dn_group(n,axes,basis)
+                return _Dn_group(n, axes, basis)
             
             elif pg_symbol_tail == 'd':
-                return _Dnd_group(n,axes,basis)
+                return _Dnd_group(n, axes, basis)
             
             elif pg_symbol_tail == 'h':
-                return _Dnh_group(n,axes,basis)
+                return _Dnh_group(n, axes, basis)
             
             else:
                 raise symbol_error
@@ -176,14 +178,14 @@ def point_group(pg_symbol, basis = None, *axes):
 # of calculations (cycle orders, inverses, etc)
 # Polyhedral point groups
 
-def _T_group(basis = None):
+def _T_group(basis=None):
     """
     Tetrahedral rotational point group. 
 
     Selected generators are C3,[111], and C2,[001].
     
     Arguments:
-    basis         - ArrayType (optional, default None), if not None, specifies
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -192,25 +194,31 @@ def _T_group(basis = None):
     """
    
     ## Define generators
-    axis_1 = [1,1,1]
-    C3 = MatrixGroupElement(operator_C(axis_1,3,basis))
+    axis_1 = [1, 1, 1]
+    C3 = MatrixGroupElement.input_args(operator_C(axis_1, 3, basis),
+                                       cycle_order = 3,
+                                       operator_inverse = \
+                                                operator_C(axis_1, -3, basis))
 
-    axis_2 = [0,0,1]
-    C2 = MatrixGroupElement(operator_C(axis_2,2,basis))
+    axis_2 = [0, 0, 1]
+    C2 = MatrixGroupElement.input_args(operator_C(axis_2, 2, basis),
+                                       cycle_order = 2,
+                                       operator_inverse = \
+                                                operator_C(axis_2, 2, basis))
     
-    generators = [C3,C2]
+    generators = [C3, C2]
 
-    return Group(generators,name='T',order=12) 
+    return Group(generators, name='T', order=12) 
 
 
-def _Td_group(basis = None):
+def _Td_group(basis=None):
     """
     Tetrahedral point group.
 
     Selected generators are S4,[001], and S4,[100].
     
     Arguments:
-    basis         - ArrayType (optional, default None), if not None, specifies
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -219,25 +227,31 @@ def _Td_group(basis = None):
     """
    
     ## Define generators
-    axis_1 = [0,0,1]
-    S4_1 = MatrixGroupElement(operator_S(axis_1,4,basis))
+    axis_1 = [0, 0, 1]
+    S4_1 = MatrixGroupElement.input_args(operator_S(axis_1, 4, basis),
+                                         cycle_order = 4,
+                                         operator_inverse = \
+                                                operator_S(axis_1, -4, basis))
 
-    axis_2 = [1,0,0]
-    S4_2 = MatrixGroupElement(operator_S(axis_2,4,basis))
+    axis_2 = [1, 0, 0]
+    S4_2 = MatrixGroupElement.input_args(operator_S(axis_2, 4, basis),
+                                         cycle_order = 4,
+                                         operator_inverse = \
+                                                operator_S(axis_2, -4, basis))
     
-    generators = [S4_1,S4_2]
+    generators = [S4_1, S4_2]
 
-    return Group(generators,name='Td',order=24) 
+    return Group(generators, name='Td', order=24) 
 
 
-def _Th_group(basis = None):
+def _Th_group(basis=None):
     """
     Tetrahedral rotation-inversion point group.
 
     Selected generators are C3,[111], and Mh,[001]. 
     
     Arguments:
-    basis         - ArrayType (optional, default None), if not None, specifies
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -246,25 +260,31 @@ def _Th_group(basis = None):
     """
    
     ## Define generators
-    axis_1 = [1,1,1]
-    C3 = MatrixGroupElement(operator_C(axis_1,3,basis))
+    axis_1 = [1, 1, 1]
+    C3 = MatrixGroupElement.input_args(operator_C(axis_1, 3, basis),
+                                         cycle_order = 3,
+                                         operator_inverse = \
+                                                operator_C(axis_1, -3, basis))
 
-    axis_2 = [0,0,1]
-    Mh = MatrixGroupElement(operator_M(axis_2,basis))
+    axis_2 = [0, 0, 1]
+    Mh = MatrixGroupElement.input_args(operator_M(axis_2, basis),
+                                       cycle_order = 2,
+                                       operator_inverse = \
+                                                operator_M(axis_2, basis))
     
-    generators = [C3,Mh]
+    generators = [C3, Mh]
 
-    return Group(generators,name='Th',order=24) 
+    return Group(generators, name='Th', order=24) 
 
 
-def _O_group(basis = None):
+def _O_group(basis=None):
     """
     Octahedral rotational point group. 
 
     Selected generators are C4,[001], and C4,[100].
     
     Arguments:
-    basis         - ArrayType (optional, default None), if not None, specifies
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -273,25 +293,31 @@ def _O_group(basis = None):
     """
    
     ## Define generators
-    axis_1 = [0,0,1]
-    C4_1 = MatrixGroupElement(operator_C(axis_1,4,basis))
+    axis_1 = [0, 0, 1]
+    C4_1 = MatrixGroupElement.input_args(operator_C(axis_1, 4, basis),
+                                         cycle_order = 4,
+                                         operator_inverse = \
+                                                operator_C(axis_1, -4, basis))
 
-    axis_2 = [1,0,0]
-    C4_2 = MatrixGroupElement(operator_C(axis_2,4,basis))
+    axis_2 = [1, 0, 0]
+    C4_2 = MatrixGroupElement.input_args(operator_C(axis_2, 4, basis),
+                                         cycle_order = 4,
+                                         operator_inverse = \
+                                                operator_C(axis_2, -4, basis))
     
-    generators = [C4_1,C4_2]
+    generators = [C4_1, C4_2]
 
-    return Group(generators,name='O',order=24) 
+    return Group(generators, name='O', order=24) 
 
 
-def _Oh_group(basis = None):
+def _Oh_group(basis=None):
     """
     Octahedral point group. 
 
     Selected generators are S6,[111], and S4,[001].
     
     Arguments:
-    basis         - ArrayType (optional, default None), if not None, specifies
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -300,18 +326,24 @@ def _Oh_group(basis = None):
     """
    
     ## Define generators
-    axis_1 = [1,1,1]
-    S6 = MatrixGroupElement(operator_S(axis_1,6,basis))
+    axis_1 = [1, 1, 1]
+    S6 = MatrixGroupElement.input_args(operator_S(axis_1, 6, basis),
+                                       cycle_order = 6,
+                                       operator_inverse = \
+                                                operator_S(axis_1, -6, basis))
 
-    axis_2 = [0,0,1]
-    S4 = MatrixGroupElement(operator_S(axis_2,4,basis))
+    axis_2 = [0, 0, 1]
+    S4 = MatrixGroupElement.input_args(operator_S(axis_2, 4, basis),
+                                       cycle_order = 4,
+                                       operator_inverse = \
+                                                operator_S(axis_2, -4, basis))
     
-    generators = [S6,S4]
+    generators = [S6, S4]
 
-    return Group(generators,name='Oh',order=48) 
+    return Group(generators, name='Oh', order=48) 
 
 
-def _I_group(basis = None):
+def _I_group(basis=None):
     """
     Icosahedral rotational point group. 
 
@@ -322,7 +354,7 @@ def _I_group(basis = None):
     is the golden ratio.
     
     Arguments:
-    basis         - ArrayType (optional, default None), if not None, specifies
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -332,18 +364,24 @@ def _I_group(basis = None):
    
     ## Define generators
     phi = (1 + np.sqrt(5))/2
-    axis_1 = [0,1,phi]
-    C5_1 = MatrixGroupElement(operator_C(axis_1,5,basis))
+    axis_1 = [0, 1, phi]
+    C5_1 = MatrixGroupElement.input_args(operator_C(axis_1, 5, basis),
+                                         cycle_order = 5,
+                                         operator_inverse = \
+                                                operator_C(axis_1, -5, basis))
 
-    axis_2 = [phi,0,1]
-    C5_2 = MatrixGroupElement(operator_C(axis_2,5,basis))
+    axis_2 = [phi, 0, 1]
+    C5_2 = MatrixGroupElement.input_args(operator_C(axis_2, 5, basis),
+                                         cycle_order = 5,
+                                         operator_inverse = \
+                                                operator_C(axis_2, -5, basis))
     
-    generators = [C5_1,C5_2]
+    generators = [C5_1, C5_2]
 
-    return Group(generators,name='I',order=60) 
+    return Group(generators, name='I', order=60) 
 
 
-def _Ih_group(basis = None):
+def _Ih_group(basis=None):
     """
     Icosahedral point group. 
 
@@ -354,7 +392,7 @@ def _Ih_group(basis = None):
     is the golden ratio.
     
     Arguments:
-    basis         - ArrayType (optional, default None), if not None, specifies
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -364,28 +402,36 @@ def _Ih_group(basis = None):
    
     ## Define generators
     phi = (1 + np.sqrt(5))/2
-    axis_1 = [0,1,phi]
-    S10_1 = MatrixGroupElement(operator_S(axis_1,10,basis))
+    axis_1 = [0, 1, phi]
+    S10_1 = MatrixGroupElement.input_args(operator_S(axis_1, 10, basis),
+                                         cycle_order = 10,
+                                         operator_inverse = \
+                                                operator_S(axis_1, -10, basis))
 
-    axis_2 = [phi,0,1]
-    S10_2 = MatrixGroupElement(operator_S(axis_2,10,basis))
+    axis_2 = [phi, 0, 1]
+    S10_2 = MatrixGroupElement.input_args(operator_S(axis_2, 10, basis),
+                                          cycle_order = 10,
+                                          operator_inverse = \
+                                                operator_S(axis_2, -10, basis))
     
-    generators = [S10_1,S10_2]
+    generators = [S10_1, S10_2]
 
-    return Group(generators,name='Ih',order=120) 
+    return Group(generators, name='Ih', order=120) 
 
 
 # Axial point groups
 
-def _Cn_group(n, axis = None, basis = None):
+def _Cn_group(n, axis = None, basis=None):
     """
     Cyclic group of n-fold rotations.
 
     Arguments:
     n             - int, cycle order of the rotations; 
-    axis          - ArrayType, (optional, default = None), defines the primary
-                    rotation axis. If None, assumes [0,0,1]; 
-    basis         - ArrayType (optional, default None), if not None, specifies
+
+    axis          - ArrayType, (default=None), defines the primary
+                    rotation axis. If None, assumes [0, 0, 1]; 
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -397,37 +443,42 @@ def _Cn_group(n, axis = None, basis = None):
     if not_None(axis):
         
         if len(axis) != 1:
-            raise Exception("Only one axis is required for "
-                           f"Cn point groups ({len(axis)} provided).")
+            raise Exception(f"Only one axis is required for "
+                            f"Cn point groups ({len(axis)} provided).")
 
         else:    
             axis = axis[0]
 
     else:
         ### By default, choose z-axis as the primary rotation axis
-        axis = [0,0,1]
+        axis = [0, 0, 1]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis,n,basis))
+    Cn = MatrixGroupElement.input_args(operator_C(axis, n, basis),
+                                         cycle_order = n,
+                                         operator_inverse = \
+                                                operator_C(axis, -n, basis))
 
     generators = [Cn]
     name = f'C{n}'
     order = n
 
-    return Group(generators,name=name,order=order) 
+    return Group(generators, name=name, order=order) 
 
 
-def _Cnv_group(n, axes = None, basis = None):
+def _Cnv_group(n, axes = None, basis=None):
     """
     Cyclic group of n-fold rotations and reflections with mirror planes 
     parallel to the n-fold axis.
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - ArrayType, (optional, default = None), defines the primary
+
+    axes          - ArrayType, (default=None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
-                    If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - ArrayType (optional, default None), if not None, specifies
+                    If None, assumes [0, 0, 1] and [0, 1, 0]; 
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -442,8 +493,8 @@ def _Cnv_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "
-                            "Cnv point groups ({len(axes)} provided).")
+            raise Exception(f"Two axes are required for "
+                            f"Cnv point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -452,31 +503,39 @@ def _Cnv_group(n, axes = None, basis = None):
     else:
         # By default, choose z-axis as the primary rotation axis, and y-axis as
         # the mirror plane normal
-        axis_1 = [0,0,1]
-        axis_2 = [0,1,0]
+        axis_1 = [0, 0, 1]
+        axis_2 = [0, 1, 0]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis_1,n,basis))
+    Cn = MatrixGroupElement.input_args(operator_C(axis_1, n, basis),
+                                         cycle_order = n,
+                                         operator_inverse = \
+                                                operator_C(axis_1, -n, basis))
 
-    Mv = MatrixGroupElement(operator_M(axis_2,basis))
+    Mv = MatrixGroupElement.input_args(operator_M(axis_2, basis),
+                                       cycle_order = 2,
+                                       operator_inverse = \
+                                                operator_M(axis_2, basis))
 
     generators = [Cn, Mv]
     name = f'C{n}v'
     order = 2*n
 
-    return Group(generators,name=name,order=order) 
+    return Group(generators, name=name, order=order) 
 
 
-def _Cnh_group(n, axis = None, basis = None):
+def _Cnh_group(n, axis = None, basis=None):
     """
     Cyclic group of n-fold rotations and a reflection with mirror plane 
     perpendicular to the n-fold axis.
 
     Arguments:
     n             - int, cycle order of the rotations; 
-    axis          - ArrayType, (optional, default = None), defines the primary
-                    rotation axis. If None, assumes [0,0,1]; 
-    basis         - ArrayType (optional, default None), if not None, specifies
+
+    axis          - ArrayType, (default=None), defines the primary
+                    rotation axis. If None, assumes [0, 0, 1]; 
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -488,38 +547,46 @@ def _Cnh_group(n, axis = None, basis = None):
     if not_None(axis):
         
         if len(axis) != 1:
-            raise Exception("Only one axis is required for "
-                            "Cnh point groups ({len(axes)} provided).")
+            raise Exception(f"Only one axis is required for "
+                            f"Cnh point groups ({len(axes)} provided).")
 
         else:    
             axis = axis[0]
 
     else:
         # By default, choose z-axis as the primary rotation axis
-        axis = [0,0,1]
+        axis = [0, 0, 1]
     
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis,n,basis))
+    Cn = MatrixGroupElement.input_args(operator_C(axis, n, basis),
+                                       cycle_order = n,
+                                       operator_inverse = \
+                                                operator_C(axis, -n, basis))
 
-    Mh = MatrixGroupElement(operator_M(axis,basis))
+    Mh = MatrixGroupElement.input_args(operator_M(axis, basis),
+                                       cycle_order = 2,
+                                       operator_inverse = \
+                                                operator_M(axis, basis))
 
     generators = [Cn, Mh]
     name = f'C{n}h'
     order = 2*n
 
-    return Group(generators,name=name,order=order) 
+    return Group(generators, name=name, order=order) 
 
 
-def _Sn_group(n, axis = None, basis = None):
+def _Sn_group(n, axis = None, basis=None):
     """
     Group of n-fold improper rotations.
 
     Arguments:
     n             - int, cycle order of the improper rotations, must be an even
                     integer; 
-    axis          - ArrayType, (optional, default = None), defines the primary
-                    rotation axis. If None, assumes [0,0,1]; 
-    basis         - ArrayType (optional, default None), if not None, specifies
+
+    axis          - ArrayType, (default=None), defines the primary
+                    rotation axis. If None, assumes [0, 0, 1]; 
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -529,43 +596,48 @@ def _Sn_group(n, axis = None, basis = None):
    
     ## Check that n is even
     if n%2 != 0:
-        raise ValueError("Sn point group requires n to be an even interger!\n"
-                        f"n = {n}")
+        raise ValueError(f"Sn point group requires n to be an even interger!\n"
+                         f"n = {n}")
     
     ## Assign primary axis
     if not_None(axis):
         
         if len(axis) != 1:
-            raise Exception("Only one axis is required for "
-                            "Sn point groups ({len(axes)} provided).")
+            raise Exception(f"Only one axis is required for "
+                            f"Sn point groups ({len(axes)} provided).")
 
         else:    
             axis = axis[0]
 
     else:
         # By default, choose z-axis as the primary rotation axis
-        axis = [0,0,1]
+        axis = [0, 0, 1]
 
     ## Define generators
-    Sn = MatrixGroupElement(operator_S(axis,n,basis))
+    Sn = MatrixGroupElement.input_args(operator_S(axis, n, basis),
+                                       cycle_order = n,
+                                       operator_inverse = \
+                                                operator_S(axis, -n, basis))
 
     generators = [Sn]
     name = f'S{n}'
     order = n
 
-    return Group(generators,name=name,order=order) 
+    return Group(generators, name=name, order=order) 
 
 
-def _Dn_group(n, axes = None, basis = None):
+def _Dn_group(n, axes = None, basis=None):
     """
     Dihedral group of order n.
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - ArrayType, (optional, default = None), defines the primary
+
+    axes          - ArrayType, (default=None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
-                    If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - ArrayType (optional, default None), if not None, specifies
+                    If None, assumes [0, 0, 1] and [0, 1, 0]; 
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -580,8 +652,8 @@ def _Dn_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "
-                            "Dn point groups ({len(axes)} provided).")
+            raise Exception(f"Two axes are required for "
+                            f"Dn point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -590,32 +662,40 @@ def _Dn_group(n, axes = None, basis = None):
     else:
         # By default, choose z-axis as the primary rotation axis, and y-axis as
         # the C2 axis
-        axis_1 = [0,0,1]
-        axis_2 = [0,1,0]
+        axis_1 = [0, 0, 1]
+        axis_2 = [0, 1, 0]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis_1,n,basis))
+    Cn = MatrixGroupElement.input_args(operator_C(axis_1, n, basis),
+                                         cycle_order = n,
+                                         operator_inverse = \
+                                                operator_C(axis_1, -n, basis))
 
-    C2 = MatrixGroupElement(operator_C(axis_2,2,basis))
+    C2 = MatrixGroupElement.input_args(operator_C(axis_2, 2, basis),
+                                         cycle_order = 2,
+                                         operator_inverse = \
+                                                operator_C(axis_2, -2, basis))
 
     generators = [Cn, C2]
     name = f'D{n}'
     order = 2*n
 
-    return Group(generators,name=name,order=order) 
+    return Group(generators, name=name, order=order) 
 
 
-def _Dnd_group(n, axes = None, basis = None):
+def _Dnd_group(n, axes = None, basis=None):
     """
     Dihedral group of order n with dihedral mirror reflections (bipyramidal
     symmetry).
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - ArrayType, (optional, default = None), defines the primary
+
+    axes          - ArrayType, (default=None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
-                    If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - ArrayType (optional, default None), if not None, specifies
+                    If None, assumes [0, 0, 1] and [0, 1, 0]; 
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -630,8 +710,8 @@ def _Dnd_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "
-                            "Dnd point groups ({len(axes)} provided).")
+            raise Exception(f"Two axes are required for "
+                            f"Dnd point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -640,31 +720,39 @@ def _Dnd_group(n, axes = None, basis = None):
     else:
         # By default, choose z-axis as the primary rotation axis, and y-axis as
         # the Mv axis
-        axis_1 = [0,0,1]
-        axis_2 = [0,1,0]
+        axis_1 = [0, 0, 1]
+        axis_2 = [0, 1, 0]
 
     ## Define generators
-    S2n = MatrixGroupElement(operator_S(axis_1,2*n,basis))
+    S2n = MatrixGroupElement.input_args(operator_S(axis_1, 2*n, basis),
+                                         cycle_order = 2*n,
+                                         operator_inverse = \
+                                                operator_S(axis_1, -2*n, basis))
 
-    Mv = MatrixGroupElement(operator_M(axis_2,basis))
+    Mv = MatrixGroupElement.input_args(operator_M(axis_2, basis),
+                                       cycle_order = 2,
+                                       operator_inverse = \
+                                                operator_M(axis_2, basis))
 
     generators = [S2n, Mv]
     name = f'D{n}d'
     order = 4*n
 
-    return Group(generators,name=name,order=order) 
+    return Group(generators, name=name, order=order) 
 
 
-def _Dnh_group(n, axes = None, basis = None):
+def _Dnh_group(n, axes = None, basis=None):
     """
     Dihedral group of order n with inversion symmetry (n-gon prism symmetry).
 
     Arguments:
     n             - int, cycle order of the rotations, must be larger than 1; 
-    axes          - ArrayType, (optional, default = None), defines the primary
+
+    axes          - ArrayType, (default=None), defines the primary
                     rotation axis and the direction of the mirror plane normal.
-                    If None, assumes [0,0,1] and [0,1,0]; 
-    basis         - ArrayType (optional, default None), if not None, specifies
+                    If None, assumes [0, 0, 1] and [0, 1, 0]; 
+
+    basis         - ArrayType (default=None), if not None, specifies
                     the basis of the transformations, assuming basis[n] = nth 
                     basis vector. If None, assumes Cartesian basis.
 
@@ -679,8 +767,8 @@ def _Dnh_group(n, axes = None, basis = None):
     ## Assign primary axes
     if not_None(axes):
         if len(axes) != 2:
-            raise Exception("Two axes are required for "
-                            "Dnh point groups ({len(axes)} provided).")
+            raise Exception(f"Two axes are required for "
+                            f"Dnh point groups ({len(axes)} provided).")
     
         else:
             axis_1 = axes[0]
@@ -689,21 +777,30 @@ def _Dnh_group(n, axes = None, basis = None):
     else:
         # By default, choose z-axis as the primary rotation axis, and y-axis as
         # the Mv axis
-        axis_1 = [0,0,1]
-        axis_2 = [0,1,0]
+        axis_1 = [0, 0, 1]
+        axis_2 = [0, 1, 0]
 
     ## Define generators
-    Cn = MatrixGroupElement(operator_C(axis_1,n,basis))
+    Cn = MatrixGroupElement.input_args(operator_C(axis_1, n, basis),
+                                         cycle_order = n,
+                                         operator_inverse = \
+                                                operator_C(axis_1, -n, basis))
 
-    Mv = MatrixGroupElement(operator_M(axis_2,basis))
+    Mv = MatrixGroupElement.input_args(operator_M(axis_2, basis),
+                                         cycle_order = 2,
+                                         operator_inverse = \
+                                                operator_M(axis_2, basis))
 
-    Mh = MatrixGroupElement(operator_M(axis_1,basis))
+    Mh = MatrixGroupElement.input_args(operator_M(axis_1, basis),
+                                       cycle_order = 2,
+                                       operator_inverse = \
+                                                operator_M(axis_1, basis))
 
     generators = [Cn, Mv, Mh]
     name = f'D{n}h'
     order = 4*n
 
-    return Group(generators,name=name,order=order) 
+    return Group(generators, name=name, order=order) 
 
 
 """
@@ -712,7 +809,7 @@ Symmetry operators in 3D
 -------------------------------------------------------------------------------
 """
 
-def operator_C(axis, angle, basis = None):
+def operator_C(axis, angle, basis=None):
     """
     Defines a proper 3D rotation.
 
@@ -721,51 +818,53 @@ def operator_C(axis, angle, basis = None):
 
     Arguments:
     axis  - np.1darray[3], rotation axis, not necesserally normalized;
+
     angle - if float, defines the angle of rotation;
             if int n, defines the angle of rotation as 2*pi/n;
-            if tuple of ints (k,n), defines the angle of rotation as 2*pi*k/n;
-    basis - None or np.2darray[3][3], (optional, default None), if not None,
+            if tuple of ints (k, n), defines the angle of rotation as 2*pi*k/n;
+
+    basis - None or np.2darray[3][3], (default=None), if not None,
             defines the basis of the transformation.
 
     Returns:
     rotation - np.2darray[3][3], 3D proper rotation matrix.
     """
 
-    check_type('axis',axis,ArrayType)
-    check_len('axis',axis,3)
-    check_type('angle',angle,float,int,tuple)
+    check_type('axis', axis, ArrayType)
+    check_len('axis', axis, 3)
+    check_type('angle', angle, float, int, tuple)
 
     axis = _normalize_vector(axis)
 
-    if isinstance(angle,int):
+    if isinstance(angle, int):
         n = angle
         angle = 2*np.pi/n
 
-    elif isinstance(angle,tuple):
-        check_len('angle = (k,n)',angle,2)
-        check_type('k',angle[0],int)
-        check_type('n',angle[1],int)
+    elif isinstance(angle, tuple):
+        check_len('angle = (k, n)', angle, 2)
+        check_type('k', angle[0], int)
+        check_type('n', angle[1], int)
 
-        k,n = angle
+        k, n = angle
         angle = 2*np.pi*k/n
     
     # Define trig functions
     cos_a = np.cos(angle)
     sin_a = np.sin(angle)
 
-    rotation = np.zeros((3,3))
+    rotation = np.zeros((3, 3))
 
-    rotation[0,0] = cos_a + axis[0]**2*(1-cos_a)
-    rotation[0,1] = axis[0]*axis[1]*( 1 - cos_a ) - axis[2]*sin_a 
-    rotation[0,2] = axis[0]*axis[2]*( 1 - cos_a ) + axis[1]*sin_a
+    rotation[0, 0] = cos_a + axis[0]**2*(1-cos_a)
+    rotation[0, 1] = axis[0]*axis[1]*( 1 - cos_a ) - axis[2]*sin_a 
+    rotation[0, 2] = axis[0]*axis[2]*( 1 - cos_a ) + axis[1]*sin_a
 
-    rotation[1,0] = axis[1]*axis[0]*( 1 - cos_a ) + axis[2]*sin_a
-    rotation[1,1] = cos_a + axis[1]**2*(1-cos_a) 
-    rotation[1,2] = axis[1]*axis[2]*( 1 - cos_a ) - axis[0]*sin_a
+    rotation[1, 0] = axis[1]*axis[0]*( 1 - cos_a ) + axis[2]*sin_a
+    rotation[1, 1] = cos_a + axis[1]**2*(1-cos_a) 
+    rotation[1, 2] = axis[1]*axis[2]*( 1 - cos_a ) - axis[0]*sin_a
     
-    rotation[2,0] = axis[2]*axis[0]*( 1 - cos_a ) - axis[1]*sin_a
-    rotation[2,1] = axis[2]*axis[1]*( 1 - cos_a ) + axis[0]*sin_a 
-    rotation[2,2] = cos_a + axis[2]**2*(1-cos_a)
+    rotation[2, 0] = axis[2]*axis[0]*( 1 - cos_a ) - axis[1]*sin_a
+    rotation[2, 1] = axis[2]*axis[1]*( 1 - cos_a ) + axis[0]*sin_a 
+    rotation[2, 2] = cos_a + axis[2]**2*(1-cos_a)
     
     if not_None(basis):
         basis = basis.T
@@ -775,62 +874,65 @@ def operator_C(axis, angle, basis = None):
     return rotation
 
 
-def operator_M(axis, basis = None):
+def operator_M(axis, basis=None):
     """
     Defines a 3D mirror reflection.
     
     Mirror reflection is defined as a 180 degree rotation followed by an
     inversion:
 
-    M(axis) = I * C(axis,2) = -C(axis,2).
+    M(axis) = I * C(axis, 2) = -C(axis, 2).
 
     Arguments:
     axis - np.1darray[3], normal vector of the mirror plane, not necesserally 
            normalized;
-    basis - None or np.2darray[3][3], (optional, default None), if not None,
+
+    basis - None or np.2darray[3][3], (default=None), if not None,
             defines the basis of the transformation.
 
     Returns:
     reflection_matrix - np.2darray[3][3], 3D reflection matrix.
     """
 
-    check_type('axis',axis,ArrayType)
-    check_len('axis',axis,3)
+    check_type('axis', axis, ArrayType)
+    check_len('axis', axis, 3)
    
     axis = _normalize_vector(axis)
 
-    reflection = -operator_C(axis,2,basis)
+    reflection = -operator_C(axis, 2, basis)
 
     return reflection
 
 
-def operator_S(axis, angle, basis = None):
+def operator_S(axis, angle, basis=None):
     """
     Defines an improper 3D rotation.
 
     Improper rotation is defined as
 
-    S(axis,angle) = C(axis,angle) * M(axis)
+    S(axis, angle) = C(axis, angle) * M(axis)
 
     Arguments:
     axis - np.1darray[3], rotation axis, not necesserally normalized;
+
     angle - if float, defines the angle of rotation;
             if int n, defines the angle of rotation as 2*pi/n;
-            if tuple of ints (k,n), defines the angle of rotation as 2*pi*k/n;
-    basis - None or np.2darray[3][3], (optional, default None), if not None,
+            if tuple of ints (k, n), defines the angle of rotation as 2*pi*k/n;
+
+    basis - None or np.2darray[3][3], (default=None), if not None,
             defines the basis of the transformation.
 
     Returns:
     rotoinversion - np.2darray[3][3], 3D improper rotation matrix.
     """
 
-    check_type('axis',axis,ArrayType)
-    check_len('axis',axis,3)
-    check_type('angle',angle,float,int,tuple)
+    check_type('axis', axis, ArrayType)
+    check_len('axis', axis, 3)
+    check_type('angle', angle, float, int, tuple)
    
     axis = _normalize_vector(axis)
 
-    rotoinversion = operator_C(axis,angle,basis).dot(operator_M(axis,basis))
+    rotoinversion = operator_C(axis, angle, basis).dot(operator_M(axis, basis))
 
     return rotoinversion
 
@@ -893,16 +995,16 @@ def operator_to_symbol(operator):
                         f"{operator} is a non-orthogonal matrix!")
 
     # Calculate the angle of rotation
-    cos_a = np.round(0.5*(operator_trace/operator_det - 1),log_eps)
+    cos_a = np.round(0.5*(operator_trace/operator_det - 1), log_eps)
     angle = np.arccos(cos_a)
 
-    n = np.round(2*np.pi/angle,log_eps).astype(int)
+    n = np.round(2*np.pi/angle, log_eps).astype(int)
 
     # Calculate the axis of rotation
     operator_skew = (operator-operator.T)/operator_det
-    axis = 0.5*np.array([operator_skew[2,1] - operator_skew[1,2],
-                         operator_skew[0,2] - operator_skew[2,0],
-                         operator_skew[1,0] - operator_skew[0,1]])
+    axis = 0.5*np.array([operator_skew[2, 1] - operator_skew[1, 2],
+                         operator_skew[0, 2] - operator_skew[2, 0],
+                         operator_skew[1, 0] - operator_skew[0, 1]])
 
     axis /= np.max(abs(axis))
     
@@ -910,7 +1012,7 @@ def operator_to_symbol(operator):
     if n == 2:
         axis /= operator_det
     
-    axis = np.round(axis,log_eps).astype(int)
+    axis = np.round(axis, log_eps).astype(int)
     axis = "".join(str(a) for a in axis)
 
     # Determine if the operation is proper or improper
@@ -925,13 +1027,14 @@ def operator_to_symbol(operator):
 
     return symbol
 
-def symbol_to_operator(symbol, basis = None):
+def symbol_to_operator(symbol, basis=None):
     """
     Determines the 3D matrix operation for a given symbolic representation.
 
     Arguments:
     symbol - str, symbolic representation of the symmetry operation;
-    basis  - None or np.2darray[3][3], (optional, default None), if not None,
+    
+    basis  - None or np.2darray[3][3], (default=None), if not None,
              defines the basis of the transformation.
 
     Returns:
@@ -942,17 +1045,17 @@ def symbol_to_operator(symbol, basis = None):
     axis = np.array(list(axis), dtype=float)
 
     if operation == 'M':
-        operator = operator_M(axis,basis)
+        operator = operator_M(axis, basis)
 
     else:
         operation_type, n = list(operation)
         n = int(n)
 
         if operation_type == 'C':
-            operator = operator_C(axis,n,basis)
+            operator = operator_C(axis, n, basis)
 
         elif operation_type == 'S':
-            operator = operator_S(axis,n,basis)
+            operator = operator_S(axis, n, basis)
 
         else:
             raise ValueError(f"Incorrect symmetry symbol: {symbol}.")

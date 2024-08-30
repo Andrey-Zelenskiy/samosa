@@ -219,8 +219,8 @@ class MatrixGroupElement(GroupElement):
         GroupElement.__init__(self)
 
         # Numerical precision for rounding error
-        self.__eps_r = 1e-8
-        self.__log_eps_r = 8
+        self.__eps_r = 1e-10
+        self.__log_eps_r = 10
 
         # Numerical precision for printing
         self.__log_eps_p = 4
@@ -272,7 +272,8 @@ class MatrixGroupElement(GroupElement):
                    cycle_order = None,
                    orthogonal_basis = None,
                    operator_inverse = None,
-                   trace = None):
+                   trace = None,
+                   sign = None):
         """
         Initializes the properties of the MatrixGroupElement from user input.
         
@@ -296,7 +297,10 @@ class MatrixGroupElement(GroupElement):
                            of operator;
 
         trace            - float, (default=None), trace of the matrix 
-                           operator.
+                           operator;
+
+        sign             - int, (default=None), sign of the determinant of the
+                           matrix operator.
 
         Returns:
         MatrixGroupElement object.
@@ -310,10 +314,11 @@ class MatrixGroupElement(GroupElement):
 
         element.args_calculated = False
 
-        elements.cycle_order = cycle_order
-        elements.orthogonal_basis = orthogonal_basis
-        elements.inv = operator_inverse
-        elements.trace = trace
+        element.cycle_order = cycle_order
+        element.orthogonal_basis = orthogonal_basis
+        element.inv = operator_inverse
+        element.trace = trace
+        element.sign = sign
 
         return element
 
@@ -426,7 +431,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("trace cannot be modified!")
         else:
-            check_type('trace', val, int, np.int64, NoneType)
+            check_type('trace', val, float, int, np.int64, NoneType)
             self.__trace = val
 
     @trace.deleter
@@ -442,6 +447,18 @@ class MatrixGroupElement(GroupElement):
             self.__sign = np.sign(np.linalg.det(self.operator))
 
         return self.__sign
+
+    @sign.setter
+    def sign(self, val):
+        if self.args_calculated:
+            raise Exception("sign cannot be modified!")
+        else:
+            check_type('sign', val, int, np.int64, NoneType)
+            self.__sign = val
+
+    @sign.deleter
+    def sign(self):
+        self.__sign = None
 
     def __mul__(self, element):
         """
