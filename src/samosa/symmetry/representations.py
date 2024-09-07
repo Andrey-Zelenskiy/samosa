@@ -397,8 +397,13 @@ class MatrixGroupElement(GroupElement):
     def inv(self, val):
         if self.args_calculated:
             raise Exception("operator_inverse cannot be modified!")
+        
+        check_type('operator_inverse', val, ArrayType, NoneType)
+        
+        if is_None(val):
+            self.__operator_inverse = val
+
         else:
-            check_type('operator_inverse', val, ArrayType, NoneType)
             operator_inverse = np.round(np.array(val), self.__log_eps_r)
             
             check_shape('operator_inv', operator_inverse, self.dim, self.dim)
@@ -615,6 +620,7 @@ class PermutationGroupElement(GroupElement):
         self.__permutation = None
         self.__permutation_cycles = None
         self.__permutation_dict = None
+        self.__permutation_matrix = None
         self.__cycle_order = None
         self.__permutation_inverse = None
         self.__trace = None
@@ -694,13 +700,31 @@ class PermutationGroupElement(GroupElement):
     @property
     def permutation_dict(self):
         """
-        Returns the permutation in dictionary map (int : int) representation.
+        Returns the permutation in dictionary-map (int : int) representation.
         """
         if is_None(self.__permutation_dict):
             self.__permutation_dict = \
                     self.get_permutation_dict(self.permutation)
 
         return self.__permutation_dict
+
+    @property
+    def permutation_matrix(self):
+        """
+        Returns the permutation in a matrix (int : int) representation.
+        """
+        if is_None(self.__permutation_matrix):
+            permutation_matrix = self.get_permutation_matrix(self.permutation)
+        
+            order = self.cycle_order
+            matrix = MatrixGroupElement.input_args(permutation_matrix, 
+                                                   cycle_order = order,
+                                                   orthogonal_basis = True,
+                                                   trace = self.trace,
+                                                   sign = self.sign)
+            self.__permutation_matrix = matrix
+
+        return self.__permutation_matrix
 
     @property
     def cycle_order(self):
@@ -844,6 +868,17 @@ class PermutationGroupElement(GroupElement):
         return hash(self.permutation)
 
     # Supplementary functions
+    def permute_basis(self, basis_permutation):
+        """
+        Permutes the basis vectors of the permutation by relabelling the 
+        permutation indices.
+        """
+        # Type checks
+        check_type('basis_permutation', basis_permutation, 
+                   PermutationGroupElement)
+
+        return basis_permutation.inv * self * basis_permutation
+
     @staticmethod
     def get_permutation_cycles(permutation):
         """
@@ -875,7 +910,7 @@ class PermutationGroupElement(GroupElement):
     @staticmethod
     def get_permutation_dict(permutation):
         """
-        Returns the permutation in dictionary map (int : int) representation.
+        Returns the permutation in a dictionary-map (int : int) representation.
         """
         # Type check
         check_type('permutation', permutation, tuple)
@@ -888,6 +923,25 @@ class PermutationGroupElement(GroupElement):
                 permutation_dict[n+1] = permutation[n]
         
         return permutation_dict
+
+    @staticmethod
+    def get_permutation_matrix(permutation):
+        """
+        Returns the permutation in a matrix representation.
+        """
+        # Type check
+        check_type('permutation', permutation, tuple)
+        for n in permutation:
+            check_type('permutation values', n, int, np.int64)
+        
+        dim = len(permutation)
+
+        permutation_matrix = np.zeros((dim, dim), int)
+        for i in range(dim):
+            permutation_matrix[i, permutation[i]-1] = 1
+
+        return permutation_matrix
+
 
     @staticmethod
     def get_cycle_order(permutation_cycles):

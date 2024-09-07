@@ -25,7 +25,7 @@ groups from a set of constraints;
 
 ## `samosa/lattice` and `samosa/particle`
 
-- [ ] To be combined into `smaosa/structures`;
+- [ ] To be combined into `samosa/structures`;
 - [ ] Definition of `Lattice` objects as crystal data containers;
 - [ ] Definition of polyhedral particles from symmetry;
 - [ ] Calculation of anisotropic interactions from particle structure;
