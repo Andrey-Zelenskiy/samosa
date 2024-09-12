@@ -43,7 +43,7 @@ def symmetric_group(n, as_matrices=False):
     if n > 2: 
         g2 = (2, 1) + tuple(i for i in range(3, n+1))
     else:
-        g2 = tuple()
+        g2 = tuple(i for i in range(1, n+1))
 
     G1 = PermutationGroupElement(g1)
     G2 = PermutationGroupElement(g2)
