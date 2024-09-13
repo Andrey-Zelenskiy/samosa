@@ -2,9 +2,9 @@
 # Andrey Zelenskiy, 2024
 
 """
-=================
+============
 api_utils.py
-=================
+============
 
 This script defines useful methods for type checking and error handling.
 """
