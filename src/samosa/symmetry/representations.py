@@ -986,14 +986,15 @@ Space group representation
 
 class SpaceGroupElement(GroupElement):
     """
-    3D matrix representation of a space group element.
+    Representation of a space group element as a proper/improper 3D rotation
+    matrix and a translation vector.
     """
 
     # Object initialization
     def __init__(self, matrix, translation):
         """
-        Initializes the space group operator as a combination of a point group
-        matrix and a translation vector.
+        Initializes the space group operator {M | t} as a combination of a 
+        point group matrix M and a translation vector t.
 
         Arguments:
         matrix      - 2dArrayType[3][3] or MatrixGroupElement, point group 
@@ -1013,8 +1014,7 @@ class SpaceGroupElement(GroupElement):
         self.__log_eps_p = 4
         
         # Initialize the properties
-        self.__matrix = None
-        self.__translation = None
+        self.__dim = 3
         self.__cycle_order = None
         self.__operator_inverse = None
 
@@ -1058,237 +1058,174 @@ class SpaceGroupElement(GroupElement):
                                  f"vector should be between 0 and 1, not "
                                  f"{translation}.")
 
+        self.__translation = translation
+
+        self.__is_identity = self.matrix.is_identity and self.symmorphic
 
     @classmethod
-    def input_args(cls, 
-                   operator,
-                   cycle_order = None,
-                   orthogonal_basis = None,
-                   operator_inverse = None,
-                   trace = None,
-                   sign = None):
+    def from_matrix(cls, operator):
         """
-        Initializes the properties of the MatrixGroupElement from user input.
+        Initializes the SpaceGroupElement from a 3 x 4 matrix. 
         
-        WARNING: this initialization method does not check the input values,
-        which could lead to incompatible properties. Only use this method 
-        when you are certain about the input!
-
         Arguments:
-        operator         - 2dArrayType, matrix operator defining the group
-                           element or
-                           IdentityGroupElement, defines an identity element;
-
-        cycle_order      - int, (default=None), gives the cycle order of the
-                           operator, i.e. n for which operator^n = identity;
-
-        orthogonal_basis - bool or np.bool_, (default=None) True if the basis
-                           of the matrix operator is orthonormal, otherwise
-                           False;
-
-        operator_inverse - 2dArrayType, (default=None), proposes an inverse
-                           of operator;
-
-        trace            - float, (default=None), trace of the matrix 
-                           operator;
-
-        sign             - int, (default=None), sign of the determinant of the
-                           matrix operator.
+        operator - 2dArrayType[3][4], matrix, where the first 3 columns yield
+                   the point group matrix operator, and the last column gives
+                   the fractional translation vector.
 
         Returns:
-        MatrixGroupElement object.
+        SpaceGroupElement object.
         """
-        element = cls(operator)
+        
+        # Type checks
+        check_type('operator', operator, ArrayType) 
+        check_shape('operator', np.array(operator), 3, 4)
 
-        if isinstance(operator, IdentityGroupElement):
-            raise Exception("Please use "
-                            "MatrixGroupElement(IdentityGroupElement(dim)) "
-                            "as the initializer.")
+        matrix = operator[:, :-1]
+        translation = operator[:, -1]
 
-        element.args_calculated = False
-
-        element.cycle_order = cycle_order
-        element.orthogonal_basis = orthogonal_basis
-        element.inv = operator_inverse
-        element.trace = trace
-        element.sign = sign
+        element = cls(matrix, translation)
 
         return element
 
     # Object's properties
     @property
-    def operator(self):
+    def matrix(self):
         """
-        Returns matrix operator.
+        Returns the point group operation (proper/improper rotation matrix).
         """
-        return self.__operator
+        return self.__matrix
+
+    @property
+    def translation(self):
+        """
+        Returns the fractional translation vector.
+        """
+        return self.__translation
+
+    @property
+    def symmorphic(self):
+        """
+        Returns True if there is no fractional translation, otherwise returns
+        False.
+        """
+        return _array_equal(self.translation, np.zeros(3), self.__eps_r)
 
     @property
     def cycle_order(self):
         """
-        Returns the cycle order of the matrix operator 
-        (n for which operator^n = identity).
+        Returns the cycle order of the space group operator, i.e., n for which
+        S^n = E (identity).
         """
         if is_None(self.__cycle_order):
-            self.__cycle_order = self.get_cycle_order(self.operator, 
-                                                      self.__eps_r)
+            if self.symmorphic:
+                self.__cycle_order = self.matrix.cycle_order
+            else:
+                self.__cycle_order = get_cycle_order(self.matrix, 
+                                                     self.translation,
+                                                     self.__eps_r)
 
         return self.__cycle_order
-
-    @cycle_order.setter
-    def cycle_order(self, val):
-        if self.args_calculated:
-            raise Exception("cycle_order cannot be modified!")
-        else:
-            check_type('cycle_order', val, int, np.int64, NoneType)
-            self.__cycle_order = val
-
-    @cycle_order.deleter
-    def cycle_order(self):
-        self.__cycle_order = None
-
-    @property
-    def orthogonal_basis(self):
-        """
-        Returns True if the matrix operator is defined in the orthogonal
-        basis, otherwise returns False.
-        """
-        if is_None(self.__orthogonal_basis):
-            self.__orthogonal_basis = _check_orthogonal(self.operator, 
-                                                        self.__eps_r)
-
-        return self.__orthogonal_basis
-
-    @orthogonal_basis.setter
-    def orthogonal_basis(self, val):
-        if self.args_calculated:
-            raise Exception("orthogonal_basis cannot be modified!")
-        else:
-            check_type('orthogonal_basis', val, bool, np.bool_, NoneType)
-            self.__orthogonal_basis = val
-
-    @orthogonal_basis.deleter
-    def orthogonal_basis(self):
-        self.__orthogonal_basis = None
 
     # Common operations
     @property
     def inv(self):
         """
-        Returns the inverse of the matrix group element.
+        Returns the inverse of the space group element.
+
+        Let x be a pont in 3D space, and the space group operator be 
+        S = {M | t}:
+
+        S x = {M | t} x
+            = M x + t.
+
+        The inverse of S(M; t) must satisfy
+
+        S^(-1) S x = {M' | t'} {M | t} x
+                   = {M' | t'} ( M x + t )
+                   = M' (M x + t) + t'
+                   = M' M x + M' t + t'
+                   = x.
+
+        From this we conclude that 
+
+        S^(-1)(M; t) = {M^(-1) | -M^(-1)t}.
         """
         if is_None(self.__operator_inverse):
-            # If the operator is orthogonal, return the transpose
-            if self.orthogonal_basis:
-                self.__operator_inverse = self.operator.T
-            else:
-                self.__operator_inverse = np.linalg.inv(self.operator)
+            # Calculated the inverse point group operation
+            matrix_inv = self.matrix.inv
 
-        return MatrixGroupElement(self.__operator_inverse)
+            # Calculate the fractional translation of the space group inverse
+            translation_inv = (-(matrix_inv * self.translation)) % 1
 
-    @inv.setter
-    def inv(self, val):
-        if self.args_calculated:
-            raise Exception("operator_inverse cannot be modified!")
-        else:
-            check_type('operator_inverse', val, ArrayType, NoneType)
-            operator_inverse = np.round(np.array(val), self.__log_eps_r)
-            
-            check_shape('operator_inv', operator_inverse, self.dim, self.dim)
+            self.__operator_inverse = SpaceGroupElement(matrix_inv, 
+                                                        translation_inv)
 
-            id_test = operator_inverse.dot(self.operator) - np.eye(self.dim)
-
-            if np.max(np.abs(id_test)) > self.__eps_r:
-                raise ValueError("Proposed inverse does not produce "\
-                                 "identity under multiplication with the "\
-                                 "operator.")
-
-            self.__operator_inverse = operator_inverse
-
-    @inv.deleter
-    def inv(self):
-        self.__operator_inverse = None
+        return self.__operator_inverse
 
     @property
     def trace(self):
         """
-        Returns the trace of the matrix operator.
+        If the operation is symmorphic, returns the trace of the point group
+        matrix operator. Otherwise returns 0.
         """
-        if is_None(self.__trace):
-            self.__trace = np.trace(self.operator)
-
-        return self.__trace
-
-    @trace.setter
-    def trace(self, val):
-        if self.args_calculated:
-            raise Exception("trace cannot be modified!")
+        if self.symmorphic:
+            return self.matrix.trace
         else:
-            check_type('trace', val, float, int, np.int64, NoneType)
-            self.__trace = val
-
-    @trace.deleter
-    def trace(self):
-        self.__trace = None
-
+            return 0
+    
     @property
     def sign(self):
         """
-        Returns +1 if the operation is proper and -1 if it is improper.
+        Returns the sign of the point group operation.
         """
-        if is_None(self.__sign):
-            self.__sign = np.sign(np.linalg.det(self.operator))
-
-        return self.__sign
-
-    @sign.setter
-    def sign(self, val):
-        if self.args_calculated:
-            raise Exception("sign cannot be modified!")
-        else:
-            check_type('sign', val, int, np.int64, NoneType)
-            self.__sign = val
-
-    @sign.deleter
-    def sign(self):
-        self.__sign = None
+        return self.matrix.sign
 
     def __mul__(self, element):
         """
         Shortcut for calculating (left) group element action.
+
+        Space group operator S = {M |t} acts on a point x as
+        
+        S x = {M | t} x 
+            = M x + t.
+
+        Thus, a multiplication of two space group elements can be determined 
+        from a similar action on x:
+
+        S_3 x = S_1 S_2 x
+              = {M_2 | t_2} {M_1 | t_1} x
+              = M_2 (M_1 x + t_1) + t_2
+              = M_2 M_1 x + M_2 t_1 + t_2
+              = {M_2 M_1 | M_2 t_1 + t_2} x.
         """
-
         # Multiplication of two group elements
-        if isinstance(element, MatrixGroupElement):
+        if isinstance(element, SpaceGroupElement):
+            matrix = self.matrix * element.matrix
 
-            if element.dim != self.dim:
-                raise TypeError(f"Cannot perform multiplication between "
-                                f"matrices of dimension {self.dim} and "
-                                f"{element.dim}.")
+            translation = self.matrix * element.translation
+            translation += self.translation
+            translation = translation % 1
 
-            product = self.operator.dot(element.operator)
-
-            return MatrixGroupElement(product)
+            return SpaceGroupElement(matrix, translation)
 
         # Left action on an array
         elif isinstance(element, ArrayType):
-
             element = np.array(element)
 
-            if element.shape[0] != self.dim:
-                raise TypeError(f"Cannot perform multiplication between "
-                                f"matrices of dimension {self.dim} and "
+            if element.shape[0] != 3:
+                raise TypeError(f"Array must have leading dimension 3, not "
                                 f"{element.shape[0]}.")
 
-            return self.operator.dot(element)
+            # The space group action is calculated modulo translation period
+            return (self.matrix * element + self.translation) % 1
 
         elif isinstance(element, IdentityGroupElement):
-            if is_None(element.dim) or self.dim == element.dim:
+            if is_None(element.dim) or element.dim == 3:
                 return self
 
             else:
                 raise TypeError(f"IdentityGroupElement must have dimension "
-                                f"{self.dim} or None, not {element.dim}.")
+                                f"3 or None, not {element.dim}.")
         
         else:
             raise TypeError(f"Cannot multiply objects of type "
@@ -1297,35 +1234,26 @@ class SpaceGroupElement(GroupElement):
 
     def __rmul__(self, element):
         """
-        Shortcut for calculating (right) group element action.
+        Right group element action is not defined.
         """
-
-        # Right action on an array
-        if isinstance(element, ArrayType):
-
-            element = np.array(element)
-
-            if element.shape[-1] != self.dim:
-                raise TypeError(f"Cannot perform multiplication between "
-                                f"matrices of dimension {element.shape[-1]}"
-                                f"and {self.dim}.")
-
-            return element.dot(self.operator)
-
-        else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{type(element).__name__} and "
-                            f"{self.__class__.__name__}.")
+        raise TypeError(f"Cannot multiply objects of type "
+                        f"{type(element).__name__} and "
+                        f"{self.__class__.__name__}.")
 
     def __eq__(self, element):
         """
-        Determines if two matrix group elements are the same up to numerical
+        Determines if two space group elements are the same up to numerical
         precision.
         """
 
-        # Comparison of two MatrixGroupElements
-        if isinstance(element, MatrixGroupElement):
-            return _array_equal(self.operator, element.operator, self.__eps_r)
+        # Comparison of two SpaceGroupElements
+        if isinstance(element, SpaceGroupElement):
+            eq_matrix = self.matrix == element.matrix
+            eq_translation =  _array_equal(self.translation, 
+                                           element.translation, 
+                                           self.__eps_r)
+            
+            return eq_matrix and eq_translation
 
         # Comparison with IdentityGroupElement
         elif isinstance(element, IdentityGroupElement):
@@ -1342,20 +1270,30 @@ class SpaceGroupElement(GroupElement):
         """
         Allows to hash the object.
         """
-        return hash(tuple(np.round(self.operator.flatten(), self.__log_eps_p)))
+        return hash(str(self))
 
     # Supplementary functions
     @staticmethod
-    def get_cycle_order(operator, eps):
+    def get_cycle_order(matrix_0, translation_0, eps):
         """
-        Calculates the cycle of the matrix operator via iterative matrix 
+        Calculates the cycle of the space group operator via iterative matrix 
         multiplication.
         """
-        matrix = np.copy(operator)
+        matrix = IdentityGroupElement(3)
+        translation = np.zeros(3)
+
+        check = False
+
         cycle_order = 1
         
-        while not _array_equal(matrix, np.eye(len(operator)), eps):
-            matrix = matrix.dot(operator)
+        while not check:
+            matrix = matrix_0 * matrix
+            translation = matrix_0 * translation + translation_0
+
+            check_matrix = matrix.is_identity
+            check_translation = _array_equal(translation, np.zeros(3), eps)
+            check = check_matrix and check_translation
+            
             cycle_order += 1
 
         return cycle_order
@@ -1365,16 +1303,17 @@ class SpaceGroupElement(GroupElement):
         """
         User-friendly output of the group element.
         """
-        return str(np.round(self.operator, self.__log_eps_p))
+        return f"{self.matrix}, "\
+               f"{np.round(self.translation, self.__log_eps_p)}"
 
     def __repr__(self):
         """
         Provedes useful print output.
         """
         cls = self.__class__.__name__
-        operator_p = np.round(self.operator, self.__log_eps_p)
-        return f"{cls}(operator={operator_p!r}, "\
-               f"args_calculated={self.args_calculated})"
+        translation_p = np.round(self.translation, self.__log_eps_p)
+        return f"{cls}(matrix={self.matrix}, "\
+               f"translation={translation_p!r})"
 
 
 """
