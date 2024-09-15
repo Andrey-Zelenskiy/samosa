@@ -15,7 +15,7 @@ import toml
 import os
 from pathlib import Path, PosixPath
 
-from samosa.api.api_utils import array_type, NoneType
+from samosa.api.api_utils import ArrayType, NoneType
 from samosa.api.api_utils import is_None, not_None
 from samosa.api.api_utils import check_type, check_len, check_in_list
 from samosa.api.api_utils import custom_format_warning
@@ -290,7 +290,7 @@ class SpaceGroupDatabase(Database):
 
         # Both lattice type and point group symbol are given
         elif not_None(lattice_type) and not_None(point_group_symbol):
-            self.__check_lattice_type(lattice_type)
+            self.check_lattice_type(lattice_type)
 
             data = self.lattice_reference[lattice_type]
             allowed_pg = {k:data[k] for k in list(data.keys())[1:]}
@@ -304,7 +304,7 @@ class SpaceGroupDatabase(Database):
 
         # Only lattice type is specified
         elif not_None(lattice_type) and is_None(point_group_symbol):
-           self.__check_lattice_type(lattice_type)
+           self.check_lattice_type(lattice_type)
 
            data = self.lattice_reference[lattice_type]
            allowed_groups = {k:data[k] for k in list(data.keys())[1:]}
@@ -313,7 +313,7 @@ class SpaceGroupDatabase(Database):
 
         # Only point_group is specified
         elif is_None(lattice_type) and not_None(point_group_symbol):
-            self.__check_point_group_symbol(point_group_symbol)
+            self.check_point_group_symbol(point_group_symbol)
 
             allowed_lattices = self.point_group_reference[point_group_symbol]
 
@@ -403,7 +403,7 @@ class SpaceGroupDatabase(Database):
         check_type('lattice_type', lattice_type, str, NoneType)
 
         if not_None(dimension):
-            self.__check_dimension(dimension)
+            self.check_dimension(dimension)
 
             allowed_pg  = self.dimension_reference[dimension]\
                                                   ["point groups"]
@@ -449,24 +449,24 @@ class SpaceGroupDatabase(Database):
         return allowed_groups
 
     # Methods for checking the values of the space group input
-    def __check_dimension(self, dimension):
+    def check_dimension(self, dimension):
         if dimension < 1 or dimension > 3:
             raise ValueError("Lattice dimension must be 1, 2, or 3, not "
                             f"{dimension}")
 
-    def __check_lattice_type(self, lattice_type):
+    def check_lattice_type(self, lattice_type):
         if lattice_type not in self.lattice_list:
             raise ValueError("Lattice type must be one of "
                             f"{self.lattice_list}, not "
                             f"{lattice_type}")
 
-    def __check_point_group_symbol(self, point_group_symbol):
+    def check_point_group_symbol(self, point_group_symbol):
         if point_group_symbol not in self.point_group_list:
             raise ValueError("Point group symbol must be one of "
                             f"{self.point_group_list}, not "
                             f"{point_group_symbol}")
 
-    def __check_space_group_index(self, space_group_index, dimension):
+    def check_space_group_index(self, space_group_index, dimension):
 
         max_index = self.n_space_groups[dimension]
 

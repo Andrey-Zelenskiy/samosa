@@ -1078,8 +1078,10 @@ class SpaceGroupElement(GroupElement):
         
         # Type checks
         check_type('operator', operator, ArrayType) 
+        operator = np.array(operator)
         check_shape('operator', np.array(operator), 3, 4)
 
+        # Extract point group matrix and translation vector operators
         matrix = operator[:, :-1]
         translation = operator[:, -1]
 
