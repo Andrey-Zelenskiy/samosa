@@ -2,39 +2,19 @@
 # Andrey Zelenskiy, 2024
 
 """
-============
-api_utils.py
-============
+===========================
+samosa/utils/type_checks.py
+===========================
 
-This script defines useful methods for type checking and error handling.
+This script defines useful methods for variable type checking.
 """
 
 import numpy as np
 
-"""
--------------------------------------------------------------------------------
-Only show the message of the warning
--------------------------------------------------------------------------------
-"""
-
-
-def custom_format_warning(msg, *args, **kwargs):
-    """
-    When throwing a warning, only throw the message
-    """
-    return str(msg) + '\n'
-
-
-"""
--------------------------------------------------------------------------------
-Argument checking
--------------------------------------------------------------------------------
-"""
 # Group np.ndarray, list, and tuple into a type categories
 ArrayType = (np.ndarray, list, tuple)
 MutableArrayType = (np.ndarray, list)
 NoneType = type(None)
-
 
 def is_None(var):
     """
@@ -42,13 +22,11 @@ def is_None(var):
     """
     return isinstance(var, NoneType)
 
-
 def not_None(var):
     """
     Checks if var is of NoneType, returns True if it isn't.
     """
     return not isinstance(var, NoneType)
-
 
 def check_type(var_name, var, *var_type):
     """
@@ -70,7 +48,6 @@ def check_type(var_name, var, *var_type):
         raise TypeError(f"{var_name} must be of type {var_type_print}, not "
                         f"{type(var).__name__}")
 
-
 def check_len(var_name, var, var_len):
     """
     Checks the length of an array.
@@ -88,7 +65,6 @@ def check_len(var_name, var, var_len):
     if len(var) != var_len:
         raise Exception(f"{var_name} must be of length {var_len}, not "
                         f"{len(var)}")
-
 
 def check_shape(var_name, var, *var_shape):
     """
@@ -108,25 +84,6 @@ def check_shape(var_name, var, *var_shape):
         raise Exception(f"{var_name} must have shape {var_shape}, not "
                         f"{var.shape}")
 
-
-def check_ifdef(var_name, var):
-    """
-    Checks if the specified argument has a value of None.
-
-    Arguments:
-    var_name  - str, name of the variable;
-    var       - generic type, variable of interest.
-
-    Returns:
-    None if the check is successful,
-    Exception if the check is failed.
-    """
-
-    if not_None(var):
-        raise Exception(f"{var_name} is already set to {var}, "
-                        f"use overwrite=True to force a new value.")
-
-
 def check_in_list(var_name, var, var_list):
     """
     Checks that the variable is contained in a list.
@@ -143,3 +100,4 @@ def check_in_list(var_name, var, var_list):
 
     if var not in var_list:
         raise Exception(f"{var_name} must be one of {var_list}, not {var}")
+
