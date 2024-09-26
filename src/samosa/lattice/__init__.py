@@ -20,6 +20,7 @@ from samosa.symmetry.space_group_utils import space_group
 
 from samosa.database import SpaceGroupDatabase
 
+from samosa.utils.array_checks import _array_in_list
 
 from samosa.utils.type_checks import ArrayType, NoneType, is_None, not_None, \
                                      check_type, check_len, check_in_list
@@ -76,13 +77,23 @@ class Lattice:
         check_type('space_group_index', space_group_index, int)
         check_type('positions', positions, list) 
 
+        input_positions = []
         for p in positions:
             check_type('vertex position', p, ArrayType)
+            
+            p = np.array(p) % 1
+
+            if not _array_in_list(p, input_positions):
+                input_positions += [p]
 
         check_type('crystal_parameters', crystal_parameters, NoneType, dict)
 
+        # Initialize space group database container
+        database = SpaceGroupDatabase()
+
         # Initialize symmetry properties
-        sg_info = space_group(dimension, space_group_index, return_info=True)
+        sg_info = space_group(dimension, space_group_index, database, 
+                              return_info=True)
         
         self.__dimension = dimension
         self.__space_group_index = space_group_index
@@ -92,15 +103,19 @@ class Lattice:
         self.__symmorphic = sg_info['symmorphic']
 
         # Initialize structural properties
-        self.__initialize_crystal_parameters(crystal_parameters)
+        self.__initialize_crystal_parameters(crystal_parameters, database)
 
+        # Group sites into Wyckoff classes
         self.__wyckoff_list = []
-        for p in positions:
+        while len(input_positions) != 0:
+            p = input_positions[0]
             wp = WyckoffPosition(p, self.space_group)
-            positions = [p for p in positions if p not in wp.positions]
+            for q in wp.positions:
+                if _array_in_list(q, input_positions):
+                    input_positions.remove(q)
             self.__wyckoff_list += [wp]
 
-    def __initialize_crystal_parameters(self, parameters=None):
+    def __initialize_crystal_parameters(self, parameters, database):
         """
         Determines lattice parameters (primitive cell dimensions and angles)
         constrained by the lattice type.
@@ -114,10 +129,15 @@ class Lattice:
 
                      if dict with allowed keys 
                      ['a', 'b', 'c', 'alpha', 'beta', 'gamma'], 
-                     initializes parameters from user input.
+                     initializes parameters from user input;
+
+        database   - SpaceGroupDatabase object, lookup data structure.
         """
+        self.__random_parameters = False
+
         # If no input crystal parameters are provided, initialize them randomly
         if is_None(parameters):
+            self.__random_parameters = True
             parameters = {}
 
             # Normalize dimensions with respect to x-direction
@@ -129,152 +149,99 @@ class Lattice:
 
             for p in ['alpha', 'beta', 'gamma']:
                 # Initialize random angle values between 0 and pi
-                parameters[p] = np.random.rand()*np.pi
-
+                parameters[p] = np.random.rand()*180
+        
         # Determine constraints on the physical crystal parameters from the
         # lattice type
-        crystal_family = self.lattice_type.split('_')[0]
-        
-        self.__crystal_parameters = {}
-        try:
-            # 1D crystal family
-            if crystal_family == 'chain':
-                
-                unconstrained_parameters = ['a']
-                self.__crystal_constraints = 'a'
+        reference = database.lattice_reference[self.lattice_type]
+        self.__unconstrained_parameters = reference['unconstrained_parameters']
+        self.__constrained_parameters = reference['constrained_parameters']
 
-                self.__crystal_parameters['a'] = parameters['a']
-
-            # 2D crystal families
-            elif crystal_family == 'oblique':
-
-                unconstrained_parameters = ['a', 'b', 'gamma']
-                self.__crystal_constraints = 'a, b, gamma'
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['b']
-                
-                self.__crystal_parameters['gamma'] = parameters['gamma']
-        
-            elif crystal_family == 'rectangular':
-
-                unconstrained_parameters = ['a', 'b']
-                self.__crystal_constraints = 'a, b, gamma = 90'
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['b']
-                
-                self.__crystal_parameters['gamma'] = np.pi/2
-        
-            elif crystal_family == 'square':
-
-                unconstrained_parameters = ['a']
-                self.__crystal_constraints = 'a = b, gamma = 90'
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['a']
-                
-                self.__crystal_parameters['gamma'] = np.pi/2
-        
-            elif crystal_family == 'hexagonal':
-
-                unconstrained_parameters = ['a']
-                self.__crystal_constraints = 'a = b, gamma = 120'
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['a']
-                
-                self.__crystal_parameters['gamma'] = 2*np.pi/3
-        
-            # 3D crystal families
-            elif crystal_family == 'Triclinic':
-
-                unconstrained_parameters = ['a', 'b', 'c', 
-                                            'alpha', 'beta', 'gamma']
-                self.__crystal_constraints = 'a, b, c, alpha, beta, gamma'
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['b']
-                self.__crystal_parameters['c'] = parameters['c']
-                
-                self.__crystal_parameters['alpha'] = parameters['alpha']
-                self.__crystal_parameters['beta']  = parameters['beta']
-                self.__crystal_parameters['gamma'] = parameters['gamma']
-        
-            elif crystal_family == 'Monoclinic':
-
-                unconstrained_parameters = ['a', 'b', 'c', 'beta']
-                self.__crystal_constraints = 'a, b, c, alpha = gamma = 90, '\
-                                             'beta'
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['b']
-                self.__crystal_parameters['c'] = parameters['c']
-                
-                self.__crystal_parameters['alpha'] = np.pi/2
-                self.__crystal_parameters['beta']  = parameters['beta']
-                self.__crystal_parameters['gamma'] = np.pi/2
-        
-            elif crystal_family == 'Orthorombic':
-
-                unconstrained_parameters = ['a', 'b', 'c']
-                self.__crystal_constraints = 'a, b, c, alpha = beta = gamma '\
-                                             '= 90, '
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['b']
-                self.__crystal_parameters['c'] = parameters['c']
-                
-                self.__crystal_parameters['alpha'] = np.pi/2
-                self.__crystal_parameters['beta']  = np.pi/2
-                self.__crystal_parameters['gamma'] = np.pi/2
-        
-            elif crystal_family == 'Cubic':
-
-                unconstrained_parameters = ['a']
-                self.__crystal_constraints = 'a = b = c, alpha = beta = gamma'\
-                                             ' = 90'
-
-                self.__crystal_parameters['a'] = parameters['a']
-                self.__crystal_parameters['b'] = parameters['a']
-                self.__crystal_parameters['c'] = parameters['a']
-                
-                self.__crystal_parameters['alpha'] = np.pi/2
-                self.__crystal_parameters['beta']  = np.pi/2
-                self.__crystal_parameters['gamma'] = np.pi/2
-        
-        except KeyError:
-            raise Exception(f'{self.lattice_type} lattice type requires '
-                            f'definition of {unconstrained_parameters} '
-                            f'crystal parameters.')
-
-            for p in unconstrained_parameters:
-                self.__crystal_parameters[p] = crystal_parameters[p]
-
-        # Initialize basis vectors
-        self.basis_vectors = self.crystal_parameters['a']
-
-        if self.dimension > 1: 
-            gamma = self.crystal_parameters['gamma']
-            self.__basis_vectors += [np.array([np.cos(gamma), np.sin(gamma)])]
-
+        self.__crystal_parameters = None
+        self.set_crystal_parameters(parameters)
 
     # Lattice methods
-    def set_units(self, a=None, b=None, c=None, 
-                        alpha=None, beta=None, gamma=None):
+    def set_crystal_parameters(self, parameters):
         """
-        Primitive lattice cell parameters (dimensions and angles).
+        Method used to set unit cell parameters with respected symmetry
+        constraints.
+        """
+
+        if not_None(self.crystal_parameters) and self.random_parameters:
+            self.__random_parameters = False
+
+        self.__crystal_parameters = {}
         
-        Arguments:
-        a, b, c            - floats, lengths of the primitive lattice vectors;
+        try:
+            for p in self.unconstrained_parameters:
+                self.__crystal_parameters[p] = parameters[p]
 
-        alpha, beta, gamma - floats, angles between the primitive lattice 
-                             vectors.
+        except KeyError:
+            raise Exception(f'{self.lattice_type} lattice type requires '
+                            f'definition of {self.unconstrained_parameters} '
+                            f'crystal parameters.')
+        
+        for p in self.constrained_parameters.keys():
+            p_val = self.constrained_parameters[p]
+            if p in ['b', 'c']:
+                self.__crystal_parameters[p] = self.crystal_parameters[p_val]
+
+            else:
+                self.__crystal_parameters[p] = p_val
+
+        # Initialize basis vectors
         """
-        # Type checks
+        In order to calculate the crystal basis vectors a_{1-3}, it is
+        sufficient to know their dot products:
 
-        if self.
+        a_1 * a_2 = a b cos(gamma),
+        a_2 * a_3 = b c cos(alpha),
+        a_3 * a_1 = c a cos(beta).
 
+        By convention, we fix the global orientation of the coordinate system
+        by taking a_1 parallel to the x-axis, and a_2 - to be lying in the 
+        xy-plane. In this case,
+
+        a_1 = a [1, 0, 0],
+        a_2 = b [cos(gamma), sin(gamma), 0].
+
+        To calculate the third basis vector, we note that the unit vectors
+        parallel to the y- and z- axes can be defined as
+
+        z/|z| = (a_1 x a_2)/(a b sin(gamma)),
+        y/|y| = ((a_1 x a_2) x a_1)/(a^2 b sin(gamma)).
+
+        Then the third crystal vector can be written as
+        a_3 = [c_x, c_y, c_z],
+
+        where
+
+        c_x = c cos(beta), 
+        c_y = c (cos(alpha) - cos(beta) cos(gamma))/sin(gamma),
+        c_z = sqrt(c^2 - c_x^2 - c_y^2).
+        """
+
+        a = self.crystal_parameters['a']
+        
+        self.__basis_vectors = [a*np.array([1, 0, 0])]
+        
+        if self.dimension > 1: 
+            b = self.crystal_parameters['b']
+            gamma = self.crystal_parameters['gamma']/180*np.pi
+            
+            self.__basis_vectors += [b*np.array([np.cos(gamma), 
+                                                 np.sin(gamma),
+                                                 0])]
+
+        if self.dimension == 3:
+            c = self.crystal_parameters['c']
+            alpha = self.crystal_parameters['alpha']/180*np.pi
+            beta = self.crystal_parameters['beta']/180*np.pi
+            
+            cx = c*np.cos(beta)
+            cy = c*(np.cos(alpha) - np.cos(beta)*np.cos(gamma))/np.sin(gamma)
+            cz = np.sqrt(c**2 - cx**2 - cy**2)
+            self.__basis_vectors += [np.array([cx, cy, cz])]
 
     # Lattice properties
     @property
@@ -313,6 +280,42 @@ class Lattice:
         return self.__space_group
 
     @property
+    def random_parameters(self):
+        """
+        True if unit cell parameters were initialized from random.
+        """
+        return self.__random_parameters
+
+    @property
+    def constrained_parameters(self):
+        """
+        Unit cell parameters for which the values are constrained by the 
+        symmetry of the lattice.
+        """
+        return self.__constrained_parameters
+
+    @property
+    def unconstrained_parameters(self):
+        """
+        Unit cell parameters which are specified through user input.
+        """
+        return self.__unconstrained_parameters
+
+    @property
+    def crystal_parameters(self):
+        """
+        Unit cell parameters (dimensions and angles).
+        """
+        return self.__crystal_parameters
+
+    @property
+    def basis_vectors(self):
+        """
+        Lattice basis vectors.
+        """
+        return self.__basis_vectors
+
+    @property
     def wyckoff_list(self):
         """
         All vertex positions in a single unit cell, sorted into non-equivalent
@@ -321,20 +324,87 @@ class Lattice:
         return self.__wyckoff_list
 
     # Output summary functions
-    def __str__(self):
+    def symmetry_info(self, print_info=True):
         """
-        Provides user-friendly summary of the Lattice container.
-        """
+        Summary of the symmetry properties of the lattice.
 
-        summary_string = "Lattice object.\n\n"
-        
+        Arguments:
+        print_info - bool, (default=True), if True prints the summary, 
+                     otherwise outputs it as a string.
+        """
+        summary_string  = "----------------------------------\n"
+        summary_string += "Symmetry properties of the lattice\n"
+        summary_string += "----------------------------------\n\n"
+
         summary_string += f"Lattice type: {self.lattice_type};\n"
         
         summary_string += f"Crystallographic point group: "\
                           f"{self.point_group_symbol};\n"
         
         summary_string += f"Space group index (ITC vol.A): "\
-                          f"{self.space_group_index};"
+                          f"{self.space_group_index}."
+
+        if print_info:
+            print(summary_string)
+        
+        else:
+            return summary_string
+
+    def structure_info(self, print_info=True):
+        """
+        Summary of the structural properties of the lattice.
+
+        Arguments:
+        print_info - bool, (default=True), if True prints the summary, 
+                     otherwise outputs it as a string.
+        """
+        summary_string  = "------------------------------------\n"
+        summary_string += "Structural properties of the lattice\n"
+        summary_string += "------------------------------------\n\n"
+        
+        summary_string += f"Unit cell parameters"
+        
+        if self.random_parameters:
+            summary_string += " (initialized randomly)"
+        
+        summary_string += f":\n"
+
+        for p in self.crystal_parameters.keys():
+            summary_string += f"{p} = {self.crystal_parameters[p]:1.4f},\n"
+
+        if len(self.wyckoff_list) == 1:
+            summary_string += f"\nSites in the unit cell occupy "\
+                              f"a single Wyckoff site, which has "\
+                              f"multiplicity "\
+                              f"{self.wyckoff_list[0].multiplicity};"
+        
+        else:
+            m_list = [str(w.multiplicity) for w in self.wyckoff_list]
+            m_list = ", ".join(m_list)
+            summary_string += f"\nSites in the unit cell occupy "\
+                              f"{len(self.wyckoff_list)} inequivalent "\
+                              f"Wyckoff sites, and have multiplicities "\
+                              f"{m_list};"
+
+        if print_info:
+            print(summary_string)
+        
+        else:
+            return summary_string
+
+
+    def __str__(self):
+        """
+        Provides user-friendly summary of the Lattice container.
+        """
+
+        summary_string = "Lattice object.\n\n"
+       
+        summary_string += self.symmetry_info(print_info=False)
+
+        summary_string += "\n\n"
+
+        summary_string += self.structure_info(print_info=False)
         
         return summary_string
 
