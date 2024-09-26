@@ -19,10 +19,10 @@ from samosa.symmetry.point_group_utils import point_group
 
 from samosa.database import SpaceGroupDatabase
 
-from samosa.utils.type_checks import is_None, not_None, check_type, \
-                                     check_len, check_shape, ArrayType
+from samosa.utils.type_checks import is_None, not_None, ArrayType, NoneType,\
+                                     check_type, check_len, check_shape
 
-def space_group(dimension, sg_index, return_info=False):
+def space_group(dimension, sg_index, database = None, return_info=False):
     """
     Returns a space group given spatial dimension, as well as the space group
     number.   
@@ -32,6 +32,9 @@ def space_group(dimension, sg_index, return_info=False):
 
     sg_index    - int, number of the space group according to the International
                   Tables for Crystallography, vol. A;
+
+    database    - SpaceGroupDatabase object, (default=None) lookup data
+                  structure;
 
     return_info - bool, (default=False), if True, returns a dictionary with 
                   additional space group information.
@@ -44,11 +47,13 @@ def space_group(dimension, sg_index, return_info=False):
                        'lattice_type' : str,
                          'symmorphic' : bool], space group information.
     """
-    database = SpaceGroupDatabase()
-
     # Type checks
     check_type('dimension', dimension, int)
     check_type('sg_index', sg_index, int)
+    check_type('database', database, SpaceGroupDatabase, NoneType)
+
+    if is_None(database):
+        database = SpaceGroupDatabase()
 
     database.check_dimension(dimension)
     database.check_space_group_index(sg_index, dimension)
