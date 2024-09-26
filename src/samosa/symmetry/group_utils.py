@@ -2,9 +2,9 @@
 # Andrey Zelenskiy, 2024
 
 """
-=================
-group_utils.py
-=================
+==============================
+samosa/symmetry/group_utils.py
+==============================
 
 This submodule defines the `Group` object, which contains all
 of the necessary information and methods for symmetry analysis.
@@ -12,14 +12,17 @@ of the necessary information and methods for symmetry analysis.
 
 import numpy as np
 
-from samosa.api.api_utils import ArrayType, NoneType
-from samosa.api.api_utils import is_None, not_None
-from samosa.api.api_utils import check_type, check_len, check_shape
-from samosa.api.api_utils import custom_format_warning
+from samosa.utils.errors import custom_format_warning
 
-from samosa.symmetry.representations import GroupElement, IdentityGroupElement
-from samosa.symmetry.representations import PermutationGroupElement
-from samosa.symmetry.representations import PointerGroupElement
+from samosa.utils.type_checks import ArrayType, NoneType, is_None, not_None, \
+                                     check_type, check_len, check_shape
+
+from samosa.utils.array_checks import _array_in_list, _element_in_list
+
+from samosa.symmetry.representations import GroupElement, \
+                                            IdentityGroupElement, \
+                                            PermutationGroupElement, \
+                                            PointerGroupElement
 
 import warnings
 warnings.formatwarning = custom_format_warning
@@ -641,7 +644,7 @@ class Group:
 
     def __str__(self):
         """
-        Provides user-friendly summary of the group container.
+        Provides user-friendly summary of the Group container.
         """
 
         generators_str = "\n\n".join([str(g) for g in self.generators])
@@ -677,26 +680,3 @@ class Group:
         """
         cls = self.__class__.__name__
         return f"{cls}(generators = {self.generators!r})"
-
-"""
--------------------------------------------------------------------------------
-Frequently used supplementary functions
--------------------------------------------------------------------------------
-"""
-
-
-def _array_in_list(a, a_list):
-    """
-    Determines if a np.ndarray is included in a list of np.ndarrays.
-    """
-    # Define numerical precision
-    eps = 1e-10
-    return any((np.isclose(a, p, eps)).all() for p in a_list)
-
-
-def _element_in_list(g, g_list):
-    """
-    Determines if a GroupElement_type is included in a list of
-    GroupElement_types.
-    """
-    return any(g == p for p in g_list)

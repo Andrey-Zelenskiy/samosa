@@ -2,9 +2,9 @@
 # Andrey Zelenskiy, 2024
 
 """
-==================
-representations.py
-==================
+==================================
+samosa/symmetry/representations.py
+==================================
 
 This submodule defines objects that correspond to some common representations
 of group elements, including matrices, permutations, and space group operators.
@@ -14,10 +14,16 @@ the group elements in a group with known generators.
 
 import numpy as np
 
-from samosa.api.api_utils import ArrayType, NoneType
-from samosa.api.api_utils import is_None, not_None
-from samosa.api.api_utils import check_type, check_len, check_shape
-from samosa.api.api_utils import custom_format_warning
+from samosa.symmetry.operations_3d import operator_to_symbol
+
+from samosa.utils.errors import custom_format_warning
+
+from samosa.utils.type_checks import ArrayType, NoneType, is_None, not_None, \
+                                     check_type, check_len, check_shape
+
+from samosa.utils.array_checks import _array_equal, _check_orthogonal
+
+from samosa.utils.math import _mod
 
 import warnings
 warnings.formatwarning = custom_format_warning
@@ -1014,7 +1020,7 @@ class SpaceGroupElement(GroupElement):
         self.__log_eps_p = 4
         
         # Initialize the properties
-        self.__dim = 3
+        self.dim = 3
         self.__cycle_order = None
         self.__operator_inverse = None
 
@@ -1039,8 +1045,10 @@ class SpaceGroupElement(GroupElement):
 
         elif isinstance(matrix, ArrayType):
             check_shape('matrix', np.array(matrix), 3, 3)
-            
-            self.__matrix = MatrixGroupElement(matrix)
+            n = operator_to_symbol(matrix, as_dict=True)['n']
+
+            self.__matrix = MatrixGroupElement.input_args(matrix,
+                                                          cycle_order=n)
 
         else:
             if matrix.dim != 3:
@@ -1060,7 +1068,7 @@ class SpaceGroupElement(GroupElement):
 
         self.__translation = translation
 
-        self.__is_identity = self.matrix.is_identity and self.symmorphic
+        self.is_identity = self.matrix.is_identity and self.symmorphic
 
     @classmethod
     def from_matrix(cls, operator):
@@ -1122,9 +1130,9 @@ class SpaceGroupElement(GroupElement):
             if self.symmorphic:
                 self.__cycle_order = self.matrix.cycle_order
             else:
-                self.__cycle_order = get_cycle_order(self.matrix, 
-                                                     self.translation,
-                                                     self.__eps_r)
+                self.__cycle_order = self.get_cycle_order(self.matrix, 
+                                                          self.translation,
+                                                          self.__eps_r)
 
         return self.__cycle_order
 
@@ -1206,7 +1214,7 @@ class SpaceGroupElement(GroupElement):
 
             translation = self.matrix * element.translation
             translation += self.translation
-            translation = translation % 1
+            translation = np.round(translation % 1, self.__log_eps_r)
 
             return SpaceGroupElement(matrix, translation)
 
@@ -1281,6 +1289,8 @@ class SpaceGroupElement(GroupElement):
         Calculates the cycle of the space group operator via iterative matrix 
         multiplication.
         """
+        log_eps = (-np.log10(eps)).astype(int)
+
         matrix = IdentityGroupElement(3)
         translation = np.zeros(3)
 
@@ -1290,7 +1300,8 @@ class SpaceGroupElement(GroupElement):
         
         while not check:
             matrix = matrix_0 * matrix
-            translation = matrix_0 * translation + translation_0
+            translation = (matrix_0 * translation + translation_0) % 1
+            translation = np.round(translation, log_eps)
 
             check_matrix = matrix.is_identity
             check_translation = _array_equal(translation, np.zeros(3), eps)
@@ -1316,6 +1327,7 @@ class SpaceGroupElement(GroupElement):
         translation_p = np.round(self.translation, self.__log_eps_p)
         return f"{cls}(matrix={self.matrix}, "\
                f"translation={translation_p!r})"
+
 
 
 """
@@ -1735,8 +1747,8 @@ class PointerGroupElement(GroupElement):
         generator_list  - list of GroupElement_type, provides a list of group
                           generators;
 
-        skip_checks      - bool, (default=False), if True, skips type checks for
-                           n_generators and generator_cycles.
+        skip_checks     - bool, (default=False), if True, skips type checks for
+                          n_generators and generator_cycles.
         """
         if skip_checks == False:
             # Type checks
@@ -1784,46 +1796,3 @@ class PointerGroupElement(GroupElement):
         return f"{cls}(pointer = {self.pointer!r}, dim = {self.dim}, " +\
                f"n_generators = {self.n_generators}, " +\
                f"generator_cycles = {self.generator_cycles})"
-
-
-"""
--------------------------------------------------------------------------------
-Frequently used supplementary functions
--------------------------------------------------------------------------------
-"""
-
-def _array_equal(a1, a2, eps):
-    """
-    Returns True if elements of array 1 are the same as elements of array 2
-    up to specified numerical precision.
-    """
-    return np.isclose(a1, a2, eps).all()
-
-def _array_in_list(a, a_list):
-    """
-    Determines if a np.ndarray is included in a list of np.ndarrays.
-    """
-    # Define numerical precision
-    eps = 1e-10
-    return any(_array_equal(a,p,eps) for p in a_list)
-
-def _mod(a, n):
-    """
-    If n is not None, return a % n, otherwise return a.
-    """
-    if not_None(n):
-        return a % n
-    else:
-        return a
-
-def _check_orthogonal(operator, eps):
-    """
-    Checks if the operator is orthogonal.
-    """
-
-    operator = np.array(operator)
-
-    # Check if O * O.T = identity
-    diff = np.max(np.abs(operator.dot(operator.T) - np.eye(len(operator))))
-
-    return diff < eps

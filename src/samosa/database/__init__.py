@@ -15,18 +15,20 @@ import toml
 import os
 from pathlib import Path, PosixPath
 
-from samosa.api.api_utils import ArrayType, NoneType
-from samosa.api.api_utils import is_None, not_None
-from samosa.api.api_utils import check_type, check_len, check_in_list
-from samosa.api.api_utils import custom_format_warning
+from samosa.utils.type_checks import ArrayType, NoneType, is_None, not_None, \
+                                     check_type, check_len, check_in_list
+
+from samosa.utils.errors import custom_format_warning
 
 import warnings
 warnings.formatwarning = custom_format_warning
+
 """
 -------------------------------------------------------------------------------
 Database classes
 -------------------------------------------------------------------------------
 """
+
 class Database:
     """
     Container for methods that access and examine the data files in

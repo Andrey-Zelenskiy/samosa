@@ -2,9 +2,9 @@
 # Andrey Zelenskiy, 2024
 
 """
-========================
-symmetric_group_utils.py
-========================
+========================================
+samosa/symmetry/symmetric_group_utils.py
+========================================
 
 This program defines methods for defining and manipulating symmetric
 permutation groups.
@@ -13,9 +13,10 @@ permutation groups.
 import numpy as np
 
 from samosa.symmetry.group_utils import Group
+
 from samosa.symmetry.representations import PermutationGroupElement
 
-from samosa.api.api_utils import not_None, check_type, check_len, ArrayType
+from samosa.utils.type_checks import ArrayType, not_None, check_type, check_len
 
 def symmetric_group(n, as_matrices=False):
     """
