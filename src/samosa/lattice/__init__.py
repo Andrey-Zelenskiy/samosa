@@ -160,6 +160,14 @@ class Lattice:
         self.__crystal_parameters = None
         self.set_crystal_parameters(parameters)
 
+    @classmethod
+    def from_name(cls):
+        """
+        Initializes Lattice object from a combination of lattice type and
+        point group symbol.
+        """
+        pass #TODO
+
     # Lattice methods
     def set_crystal_parameters(self, parameters):
         """
