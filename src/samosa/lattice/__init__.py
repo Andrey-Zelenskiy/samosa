@@ -52,15 +52,15 @@ class Lattice:
         dimension and space group number. 
 
         Arguments:
-        dimension         - int, dimension of the lattice;
+        dimension          - int, dimension of the lattice;
 
-        space_group_index - int, space group number (as per International 
-                            Tables for Crystallography, volume A);
+        space_group_index  - int, space group number (as per International 
+                             Tables for Crystallography, volume A);
         
-        positions         - list of ArrayType[3], (default=[[0, 0, 0]]), vertex
-                            (Wyckoff) positions written in fractional 
-                            coordinates. Only inequivalent Wyckoff sites need
-                            to be specified;
+        positions          - list of ArrayType[3], (default=[[0, 0, 0]]), 
+                             vertex (Wyckoff) positions written in fractional 
+                             coordinates. Only inequivalent Wyckoff sites need
+                             to be specified;
         
         crystal_parameters - (default=None), physical parameters of the lattice
                              (unit cell dimensions and angles):
@@ -161,12 +161,54 @@ class Lattice:
         self.set_crystal_parameters(parameters)
 
     @classmethod
-    def from_name(cls):
+    def initialize_simple(cls, name, point_group):
         """
-        Initializes Lattice object from a combination of lattice type and
-        point group symbol.
+        Initializes Lattice object corresponding to one of the common Bravais
+        lattices.
+
+        Arguments:
+        name        - str, valid names are: chain, square, hexagonal, cubic,
+                      bcc, fcc;
+        
+        point_group - Schoenflies symbol of the site point group symmetry.
         """
-        pass #TODO
+        # Define space groups for the allowed lattice names/point group
+        # combinations
+        allowed_names = {'chain'     : {'C1'  : (1, 1), 
+                                        'Cs'  : (1, 2)},
+                         'square'    : {'C4'  : (2, 10),
+                                        'C4v' : (2, 11)},
+                         'hexagonal' : {'C6'  : (2, 16),
+                                        'C6v' : (2, 17)},
+                         'cubic'     : {'O'   : (3, 207),
+                                        'Oh'  : (3, 221)},
+                         'bcc'       : {'O'   : (3, 211),
+                                        'Oh'  : (3, 229)},
+                         'fcc'       : {'O'   : (3, 209),
+                                        'Oh'  : (3, 225)}
+                         }
+
+        # Type checks
+        check_type('name', name, str)
+        check_type('point_group', point_group, str)
+
+        if name not in allowed_names.keys():
+            names_str = ", ".join(allowed_names.keys())
+            raise ValueError(f"Lattice name must be one of {names_str}, not "
+                             f"{name}. Please choose a valid name or use the "
+                             f"default initializer.")
+
+        if point_group not in allowed_names[name].keys():
+            point_groups_str = ", ".join(allowed_names[name].keys())
+            raise ValueError(f"Point group for lattice '{name}' must be one "
+                             f"of {point_groups_str}, not {point_group}. "
+                             f"Please choose a valid point group or use the "
+                             f"default initializer.")
+        
+        # Initialize the Lattice object
+        dimension, space_group_index  = allowed_names[name][point_group]
+       
+        return cls(dimension, space_group_index)
 
     # Lattice methods
     def set_crystal_parameters(self, parameters):
