@@ -5,13 +5,12 @@ discrete geomentric objects.
 
 ## Submodules
 
-## `samosa/api`
+## `samosa/utils`
 
 - [x] Variable type checking;
 - [x] Array shape checking;
 - [x] List membership checking;
 - [ ] Class for variable checking;
-- [ ] General `utils` script;
 - [ ] Module-specific errors script;
 
 ## `samosa/database`
