@@ -327,6 +327,9 @@ class Group:
 
         candidate_list = []
         filtered_generators = []
+        
+        # TODO not empty! 
+        dim = generators[0].dim
 
         # Remove potential duplicates and identity elements
         for g in generators:
@@ -342,7 +345,6 @@ class Group:
             filtered_generators = candidate_list
 
         else:
-            dim = generators[0].dim
             blacklist = [IdentityGroupElement(dim)]
 
             for g in candidate_list:
