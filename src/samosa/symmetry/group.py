@@ -2,27 +2,35 @@
 # Andrey Zelenskiy, 2024
 
 """
-==============================
-samosa/symmetry/group_utils.py
-==============================
+========================
+samosa/symmetry/group.py
+========================
 
-This submodule defines the `Group` object, which contains all
-of the necessary information and methods for symmetry analysis.
+This submodule defines implementation for mathematical group operations.
+The main objects are `Group` and `Orbit`, which contains all of the necessary
+information and methods for symmetry analysis.
 """
 
 import numpy as np
 
-from samosa.utils.errors import custom_format_warning
-
-from samosa.utils.type_checks import ArrayType, NoneType, is_None, not_None, \
-                                     check_type, check_len, check_shape
+from samosa.symmetry.representations import (
+    GroupElement,
+    IdentityGroupElement,
+    PermutationGroupElement,
+    PointerGroupElement,
+)
 
 from samosa.utils.array_checks import _array_in_list, _element_in_list
 
-from samosa.symmetry.representations import GroupElement, \
-                                            IdentityGroupElement, \
-                                            PermutationGroupElement, \
-                                            PointerGroupElement
+from samosa.utils.type_checks import (
+    ArrayType,
+    NoneType,
+    is_None,
+    not_None,
+    check_type,
+)
+
+from samosa.utils.errors import custom_format_warning
 
 import warnings
 warnings.formatwarning = custom_format_warning
@@ -38,9 +46,9 @@ class Group:
     A container for storing the properties and methods of a symmetry group.
     """
 
-    def __init__(self, 
-                 generators, 
-                 name=None,  
+    def __init__(self,
+                 generators,
+                 name=None,
                  order=None,
                  elements=None,
                  character_table=None,
@@ -56,7 +64,7 @@ class Group:
         name              - str, (default=None) user-specified name of the
                             group;
 
-        order             - int, (default=None) order of the group (number of 
+        order             - int, (default=None) order of the group (number of
                             elements);
 
         elements          - list of objects derrived from GroupElement class,
@@ -65,7 +73,7 @@ class Group:
         character_table   - 2d_ArrayType, (default=None) character table of the
                             group;
 
-        irreps            - list of ArrayType, (default=None) list of 
+        irreps            - list of ArrayType, (default=None) list of
                             irreducible group representations;
 
         filter_generators - bool, (default=False) and option to perform
@@ -76,7 +84,7 @@ class Group:
         self.__elements = None
 
         check_type('filter_generators', filter_generators, bool)
-        if filter_generators == True:
+        if filter_generators:
             generators = self.generator_filter(generators)
 
         self.generators = generators
@@ -87,7 +95,7 @@ class Group:
         self.elements = elements
         self.character_table = character_table
         self.irreps = irreps
-        
+
         self.__conjugate_classes = None
         self.__n_classes = None
 
@@ -96,37 +104,36 @@ class Group:
         Calculates all group elements from the list of generators.
 
         Arguments:
-        store_data - bool, (default=False), if True, stores the calculated 
+        store_data - bool, (default=False), if True, stores the calculated
                      elements as self.elements.
         """
         # Type checks
         check_type('store_data', store_data, bool)
 
         # Generate all elements of the group
-        dim = self.generators[0].dim
-        element_list = list(self.generators) 
+        element_list = list(self.generators)
 
         for e in element_list:
             for g in self.generators:
-                new_element = g*e
+                new_element = g * e
                 if not _element_in_list(new_element, element_list):
                     element_list += [new_element]
 
         # Optionally store the elements in the group container
-        if store_data == True:
+        if store_data:
             self.__elements = element_list
             self.order = len(self.elements)
             return self.elements
 
         else:
             return element_list
-    
+
     def calculate_classes(self, store_data=False):
         """
         Sorts group elements into conjugate classes.
 
         Arguments:
-        store_data - bool, (default=False), if True, stores the calculated 
+        store_data - bool, (default=False), if True, stores the calculated
                      elements as self.elements.
         """
         # Type checks
@@ -138,12 +145,12 @@ class Group:
         else:
             element_list = list(self.elements)
 
-        # Calculate conjugate classes 
+        # Calculate conjugate classes
         order = len(element_list)
 
         members = list(element_list)
         element_index = dict(zip(element_list, np.arange(order)))
-        
+
         conjugate_classes = {}
 
         while len(members) > 0:
@@ -155,17 +162,17 @@ class Group:
             members.remove(e)
 
             for h in element_list:
-                e_h = h.inv*e*h
+                e_h = h.inv * e * h
 
                 if not element_index[e_h] in class_:
                     class_ += [element_index[e_h]]
                     members.remove(e_h)
 
-            conjugate_classes[tuple(class_)] = {"sign" : e_sign, 
-                                                "trace" : e_trace}
-        
+            conjugate_classes[tuple(class_)] = {"sign": e_sign,
+                                                "trace": e_trace}
+
         # Optionally store conjugate classes in the class container
-        if store_data == True:
+        if store_data:
             self.__conjugate_classes = conjugate_classes
             self.__n_classes = len(self.conjugate_classes.keys())
             return self.elements, self.conjugate_classes
@@ -214,7 +221,8 @@ class Group:
 
         Returns:
         orbit            - list of type(p0), a closed set of points generated
-                           from the seed  through application of group elements;
+                           from the seed  through application of group
+                           elements;
 
         permutations     - list of dict int:int, generators of the group
                            represented as permutations of members of the orbit;
@@ -233,22 +241,22 @@ class Group:
 
         # Initialize the orbit and orbit member index
         orbit = [p0]
-        p_ind = {self.__hashed(p0) : 0}
+        p_ind = {self.__hashed(p0): 0}
 
         eye_element = IdentityGroupElement(self.generators[0].dim)
 
         if as_pointer:
-            eye_element = PointerGroupElement.from_generators(eye_element, 
+            eye_element = PointerGroupElement.from_generators(eye_element,
                                                               self.generators)
 
         permutations = [{} for i in range(len(self.generators))]
-        transporter_dict = {self.__hashed(p0) : eye_element}
+        transporter_dict = {self.__hashed(p0): eye_element}
         stabilizer_list = [eye_element]
 
         for p in orbit:
             for ind_g, g in enumerate(self.generators):
                 # Calculate a new point
-                q = g*p
+                q = g * p
 
                 p_h = self.__hashed(p)
                 q_h = self.__hashed(q)
@@ -261,14 +269,14 @@ class Group:
 
                     if as_pointer:
                         transporter_dict[q_h] = \
-                                (ind_g, 1)*transporter_dict[p_h]
+                            (ind_g, 1) * transporter_dict[p_h]
 
                     else:
                         transporter_dict[q_h] = \
-                                g*transporter_dict[p_h]
+                            g * transporter_dict[p_h]
 
-                # If the new point is already in the orbit, record the operation
-                # as a stabilizer
+                # If the new point is already in the orbit, record the
+                # operation as a stabilizer
                 else:
                     """
                     We assume that some group generator g satisfies
@@ -295,9 +303,9 @@ class Group:
                     g_20_inv = g_20.inv
 
                     if as_pointer:
-                        stabilizer = (g_20_inv*(ind_g, 1))*g_10
+                        stabilizer = (g_20_inv * (ind_g, 1)) * g_10
                     else:
-                        stabilizer = g_20_inv*g*g_10
+                        stabilizer = g_20_inv * g * g_10
 
                     if not _element_in_list(stabilizer, stabilizer_list):
                         stabilizer_list += [stabilizer]
@@ -310,7 +318,7 @@ class Group:
 
     def as_permutations(self, point):
         """
-        Changes the basis of the group elements to permutations of the 
+        Changes the basis of the group elements to permutations of the
         members of an orbit formed from a single point.
 
         point - object for which multiplication GroupElement action is
@@ -324,7 +332,7 @@ class Group:
         if not_None(self.elements):
             del self.elements
             self.generators = out[1]
-            element_list = self.calculate_elements(store_data=True)
+            self.calculate_elements(store_data=True)
 
         else:
             self.generators = out[1]
@@ -336,12 +344,9 @@ class Group:
         Removes redundant operators from the candidate generator list.
         """
 
-        # Conflict check
-        self.__check_generators(generators)
-
         candidate_list = []
         filtered_generators = []
-        
+
         dim = generators[0].dim
 
         # Remove potential duplicates and identity elements
@@ -366,14 +371,14 @@ class Group:
 
                     # Update self.__generators and blacklist
                     extended_element = [IdentityGroupElement(dim)]\
-                                         + filtered_generators
+                        + filtered_generators
 
                     for h in extended_element:
-                        g_head = h*g
+                        g_head = h * g
                         g_chain = g_head
                         while not _element_in_list(g_chain, blacklist):
                             blacklist += [g_chain]
-                            g_chain = g_chain*g_head
+                            g_chain = g_chain * g_head
 
                     filtered_generators += [g]
 
@@ -383,7 +388,7 @@ class Group:
     @staticmethod
     def __hashed(val):
         """
-        If the input value is of ArrayType, changes the type to tuple, 
+        If the input value is of ArrayType, changes the type to tuple,
         otherwise returns the value itself.
         """
         if type(val) in ArrayType:
@@ -394,17 +399,17 @@ class Group:
 
     # Methods for property checks
     @staticmethod
-    def __check_conflicts(*checks,**kwargs):
+    def __check_conflicts(*checks, **kwargs):
         """
         Performs conflict checks between group generators, all elements, and
         group order.
 
         Arguments:
         *checks    - str, instructs which checks to perform. Allowed values:
-                     "number_of_elements", 
+                     "number_of_elements",
                      "generators_in_elements",
                      "group_order";
-        
+
         **kwargs   - depending on the checks, the key-word arguments:
 
         generators - list of objects derrived from GroupElement class,
@@ -423,7 +428,7 @@ class Group:
         if "number_of_elements" in checks:
             generators = kwargs["generators"]
             elements = kwargs["elements"]
-            
+
             if not_None(generators) and not_None(elements):
                 if len(elements) < len(generators):
                     raise Exception(f"List of generators cannot be smaller "
@@ -434,7 +439,7 @@ class Group:
         # Generators are included in the list of all group elements
         if "generators_in_elements" in checks:
             generators = kwargs["generators"]
-            elements = kwargs["elements"] 
+            elements = kwargs["elements"]
 
             if not_None(generators) and not_None(elements):
                 for g in generators:
@@ -457,7 +462,7 @@ class Group:
 
     def __check_generators(self, generators):
         """
-        Performs type and conflict checks for an input list of group 
+        Performs type and conflict checks for an input list of group
         generators.
 
         Arguments:
@@ -468,7 +473,7 @@ class Group:
         None if all checks are passed,
         Exception if at least one of the checks is failed.
         """
-        
+
         # Type checks
         check_type('generators', generators, list)
 
@@ -501,15 +506,15 @@ class Group:
         None if all checks are passed,
         Exception if at least one of the checks is failed.
         """
-        
+
         # Type checks
         check_type('order', order, int, NoneType)
 
         if not_None(order):
             # Conflict checks
             self.__check_conflicts("group_order",
-                                   elements = self.elements,
-                                   order = order)
+                                   elements=self.elements,
+                                   order=order)
 
     def __check_elements(self, elements):
         """
@@ -523,7 +528,7 @@ class Group:
         None if all checks are passed,
         Exception if at least one of the checks is failed.
         """
-        
+
         # Type checks
         check_type('elements', elements, list, NoneType)
 
@@ -545,9 +550,9 @@ class Group:
             self.__check_conflicts("number_of_elements",
                                    "generators_in_elements",
                                    "group_order",
-                                   generators = self.generators,
-                                   elements = elements,
-                                   order = self.order)
+                                   generators=self.generators,
+                                   elements=elements,
+                                   order=self.order)
 
     # Group properties
     @property
@@ -587,8 +592,8 @@ class Group:
 
     @order.setter
     def order(self, val):
-         self.__check_order(val)
-         self.__order = val
+        self.__check_order(val)
+        self.__order = val
 
     @order.deleter
     def order(self):
@@ -598,7 +603,7 @@ class Group:
     def elements(self):
         """
         Returns a list of group elements.
-        """    
+        """
         return self.__elements
 
     @elements.setter
@@ -616,7 +621,7 @@ class Group:
     @property
     def conjugate_classes(self):
         """
-        Returns partition of group elements into conjugate classes. 
+        Returns partition of group elements into conjugate classes.
         """
         return self.__conjugate_classes
 
@@ -667,9 +672,9 @@ class Group:
         summary_string = ""
         if not_None(self.name):
             summary_string += f"Symmetry group {self.name}\n\n"
-        
+
         summary_string += f"Generators:\n{generators_str};"
-        
+
         if not_None(self.order):
             summary_string += f"\n\nGroup order: {self.order};"
 
@@ -678,14 +683,15 @@ class Group:
             summary_string += f"\n\nGroup elements:\n{elements_str};"
 
         if not_None(self.conjugate_classes):
-            summary_string += f"\n\nConjugate classes:" +\
+            summary_string += "\n\nConjugate classes:" +\
                               f"\n{self.conjugate_classes};"
 
         if not_None(self.character_table):
             summary_string += f"\n\nCharacter table:\n{self.character_table};"
-        
+
         if not_None(self.irreps):
-            summary_string += f"\n\nIrreducible representations:\n{self.irreps};"
+            summary_string += "\n\nIrreducible representations:" +\
+                              f"\n{self.irreps};"
 
         return summary_string
 
@@ -696,9 +702,10 @@ class Group:
         cls = self.__class__.__name__
         return f"{cls}(generators = {self.generators!r})"
 
+
 """
 -------------------------------------------------------------------------------
-Group class
+Orbit class
 -------------------------------------------------------------------------------
 """
 
@@ -706,29 +713,29 @@ Group class
 class Orbit:
     """
     Defines a container for storing all properties of an orbit generated
-    by a group. 
+    by a group.
     """
 
-    def __init__(self, 
-                 generators, 
-                 points, 
-                 permutations, 
-                 transporters, 
+    def __init__(self,
+                 generators,
+                 points,
+                 permutations,
+                 transporters,
                  stabilizers):
         """
         Initializes properties of the orbit.
 
         Arguments:
         generators   - list, group generators in the original basis;
-        
+
         points       - list, points in the orbit;
-        
+
         permutations - list of PermutationGroupElement objects, group
                        generators represented as permutations of the orbit
                        elements;
 
         transporters - dict point : PointerGroupElement, group elements that
-                       transport the first point in 
+                       transport the first point in
                        the orbit into all others;
 
         stabilizers  - list of PointerGroupElement objects, generators of the
@@ -738,8 +745,8 @@ class Orbit:
         generators = Group.filter_generators(generators)
 
         check_type('points', points, list)
-        
-        check_type('permutations', permutations, Array)
+
+        check_type('permutations', permutations, ArrayType)
 
         for perm in permutations:
             check_type(perm, PermutationGroupElement)
@@ -747,7 +754,7 @@ class Orbit:
         check_type('transporters', transporters, dict)
 
         for p in points:
-            check_type('transporter elements', 
+            check_type('transporter elements',
                        transporters[p], PointerGroupElement)
 
         check_type('stabilizers', stabilizers, list)
@@ -775,11 +782,11 @@ class Orbit:
         position - first member of the orbit.
         """
         output = group.calculate_orbit(position, as_pointer=True)
-        
-        return cls(group.generators, 
-                   output[0], 
-                   output[1], 
-                   output[2], 
+
+        return cls(group.generators,
+                   output[0],
+                   output[1],
+                   output[2],
                    output[3])
 
     @classmethod
@@ -798,7 +805,7 @@ class Orbit:
         # Type checks
         check_type("item_list", item_list, list)
         check_type("group", group, Group)
-        
+
         # Sort list elements into orbits
         orbit_list = []
 
@@ -814,8 +821,8 @@ class Orbit:
 
         return orbit_list
 
-
     # WyckoffPosition properties
+
     @property
     def points(self):
         """
@@ -833,7 +840,7 @@ class Orbit:
     @property
     def generators(self):
         """
-        Generators of the space group written as permutations of the Wyckoff 
+        Generators of the space group written as permutations of the Wyckoff
         positions.
         """
         return self.__generators_permutations
@@ -841,10 +848,10 @@ class Orbit:
     def transporters(self, as_permutations=False):
         """
         Operators that transform the first member of the orbit into other
-        members. 
+        members.
 
         Arguments:
-        as_permutations - bool, (default=False), if True, returns the 
+        as_permutations - bool, (default=False), if True, returns the
                           transporters as permutations of the orbit
                           members;
                           otherwise, returns transporters in the same
@@ -869,12 +876,12 @@ class Orbit:
 
     def stabilizer_group(self, as_permutations=False):
         """
-        Stabilizer group of the first orbit member. 
+        Stabilizer group of the first orbit member.
 
         Arguments:
-        as_permutations - bool, (default=False), if True, returns the 
+        as_permutations - bool, (default=False), if True, returns the
                           Group object generated by permutations of the orbit
-                          members; 
+                          members;
                           otherwise, returns Group with generators in the
                           same representation as the original group generators.
 
@@ -898,9 +905,9 @@ class Orbit:
 
         summary_string = f"Group orbit with size "\
                          f"{self.size}\n"
-        
+
         summary_string += f"{self.points}"
-        
+
         return summary_string
 
     def __repr__(self):
@@ -909,4 +916,3 @@ class Orbit:
         """
         cls = self.__class__.__name__
         return f"{cls}(points={self.points})"
-

@@ -2,9 +2,9 @@
 # Andrey Zelenskiy, 2024
 
 """
-================================
-samosa/symmetry/3d_operations.py
-================================
+============================
+samosa/symmetry/operators.py
+============================
 
 This program defines 3D symmetry operations, as well as methods for converting
 between different representations of these operations.
@@ -14,16 +14,23 @@ import numpy as np
 
 from fractions import Fraction
 
-from samosa.utils.type_checks import ArrayType, NoneType, is_None, not_None, \
-                                     check_type, check_len, check_shape
+from samosa.utils.type_checks import (
+    ArrayType,
+    NoneType,
+    not_None,
+    check_type,
+    check_len,
+    check_shape,
+)
 
-from samosa.utils.math import _normalize_vector 
+from samosa.utils.math import _normalize_vector
 
 """
 -------------------------------------------------------------------------------
 Symmetry operators in 3D
 -------------------------------------------------------------------------------
 """
+
 
 def operator_C(axis, angle, basis=None):
     """
@@ -54,7 +61,7 @@ def operator_C(axis, angle, basis=None):
 
     if isinstance(angle, int):
         n = angle
-        angle = 2*np.pi/n
+        angle = 2 * np.pi / n
 
     elif isinstance(angle, tuple):
         check_len('angle = (k, n)', angle, 2)
@@ -62,26 +69,26 @@ def operator_C(axis, angle, basis=None):
         check_type('n', angle[1], int)
 
         k, n = angle
-        angle = 2*np.pi*k/n
-    
+        angle = 2 * np.pi * k / n
+
     # Define trig functions
     cos_a = np.cos(angle)
     sin_a = np.sin(angle)
 
     rotation = np.zeros((3, 3))
 
-    rotation[0, 0] = cos_a + axis[0]**2*(1-cos_a)
-    rotation[0, 1] = axis[0]*axis[1]*( 1 - cos_a ) - axis[2]*sin_a 
-    rotation[0, 2] = axis[0]*axis[2]*( 1 - cos_a ) + axis[1]*sin_a
+    rotation[0, 0] = cos_a + axis[0]**2 * (1 - cos_a)
+    rotation[0, 1] = axis[0] * axis[1] * (1 - cos_a) - axis[2] * sin_a
+    rotation[0, 2] = axis[0] * axis[2] * (1 - cos_a) + axis[1] * sin_a
 
-    rotation[1, 0] = axis[1]*axis[0]*( 1 - cos_a ) + axis[2]*sin_a
-    rotation[1, 1] = cos_a + axis[1]**2*(1-cos_a) 
-    rotation[1, 2] = axis[1]*axis[2]*( 1 - cos_a ) - axis[0]*sin_a
-    
-    rotation[2, 0] = axis[2]*axis[0]*( 1 - cos_a ) - axis[1]*sin_a
-    rotation[2, 1] = axis[2]*axis[1]*( 1 - cos_a ) + axis[0]*sin_a 
-    rotation[2, 2] = cos_a + axis[2]**2*(1-cos_a)
-    
+    rotation[1, 0] = axis[1] * axis[0] * (1 - cos_a) + axis[2] * sin_a
+    rotation[1, 1] = cos_a + axis[1]**2 * (1 - cos_a)
+    rotation[1, 2] = axis[1] * axis[2] * (1 - cos_a) - axis[0] * sin_a
+
+    rotation[2, 0] = axis[2] * axis[0] * (1 - cos_a) - axis[1] * sin_a
+    rotation[2, 1] = axis[2] * axis[1] * (1 - cos_a) + axis[0] * sin_a
+    rotation[2, 2] = cos_a + axis[2]**2 * (1 - cos_a)
+
     if not_None(basis):
         basis = basis.T
         basis_inv = np.linalg.inv(basis)
@@ -93,14 +100,14 @@ def operator_C(axis, angle, basis=None):
 def operator_M(axis, basis=None):
     """
     Defines a 3D mirror reflection.
-    
+
     Mirror reflection is defined as a 180 degree rotation followed by an
     inversion:
 
     M(axis) = I * C(axis, 2) = -C(axis, 2).
 
     Arguments:
-    axis - np.1darray[3], normal vector of the mirror plane, not necesserally 
+    axis - np.1darray[3], normal vector of the mirror plane, not necesserally
            normalized;
 
     basis - None or np.2darray[3][3], (default=None), if not None,
@@ -112,7 +119,7 @@ def operator_M(axis, basis=None):
 
     check_type('axis', axis, ArrayType)
     check_len('axis', axis, 3)
-   
+
     axis = _normalize_vector(axis)
 
     reflection = -operator_C(axis, 2, basis)
@@ -145,18 +152,20 @@ def operator_S(axis, angle, basis=None):
     check_type('axis', axis, ArrayType)
     check_len('axis', axis, 3)
     check_type('angle', angle, float, int, tuple)
-   
+
     axis = _normalize_vector(axis)
 
     rotoinversion = operator_C(axis, angle, basis).dot(operator_M(axis, basis))
 
     return rotoinversion
 
+
 """
 -------------------------------------------------------------------------------
 Tools for converting between matrix and symbolic representations
 -------------------------------------------------------------------------------
 """
+
 
 def operator_to_symbol(operator, as_dict=False, eps=1e-10):
     """
@@ -165,7 +174,7 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
     ---------------------------------------------------------------------------
     Proper and improper operations
     ---------------------------------------------------------------------------
-    3D operations are defined as orthogonal matrices, meaning that 
+    3D operations are defined as orthogonal matrices, meaning that
 
     |det(operator)| = 1.
 
@@ -174,12 +183,12 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
     det(operator) = 1
 
     Otherwise, det(operator = -1, which means that the operation is improper
-    (reflections, rotoinversions). 
+    (reflections, rotoinversions).
 
     ---------------------------------------------------------------------------
     Angle of rotation
     ---------------------------------------------------------------------------
-    The angle of the rotation can be determined for proper and improper 
+    The angle of the rotation can be determined for proper and improper
     operators by using
 
     trace(operator)/det(operator) = 1 + 2cos(angle).
@@ -193,7 +202,7 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
 
     Skew(axis) = (operator - operator.T),
 
-    where Skew(axis) is the skew-symmetric matrix. 
+    where Skew(axis) is the skew-symmetric matrix.
     (see https://en.wikipedia.org/wiki/Rotation_matrix#Determining_the_axis)
 
     Arguments:
@@ -203,54 +212,54 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
                ['type', 'n, 'k', 'axis']. If False, returns the symbol as a
                formatted string;
 
-    eps      - float, (default=1e-10) defines numerical precision of float 
+    eps      - float, (default=1e-10) defines numerical precision of float
                operations;
 
     Returns:
     symbol - (as_dict=False) str, symbolic representation of the symmetry
              operation;
-             (as_dict=True) dict, returns the operator information as a 
+             (as_dict=True) dict, returns the operator information as a
              dictionary with keys ['type', 'n, 'k', 'axis'].
     """
-   
+
     # Type checks
     check_type('operator', operator, ArrayType)
     check_type('as_dict', as_dict, bool)
     check_type('eps', eps, float)
 
     log_eps = (-np.log10(eps)).astype(int)
-    
+
     operator = np.array(operator)
     check_shape('operator', operator, 3, 3)
 
     # Calculate the trace and determinant of the operator matrix
     operator_trace = np.trace(operator)
     operator_det = np.linalg.det(operator)
-    
+
     if abs(abs(operator_det) - 1.0) > eps:
         raise ValueError("Cannot determine symmetry symbol: operator "
-                        f"{operator} is a non-orthogonal matrix!")
+                         f"{operator} is a non-orthogonal matrix!")
 
     # Calculate the angle of rotation
-    cos_a = np.round(0.5*(operator_trace/operator_det - 1), log_eps)
+    cos_a = np.round(0.5 * (operator_trace / operator_det - 1), log_eps)
     angle = np.arccos(cos_a)
 
-    frac = Fraction(np.round(angle/(2*np.pi), log_eps)).limit_denominator()
+    frac = Fraction(np.round(angle / (2 * np.pi), log_eps)).limit_denominator()
     k = frac.numerator
     n = frac.denominator
 
     # Calculate the axis of rotation
-    operator_skew = (operator-operator.T)/operator_det
-    axis = 0.5*np.array([operator_skew[2, 1] - operator_skew[1, 2],
-                         operator_skew[0, 2] - operator_skew[2, 0],
-                         operator_skew[1, 0] - operator_skew[0, 1]])
+    operator_skew = (operator - operator.T) / operator_det
+    axis = 0.5 * np.array([operator_skew[2, 1] - operator_skew[1, 2],
+                           operator_skew[0, 2] - operator_skew[2, 0],
+                           operator_skew[1, 0] - operator_skew[0, 1]])
 
     axis /= np.max(abs(axis)) + eps
-    
+
     # Correct the axis for the reflections
     if n == 2:
         axis /= operator_det
-    
+
     axis = np.round(axis, log_eps).astype(int)
 
     # Determine if the operation is proper or improper
@@ -264,10 +273,10 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
             operator_type = 'M'
 
     if as_dict:
-        symbol = {'type' : operator_type,
-                     'n' : n,
-                     'k' : k,
-                  'axis' : axis}
+        symbol = {'type': operator_type,
+                  'n': n,
+                  'k': k,
+                  'axis': axis}
 
     else:
         axis = "".join(str(a) for a in axis)
@@ -278,13 +287,14 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
 
     return symbol
 
+
 def symbol_to_operator(symbol, basis=None):
     """
     Determines the 3D matrix operation for a given symbolic representation.
 
     Arguments:
     symbol - str, symbolic representation of the symmetry operation;
-    
+
     basis  - None or np.2darray[3][3], (default=None), if not None,
              defines the basis of the transformation.
 
@@ -296,7 +306,7 @@ def symbol_to_operator(symbol, basis=None):
     check_type('basis', basis, NoneType, ArrayType)
 
     # Separate the operation and the axis
-    operation, axis = symbol.split(';') 
+    operation, axis = symbol.split(';')
     axis = np.array(list(axis), dtype=float)
 
     if operation == 'M':
@@ -318,4 +328,3 @@ def symbol_to_operator(symbol, basis=None):
             raise ValueError(f"Incorrect symmetry symbol: {symbol}.")
 
     return operator
-
