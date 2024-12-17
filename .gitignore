@@ -5,3 +5,4 @@
 **/__pycache__/
 *checkpoints*
 tutorials/.virtual_documents/
+*tests.ipynb*

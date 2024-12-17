@@ -1,47 +1,23 @@
 # `samosa`: Symmetry Analysis MOdule for Self-Assembly
 
-The aim of this library is to provide essential tools for symmetry analysis of
-discrete geomentric objects.
+**samosa** is a Python library that provides essential tools for symmetry
+analysis of discrete geomentric objects.
+Most features are designed to complement computer simulations of lattice
+models, including, but not limited to self-assembly of anisotropic particles.
+The library provides implementation for all point and space groups in up to 3
+dimensions, as well as symmetric groups of a given order.
+Additionally, the module includes methods for initializing geometric
+structures, such as crystallographic lattices and polyhedral particles.
 
-## Submodules
+## Resources
 
-## `samosa/utils`
+- [Tutorials](./tutorials/): Jupyter notebooks that demonstrate main features
+of the library.
 
-- [x] Variable type checking;
-- [x] Array shape checking;
-- [x] List membership checking;
-- [ ] Class for variable checking;
-- [ ] Module-specific errors script;
+## Contributing 
 
-## `samosa/database`
+Contributions are welcome via pull requests.
 
-- [x] General `Database` class for uploading symmetry data;
-- [x] `SpaceGroupDatabase` class for analysing space group properties;
-- [x] Method for identifying allowed lattice types, point groups, and space
-groups from a set of constraints;
-- [ ] Wyckoff positions data;
-- [ ] All point group symmetries for each space group;
+## Licence
 
-## `samosa/lattice` and `samosa/particle`
-
-- [ ] To be combined into `samosa/structures`;
-- [ ] Definition of `Lattice` objects as crystal data containers;
-- [ ] Definition of polyhedral particles from symmetry;
-- [ ] Calculation of anisotropic interactions from particle structure;
-
-## `samosa/symmetry`
-
-- [x] General `Group` class with methods for orbit/stabilizer calculations;
-- [x] Classes for group element representations: `MatrixGroupElement`,
-`PermutationGroupElement`, `IdentityGroupElement`, and `PointerGroupElement`;
-- [x] Methods for defining point groups from Schoefields symbols;
-- [x] Methods for defining common 3D matrix operations (proper/improper
-rotations and reflections);
-- [ ] Tools for representation theory analysis: irreps, character tables,
-group element traces;
-
-## General TODOs
-
-- [ ] PEP8 checks;
-- [ ] Documentation;
-- [ ] Tutorials (see `samosa/tutorials/INDEX.md` for current tutorial status);
+**samosa** is availble under the [3-Clause BSD license](LICENSE).
