@@ -12,7 +12,7 @@ space group symmetries.
 
 import numpy as np
 
-from samosa.symmetry.group_utils import Group
+from samosa.symmetry.group_utils import Group, Orbit
 
 from samosa.symmetry.representations import SpaceGroupElement
 
@@ -42,6 +42,7 @@ class Lattice:
     lattice. 
     """
 
+    # Lattice initializers
     def __init__(self, 
                  dimension, 
                  space_group_index, 
@@ -106,14 +107,8 @@ class Lattice:
         self.__initialize_crystal_parameters(crystal_parameters, database)
 
         # Group sites into Wyckoff classes
-        self.__wyckoff_list = []
-        while len(input_positions) != 0:
-            p = input_positions[0]
-            wp = WyckoffPosition(p, self.space_group)
-            for q in wp.positions:
-                if _array_in_list(q, input_positions):
-                    input_positions.remove(q)
-            self.__wyckoff_list += [wp]
+        self.__wyckoff_list = Orbit.sort_into_orbits(input_positions, 
+                                                     self.space_group)
 
     def __initialize_crystal_parameters(self, parameters, database):
         """
@@ -426,7 +421,7 @@ class Lattice:
             summary_string += f"\nSites in the unit cell occupy "\
                               f"a single Wyckoff site, which has "\
                               f"multiplicity "\
-                              f"{self.wyckoff_list[0].multiplicity};"
+                              f"{self.wyckoff_list[0].size};"
         
         else:
             m_list = [str(w.multiplicity) for w in self.wyckoff_list]
@@ -465,137 +460,3 @@ class Lattice:
         cls = self.__class__.__name__
         return f"{cls}(dimension={self.dimension}, "\
                f"space_group_index={self.space_group_index})"
-
-"""
--------------------------------------------------------------------------------
-WyckoffPosition class
--------------------------------------------------------------------------------
-"""
-
-class WyckoffPosition:
-    """
-    Defines a container for storing all properties of a speciefied Wyckoff
-    site. 
-    """
-
-    def __init__(self, position, space_group):
-        """
-        Initializes the properties related to the Wyckoff position.
-
-        Arguments:
-        position    - ArrayType, fractional positions of a single vertex;
-
-        space_group - Group, space group of the lattice.
-        """
-        # Type checks
-        check_type('position', position, ArrayType)
-        check_len('position', position, 3)
-        check_type('space_group', space_group, Group)
-
-        # Store original space group generators
-        self.__generators_group = space_group.generators
-
-        # Calculate orbit
-        output = space_group.calculate_orbit(position, as_pointer=True)
-        self.__positions = output[0]
-        self.__generators_wyckoff = output[1]
-        self.__transporter_pointers = output[2]
-        self.__generators_pg = output[3]
-
-    # WyckoffPosition properties
-    @property
-    def positions(self):
-        """
-        Orbit of the input position (vertices related by crystallographic point
-        group operations).
-        """
-        return self.__positions
-
-    @property
-    def multiplicity(self):
-        """
-        Returns the total number of Wyckoff positions.
-        """
-        return len(self.positions)
-
-    @property
-    def generators(self):
-        """
-        Generators of the space group written as permutations of the Wyckoff 
-        positions.
-        """
-        return self.__generators_wyckoff
-
-    def transporters(self, as_permutations=False):
-        """
-        Space group transformations that move the selected vertex to other
-        positions in the orbit. 
-
-        Arguments:
-        as_permutations - bool, (default=False), if True, returns the 
-                          transporters as permutations of the Wyckoff
-                          positions; 
-                          otherwise, returns transporters in a
-                          SpaceGroupElement representation.
-
-        Returns:
-        transporter_dict - dict {(position) : transporter}, transporter
-                           operators that change the initial vertex to another
-                           vertex in the orbit.
-        """
-        if as_permutations:
-            generators = self.generators
-        else:
-            generators = self.__generators_group
-
-        transporter_dict = {}
-        for p in self.__transporter_pointers.keys():
-            pointer = self.__transporter_pointers[p]
-            element = pointer.pointer_to_element(generators, skip_checks=True)
-            transporter_dict[p] = element
-
-        return transporter_dict
-
-    def point_group(self, as_permutations=False):
-        """
-        Stabilizer point group of a single Wyckoff position. 
-
-        Arguments:
-        as_permutations - bool, (default=False), if True, returns the 
-                          Group object generated by permutations of the Wyckoff
-                          positions; 
-                          otherwise, returns Group wit henerators in a
-                          MatrixGroupElement representation.
-
-        Returns:
-        PointGroup - dict {(position) : transporter}, transporter operators
-                     that change the initial vertex to another vertex in the
-                     orbit.
-        """
-        if as_permutations:
-            generators = self.generators
-        else:
-            generators = [g.matrix for g in self.__generators_group]
-
-        return Group(generators, filter_generators=True)
-
-    # Output summary functions
-    def __str__(self):
-        """
-        Provides user-friendly summary of the WyckoffPosition container.
-        """
-
-        summary_string = f"Wyckoff positions with multiplicity "\
-                         f"{self.multiplicity}\n"
-        
-        summary_string += f"{self.positions}"
-        
-        return summary_string
-
-    def __repr__(self):
-        """
-        Provedes useful print output.
-        """
-        cls = self.__class__.__name__
-        return f"{cls}(position={self.positions[0]})"
-

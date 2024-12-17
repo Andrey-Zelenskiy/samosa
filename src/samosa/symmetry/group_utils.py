@@ -99,6 +99,10 @@ class Group:
         store_data - bool, (default=False), if True, stores the calculated 
                      elements as self.elements.
         """
+        # Type checks
+        check_type('store_data', store_data, bool)
+
+        # Generate all elements of the group
         dim = self.generators[0].dim
         element_list = list(self.generators) 
 
@@ -108,6 +112,7 @@ class Group:
                 if not _element_in_list(new_element, element_list):
                     element_list += [new_element]
 
+        # Optionally store the elements in the group container
         if store_data == True:
             self.__elements = element_list
             self.order = len(self.elements)
@@ -124,11 +129,16 @@ class Group:
         store_data - bool, (default=False), if True, stores the calculated 
                      elements as self.elements.
         """
+        # Type checks
+        check_type('store_data', store_data, bool)
+
+        # Initialize array of group elements
         if is_None(self.elements):
             element_list = self.calculate_elements(store_data)
         else:
             element_list = list(self.elements)
 
+        # Calculate conjugate classes 
         order = len(element_list)
 
         members = list(element_list)
@@ -154,6 +164,7 @@ class Group:
             conjugate_classes[tuple(class_)] = {"sign" : e_sign, 
                                                 "trace" : e_trace}
         
+        # Optionally store conjugate classes in the class container
         if store_data == True:
             self.__conjugate_classes = conjugate_classes
             self.__n_classes = len(self.conjugate_classes.keys())
@@ -325,10 +336,12 @@ class Group:
         Removes redundant operators from the candidate generator list.
         """
 
+        # Conflict check
+        self.__check_generators(generators)
+
         candidate_list = []
         filtered_generators = []
         
-        # TODO not empty! 
         dim = generators[0].dim
 
         # Remove potential duplicates and identity elements
@@ -338,7 +351,7 @@ class Group:
 
         # If the list is empty after sorting, the only generator is identity
         if len(candidate_list) == 0:
-            filtered_generators = [IdentityGroupElement()]
+            filtered_generators = [IdentityGroupElement(dim)]
 
         # If only one generator is provided, no need to perform the check
         elif len(candidate_list) == 1:
@@ -682,3 +695,218 @@ class Group:
         """
         cls = self.__class__.__name__
         return f"{cls}(generators = {self.generators!r})"
+
+"""
+-------------------------------------------------------------------------------
+Group class
+-------------------------------------------------------------------------------
+"""
+
+
+class Orbit:
+    """
+    Defines a container for storing all properties of an orbit generated
+    by a group. 
+    """
+
+    def __init__(self, 
+                 generators, 
+                 points, 
+                 permutations, 
+                 transporters, 
+                 stabilizers):
+        """
+        Initializes properties of the orbit.
+
+        Arguments:
+        generators   - list, group generators in the original basis;
+        
+        points       - list, points in the orbit;
+        
+        permutations - list of PermutationGroupElement objects, group
+                       generators represented as permutations of the orbit
+                       elements;
+
+        transporters - dict point : PointerGroupElement, group elements that
+                       transport the first point in 
+                       the orbit into all others;
+
+        stabilizers  - list of PointerGroupElement objects, generators of the
+                       stabilizer group (first point in the orbit).
+        """
+        # Type checks
+        generators = Group.filter_generators(generators)
+
+        check_type('points', points, list)
+        
+        check_type('permutations', permutations, Array)
+
+        for perm in permutations:
+            check_type(perm, PermutationGroupElement)
+
+        check_type('transporters', transporters, dict)
+
+        for p in points:
+            check_type('transporter elements', 
+                       transporters[p], PointerGroupElement)
+
+        check_type('stabilizers', stabilizers, list)
+
+        for s in stabilizers:
+            check_type('stabilizer element', s, PointerGroupElement)
+
+        # Store original space group generators
+        self.__generators_group = generators
+
+        # Calculate orbit
+        self.__points = points
+        self.__generators_permutations = permutations
+        self.__transporter_pointers = transporters
+        self.__stabilizers = stabilizers
+
+    @classmethod
+    def from_group(cls, group, position):
+        """
+        Calculate orbit given a group and the first member of the orbit.
+
+        Arguments:
+        group    - Group, symmetry group;
+
+        position - first member of the orbit.
+        """
+        output = group.calculate_orbit(position, as_pointer=True)
+        
+        return cls(group.generators, 
+                   output[0], 
+                   output[1], 
+                   output[2], 
+                   output[3])
+
+    @classmethod
+    def sort_into_orbits(cls, item_list, group):
+        """
+        Sorts elements of a list into unique orbits.
+
+        Arguments:
+        item_list - list, initial list of objects;
+
+        group     - Group, symmetry group for orbit calculations.
+
+        Returns:
+        orbit_list - list of Orbit, unique orbits of the input objects.
+        """
+        # Type checks
+        check_type("item_list", item_list, list)
+        check_type("group", group, Group)
+        
+        # Sort list elements into orbits
+        orbit_list = []
+
+        while len(item_list) != 0:
+            p = item_list[0]
+            item_orbit = cls.from_group(group, p)
+
+            for q in item_orbit.points:
+                if _array_in_list(q, item_list):
+                    item_list.remove(q)
+
+            orbit_list += [item_orbit]
+
+        return orbit_list
+
+
+    # WyckoffPosition properties
+    @property
+    def points(self):
+        """
+        Members of the orbit.
+        """
+        return self.__points
+
+    @property
+    def size(self):
+        """
+        Returns the size of the orbit.
+        """
+        return len(self.points)
+
+    @property
+    def generators(self):
+        """
+        Generators of the space group written as permutations of the Wyckoff 
+        positions.
+        """
+        return self.__generators_permutations
+
+    def transporters(self, as_permutations=False):
+        """
+        Operators that transform the first member of the orbit into other
+        members. 
+
+        Arguments:
+        as_permutations - bool, (default=False), if True, returns the 
+                          transporters as permutations of the orbit
+                          members;
+                          otherwise, returns transporters in the same
+                          representation as the original group generators.
+
+        Returns:
+        transporter_dict - dict {(position) : transporter}, transporter
+                           operators.
+        """
+        if as_permutations:
+            generators = self.generators
+        else:
+            generators = self.__generators_group
+
+        transporter_dict = {}
+        for p in self.__transporter_pointers.keys():
+            pointer = self.__transporter_pointers[p]
+            element = pointer.pointer_to_element(generators, skip_checks=True)
+            transporter_dict[p] = element
+
+        return transporter_dict
+
+    def stabilizer_group(self, as_permutations=False):
+        """
+        Stabilizer group of the first orbit member. 
+
+        Arguments:
+        as_permutations - bool, (default=False), if True, returns the 
+                          Group object generated by permutations of the orbit
+                          members; 
+                          otherwise, returns Group with generators in the
+                          same representation as the original group generators.
+
+        Returns:
+        PointGroup - dict {(position) : transporter}, transporter operators
+                     that change the initial vertex to another vertex in the
+                     orbit.
+        """
+        if as_permutations:
+            generators = self.generators
+        else:
+            generators = self.__generators_group
+
+        return Group(generators, filter_generators=True)
+
+    # Output summary functions
+    def __str__(self):
+        """
+        Provides user-friendly summary of the Orbit container.
+        """
+
+        summary_string = f"Group orbit with size "\
+                         f"{self.size}\n"
+        
+        summary_string += f"{self.points}"
+        
+        return summary_string
+
+    def __repr__(self):
+        """
+        Provedes useful print output.
+        """
+        cls = self.__class__.__name__
+        return f"{cls}(points={self.points})"
+
