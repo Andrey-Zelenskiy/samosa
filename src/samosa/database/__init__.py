@@ -170,7 +170,7 @@ class SpaceGroupDatabase(Database):
         self.__lattice_list = list(data.keys())
 
         # Lookup for allowed symmetry groups given lattice type
-        self.__lattice_reference = {}      
+        self.__lattice_reference = {}
         # { "{lattice}" : {
         #   "dimension" : int,
         #   "unconstrained_parameters" : list,
@@ -180,16 +180,16 @@ class SpaceGroupDatabase(Database):
         # }
 
         # Lookup for allowed lattices given a point group
-        self.__point_group_reference = {}  
+        self.__point_group_reference = {}
         # { "{PG}" : { "{lattice}" : list } }
 
         # Lookup for point group and lattice type for a given space group
-        self.__space_group_reference = {}  
+        self.__space_group_reference = {}
         # { ( dim, SG ) : ( "{PG}", "{lattice}" ) }
 
         # Lookup for allowed lattice types and point groups given lattice
         # dimension
-        self.__dimension_reference = {}    
+        self.__dimension_reference = {}
         # { int : { "lattices"     : list,
         #           "point groups" : list,
         #           "space groups" : list,
@@ -212,8 +212,8 @@ class SpaceGroupDatabase(Database):
                     sg_t = (dim, sg)
 
                     self.__fill_lattice_reference(lat, pg, sg, dim,
-                        param_u, param_c)
-                    
+                                                  param_u, param_c)
+
                     self.__fill_point_group_reference(lat, pg, sg_t)
 
                     self.__fill_space_group_reference(lat, pg, sg_t)
@@ -326,7 +326,7 @@ class SpaceGroupDatabase(Database):
             warnings.warn("No constraints for lattice type or point group "
                           "are specified")
             allowed_groups = []
-            
+
             for i in range(1, 4):
                 allowed_groups +=\
                     [[(i, j) for j in range(1, self.n_space_groups[i])]]
@@ -468,7 +468,7 @@ class SpaceGroupDatabase(Database):
             allowed_groups = self.allowed_symmetry(lattice_type,
                                                    point_group_symbol,
                                                    as_str)
-            
+
             if isinstance(allowed_groups, list):
                 allowed_groups = allowed_groups[dimension - 1]
 

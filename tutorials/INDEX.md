@@ -6,43 +6,11 @@ The tutorials are split by `samosa` modules.
 It is recommended to view the tutorials in the same order as they appear in the
 following list.
 
-## `samosa.symmetry` module tutorials
-
-### `group_elements.ipynb` - create and interact objects of `GroupElement` type.
-### STATUS: IMPLEMENTED
-
-This tutorial illustrates the properties of two most common classes that are 
-used to represent group elements: `MatrixGroupElement` and 
-`PermutationGroupElement`.
-
-#### TODOs
-- [ ] Element dimension;
-- [ ] Element trace;
-
-### `point_group.ipynb` - create and interact with 3D point groups.
-### STATUS: IMPLEMENTED
-
-This notebook demonstrates the properties of a `Group` object using familiar 
-3D point groups.
-
-### TODOs
-- [ ] Representation theory;
-- [ ] Orbit/stabilizers calculations;
-
-### `custom_group.ipynb` - create your own group.
-### STATUS: IMPLEMENTED
-
-This tutorial shows a procedure for initializing a new `Group` object from 
-scratch.
-
-### TO BE MERGED WITH `point_group.ipynb`
-
-## `samosa.database` module tutorials
-
-### `database_access.ipynb` - get access to `samosa`'s databases .
-### STATUS: NOT IMPLEMENTED
-
-## `samosa.particle` module tutorials
-
-## `samosa.lattice` module tutorials
+* [group_elements](group_elements.ipynb) - initialize and manipulate objects of
+`GroupElement` type;
+* [group](group.ipynb) - initialize `Group` objects and calculate group
+properties;
+* [database](database.ipynb) - use `Database` and `SpaceGroupDatabase` to
+upload input data, and use research tools to determine compatibility between
+lattice symmetries;
 

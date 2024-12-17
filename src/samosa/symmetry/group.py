@@ -742,7 +742,7 @@ class Orbit:
                        stabilizer group (first point in the orbit).
         """
         # Type checks
-        generators = Group.filter_generators(generators)
+        generators = Group.generator_filter(generators)
 
         check_type('points', points, list)
 

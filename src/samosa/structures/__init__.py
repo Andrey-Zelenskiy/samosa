@@ -12,20 +12,23 @@ symmetry analysis.
 
 import numpy as np
 
-from samosa.symmetry.group_utils import Group, Orbit
+from samosa.symmetry import space_group
 
-from samosa.symmetry.representations import SpaceGroupElement
-
-from samosa.symmetry.space_group_utils import space_group
+from samosa.symmetry.group import Orbit
 
 from samosa.database import SpaceGroupDatabase
 
 from samosa.utils.array_checks import _array_in_list
 
-from samosa.utils.type_checks import ArrayType, NoneType, is_None, not_None, \
-                                     check_type, check_len, check_in_list
+from samosa.utils.type_checks import (
+    ArrayType,
+    NoneType,
+    is_None,
+    not_None,
+    check_type,
+)
 
-from samosa.utils.errors import custom_format_warning 
+from samosa.utils.errors import custom_format_warning
 
 import warnings
 warnings.formatwarning = custom_format_warning
@@ -36,52 +39,53 @@ Lattice class
 -------------------------------------------------------------------------------
 """
 
+
 class Lattice:
     """
     Defines a container for storing all relevant spatial information about a
-    crystallographic lattice. 
+    crystallographic lattice.
     """
 
     # Lattice initializers
-    def __init__(self, 
-                 dimension, 
-                 space_group_index, 
+    def __init__(self,
+                 dimension,
+                 space_group_index,
                  positions=[[0, 0, 0]],
                  crystal_parameters=None):
         """
-        Initialize all relevant space group information from the lattice 
-        dimension and space group number. 
+        Initialize all relevant space group information from the lattice
+        dimension and space group number.
 
         Arguments:
         dimension          - int, dimension of the lattice;
 
-        space_group_index  - int, space group number (as per International 
+        space_group_index  - int, space group number (as per International
                              Tables for Crystallography, volume A);
-        
-        positions          - list of ArrayType[3], (default=[[0, 0, 0]]), 
-                             vertex (Wyckoff) positions written in fractional 
+
+        positions          - list of ArrayType[3], (default=[[0, 0, 0]]),
+                             vertex (Wyckoff) positions written in fractional
                              coordinates. Only inequivalent Wyckoff sites need
                              to be specified;
-        
+
         crystal_parameters - (default=None), physical parameters of the lattice
                              (unit cell dimensions and angles):
-                             
+
                              if None, initializes the unconstrained parameters
                              randomly;
 
-                             if dict with allowed keys 
-                             ['a', 'b', 'c', 'alpha', 'beta', 'gamma'], 
+                             if dict with allowed keys
+                             ['a', 'b', 'c', 'alpha', 'beta', 'gamma'],
                              initializes parameters from user input.
         """
         # Type checks
         check_type('dimension', dimension, int)
         check_type('space_group_index', space_group_index, int)
-        check_type('positions', positions, list) 
+        check_type('positions', positions, list)
 
         input_positions = []
         for p in positions:
             check_type('vertex position', p, ArrayType)
-            
+
             p = np.array(p) % 1
 
             if not _array_in_list(p, input_positions):
@@ -93,9 +97,9 @@ class Lattice:
         database = SpaceGroupDatabase()
 
         # Initialize symmetry properties
-        sg_info = space_group(dimension, space_group_index, database, 
+        sg_info = space_group(dimension, space_group_index, database,
                               return_info=True)
-        
+
         self.__dimension = dimension
         self.__space_group_index = space_group_index
         self.__space_group = sg_info['space_group']
@@ -107,23 +111,23 @@ class Lattice:
         self.__initialize_crystal_parameters(crystal_parameters, database)
 
         # Group sites into Wyckoff classes
-        self.__wyckoff_list = Orbit.sort_into_orbits(input_positions, 
+        self.__wyckoff_list = Orbit.sort_into_orbits(input_positions,
                                                      self.space_group)
 
     def __initialize_crystal_parameters(self, parameters, database):
         """
         Determines lattice parameters (primitive cell dimensions and angles)
         constrained by the lattice type.
-       
+
         Arguments:
         parameters - (default=None), physical parameters of the lattice
                      (unit cell dimensions and angles):
-                     
+
                      if None, initializes the unconstrained parameters
                      randomly;
 
-                     if dict with allowed keys 
-                     ['a', 'b', 'c', 'alpha', 'beta', 'gamma'], 
+                     if dict with allowed keys
+                     ['a', 'b', 'c', 'alpha', 'beta', 'gamma'],
                      initializes parameters from user input;
 
         database   - SpaceGroupDatabase object, lookup data structure.
@@ -140,12 +144,12 @@ class Lattice:
 
             for p in ['b', 'c']:
                 # Initialize random dimension values between 0 and 5
-                parameters[p] = np.random.rand()*5.0 
+                parameters[p] = np.random.rand() * 5.0
 
             for p in ['alpha', 'beta', 'gamma']:
                 # Initialize random angle values between 0 and pi
-                parameters[p] = np.random.rand()*180
-        
+                parameters[p] = np.random.rand() * 180
+
         # Determine constraints on the physical crystal parameters from the
         # lattice type
         reference = database.lattice_reference[self.lattice_type]
@@ -164,23 +168,23 @@ class Lattice:
         Arguments:
         name        - str, valid names are: chain, square, hexagonal, cubic,
                       bcc, fcc;
-        
+
         point_group - Schoenflies symbol of the site point group symmetry.
         """
         # Define space groups for the allowed lattice names/point group
         # combinations
-        allowed_names = {'chain'     : {'C1'  : (1, 1), 
-                                        'Cs'  : (1, 2)},
-                         'square'    : {'C4'  : (2, 10),
-                                        'C4v' : (2, 11)},
-                         'hexagonal' : {'C6'  : (2, 16),
-                                        'C6v' : (2, 17)},
-                         'cubic'     : {'O'   : (3, 207),
-                                        'Oh'  : (3, 221)},
-                         'bcc'       : {'O'   : (3, 211),
-                                        'Oh'  : (3, 229)},
-                         'fcc'       : {'O'   : (3, 209),
-                                        'Oh'  : (3, 225)}
+        allowed_names = {'chain': {'C1': (1, 1),
+                                   'Cs': (1, 2)},
+                         'square': {'C4': (2, 10),
+                                    'C4v': (2, 11)},
+                         'hexagonal': {'C6': (2, 16),
+                                       'C6v': (2, 17)},
+                         'cubic': {'O': (3, 207),
+                                   'Oh': (3, 221)},
+                         'bcc': {'O': (3, 211),
+                                 'Oh': (3, 229)},
+                         'fcc': {'O': (3, 209),
+                                 'Oh': (3, 225)}
                          }
 
         # Type checks
@@ -199,10 +203,10 @@ class Lattice:
                              f"of {point_groups_str}, not {point_group}. "
                              f"Please choose a valid point group or use the "
                              f"default initializer.")
-        
+
         # Initialize the Lattice object
-        dimension, space_group_index  = allowed_names[name][point_group]
-       
+        dimension, space_group_index = allowed_names[name][point_group]
+
         return cls(dimension, space_group_index)
 
     # Lattice methods
@@ -216,7 +220,7 @@ class Lattice:
             self.__random_parameters = False
 
         self.__crystal_parameters = {}
-        
+
         try:
             for p in self.unconstrained_parameters:
                 self.__crystal_parameters[p] = parameters[p]
@@ -225,7 +229,7 @@ class Lattice:
             raise Exception(f'{self.lattice_type} lattice type requires '
                             f'definition of {self.unconstrained_parameters} '
                             f'crystal parameters.')
-        
+
         for p in self.constrained_parameters.keys():
             p_val = self.constrained_parameters[p]
             if p in ['b', 'c']:
@@ -244,7 +248,7 @@ class Lattice:
         a_3 * a_1 = c a cos(beta).
 
         By convention, we fix the global orientation of the coordinate system
-        by taking a_1 parallel to the x-axis, and a_2 - to be lying in the 
+        by taking a_1 parallel to the x-axis, and a_2 - to be lying in the
         xy-plane. In this case,
 
         a_1 = a [1, 0, 0],
@@ -261,30 +265,31 @@ class Lattice:
 
         where
 
-        c_x = c cos(beta), 
+        c_x = c cos(beta),
         c_y = c (cos(alpha) - cos(beta) cos(gamma))/sin(gamma),
         c_z = sqrt(c^2 - c_x^2 - c_y^2).
         """
 
         a = self.crystal_parameters['a']
-        
-        self.__basis_vectors = [a*np.array([1, 0, 0])]
-        
-        if self.dimension > 1: 
+
+        self.__basis_vectors = [a * np.array([1, 0, 0])]
+
+        if self.dimension > 1:
             b = self.crystal_parameters['b']
-            gamma = self.crystal_parameters['gamma']/180*np.pi
-            
-            self.__basis_vectors += [b*np.array([np.cos(gamma), 
-                                                 np.sin(gamma),
-                                                 0])]
+            gamma = self.crystal_parameters['gamma'] / 180 * np.pi
+
+            self.__basis_vectors += [b * np.array([np.cos(gamma),
+                                                   np.sin(gamma),
+                                                   0])]
 
         if self.dimension == 3:
             c = self.crystal_parameters['c']
-            alpha = self.crystal_parameters['alpha']/180*np.pi
-            beta = self.crystal_parameters['beta']/180*np.pi
-            
-            cx = c*np.cos(beta)
-            cy = c*(np.cos(alpha) - np.cos(beta)*np.cos(gamma))/np.sin(gamma)
+            alpha = self.crystal_parameters['alpha'] / 180 * np.pi
+            beta = self.crystal_parameters['beta'] / 180 * np.pi
+
+            cx = c * np.cos(beta)
+            cy = c * (np.cos(alpha) - np.cos(beta) *
+                      np.cos(gamma)) / np.sin(gamma)
             cz = np.sqrt(c**2 - cx**2 - cy**2)
             self.__basis_vectors += [np.array([cx, cy, cz])]
 
@@ -334,7 +339,7 @@ class Lattice:
     @property
     def constrained_parameters(self):
         """
-        Unit cell parameters for which the values are constrained by the 
+        Unit cell parameters for which the values are constrained by the
         symmetry of the lattice.
         """
         return self.__constrained_parameters
@@ -374,24 +379,24 @@ class Lattice:
         Summary of the symmetry properties of the lattice.
 
         Arguments:
-        print_info - bool, (default=True), if True prints the summary, 
+        print_info - bool, (default=True), if True prints the summary,
                      otherwise outputs it as a string.
         """
-        summary_string  = "----------------------------------\n"
+        summary_string = "----------------------------------\n"
         summary_string += "Symmetry properties of the lattice\n"
         summary_string += "----------------------------------\n\n"
 
         summary_string += f"Lattice type: {self.lattice_type};\n"
-        
+
         summary_string += f"Crystallographic point group: "\
                           f"{self.point_group_symbol};\n"
-        
+
         summary_string += f"Space group index (ITC vol.A): "\
                           f"{self.space_group_index}."
 
         if print_info:
             print(summary_string)
-        
+
         else:
             return summary_string
 
@@ -400,19 +405,19 @@ class Lattice:
         Summary of the structural properties of the lattice.
 
         Arguments:
-        print_info - bool, (default=True), if True prints the summary, 
+        print_info - bool, (default=True), if True prints the summary,
                      otherwise outputs it as a string.
         """
-        summary_string  = "------------------------------------\n"
+        summary_string = "------------------------------------\n"
         summary_string += "Structural properties of the lattice\n"
         summary_string += "------------------------------------\n\n"
-        
-        summary_string += f"Unit cell parameters"
-        
+
+        summary_string += "Unit cell parameters"
+
         if self.random_parameters:
             summary_string += " (initialized randomly)"
-        
-        summary_string += f":\n"
+
+        summary_string += ":\n"
 
         for p in self.crystal_parameters.keys():
             summary_string += f"{p} = {self.crystal_parameters[p]:1.4f},\n"
@@ -422,7 +427,7 @@ class Lattice:
                               f"a single Wyckoff site, which has "\
                               f"multiplicity "\
                               f"{self.wyckoff_list[0].size};"
-        
+
         else:
             m_list = [str(w.multiplicity) for w in self.wyckoff_list]
             m_list = ", ".join(m_list)
@@ -433,10 +438,9 @@ class Lattice:
 
         if print_info:
             print(summary_string)
-        
+
         else:
             return summary_string
-
 
     def __str__(self):
         """
@@ -444,13 +448,13 @@ class Lattice:
         """
 
         summary_string = "Lattice object.\n\n"
-       
+
         summary_string += self.symmetry_info(print_info=False)
 
         summary_string += "\n\n"
 
         summary_string += self.structure_info(print_info=False)
-        
+
         return summary_string
 
     def __repr__(self):
@@ -460,4 +464,3 @@ class Lattice:
         cls = self.__class__.__name__
         return f"{cls}(dimension={self.dimension}, "\
                f"space_group_index={self.space_group_index})"
-
