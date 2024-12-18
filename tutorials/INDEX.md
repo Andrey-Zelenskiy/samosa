@@ -13,4 +13,4 @@ properties;
 * [database](database.ipynb) - use `Database` and `SpaceGroupDatabase` to
 upload input data, and use research tools to determine compatibility between
 lattice symmetries;
-
+* [lattice](lattice.ipynb) - initialize a `Lattice` structure.
