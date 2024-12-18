@@ -11,7 +11,7 @@ structures, such as crystallographic lattices and polyhedral particles.
 
 ## Resources
 
-- [Tutorials](./tutorials/): Jupyter notebooks that demonstrate main features
+- [Tutorials](./tutorials/INDEX.md): Jupyter notebooks that demonstrate main features
 of the library.
 
 ## Contributing 

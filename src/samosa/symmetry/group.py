@@ -297,15 +297,15 @@ class Group:
         Returns:
         None, updates group attributes to the new permutation basis.
         """
-        out = self.calculate_orbit(point)
+        orbit = self.calculate_orbit(point)
 
         if not_None(self.elements):
             del self.elements
-            self.generators = out[1]
+            self.generators = orbit.generators
             self.calculate_elements(store_data=True)
 
         else:
-            self.generators = out[1]
+            self.generators = orbit.generators
 
     # Method for filtering out redundant generators
     @staticmethod
