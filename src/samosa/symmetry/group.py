@@ -180,7 +180,7 @@ class Group:
         else:
             return element_list, conjugate_classes
 
-    def calculate_orbit(self, p0, as_pointer=False):
+    def calculate_orbit(self, p0):
         """
         Calculates the orbit of a single point under the action of the group.
 
@@ -200,8 +200,6 @@ class Group:
 
         To save memory, transporters and stabilizers may be stored as pointers
         to the sequence of generators that produce the correct group element.
-        The option to output group elements as pointers is controlled by
-        as_pointer argument.
 
         Note that the set of all stabilizers of the seed comprises a group
         (called the stabilizer group). The list of stabilizers in the output
@@ -215,39 +213,16 @@ class Group:
         p0         - object for which multiplication GroupElement action is
                      supported, the 'seed' point of the orbit;
 
-        as_pointer - bool, (default = False), when True, outputes the
-                     group elements as pointers to the generating set.
-
-
         Returns:
-        orbit            - list of type(p0), a closed set of points generated
-                           from the seed  through application of group
-                           elements;
-
-        permutations     - list of dict int:int, generators of the group
-                           represented as permutations of members of the orbit;
-
-        transporter_dict - dict tuple : PointerGroupElement (as_pointer = True)
-                           or
-                           dict tuple : GroupElement_type (as_pointer = False),
-                           a set of group operators (values) that transform the
-                           seed to other points in the orbit (keys);
-
-        stabilizer_list  - list of PointerGroupElement (as_pointer = True) or
-                           list of GroupElement_type (as_pointer = False),
-                           operators that leave the seed point unchanged.
+        Orbit object
         """
-        check_type("as_pointer", as_pointer, bool)
-
         # Initialize the orbit and orbit member index
         orbit = [p0]
         p_ind = {self.__hashed(p0): 0}
 
         eye_element = IdentityGroupElement(self.generators[0].dim)
-
-        if as_pointer:
-            eye_element = PointerGroupElement.from_generators(eye_element,
-                                                              self.generators)
+        eye_element = PointerGroupElement.from_generators(eye_element,
+                                                          self.generators)
 
         permutations = [{} for i in range(len(self.generators))]
         transporter_dict = {self.__hashed(p0): eye_element}
@@ -267,13 +242,7 @@ class Group:
                     orbit += [q]
                     p_ind[q_h] = len(orbit) - 1
 
-                    if as_pointer:
-                        transporter_dict[q_h] = \
-                            (ind_g, 1) * transporter_dict[p_h]
-
-                    else:
-                        transporter_dict[q_h] = \
-                            g * transporter_dict[p_h]
+                    transporter_dict[q_h] = (ind_g, 1) * transporter_dict[p_h]
 
                 # If the new point is already in the orbit, record the
                 # operation as a stabilizer
@@ -302,10 +271,7 @@ class Group:
                     g_20 = transporter_dict[q_h]
                     g_20_inv = g_20.inv
 
-                    if as_pointer:
-                        stabilizer = (g_20_inv * (ind_g, 1)) * g_10
-                    else:
-                        stabilizer = g_20_inv * g * g_10
+                    stabilizer = (g_20_inv * (ind_g, 1)) * g_10
 
                     if not _element_in_list(stabilizer, stabilizer_list):
                         stabilizer_list += [stabilizer]
@@ -314,7 +280,11 @@ class Group:
 
         permutations = [PermutationGroupElement(p) for p in permutations]
 
-        return orbit, permutations, transporter_dict, stabilizer_list
+        return Orbit(self.generators,
+                     orbit,
+                     permutations,
+                     transporter_dict,
+                     stabilizer_list)
 
     def as_permutations(self, point):
         """
@@ -327,15 +297,15 @@ class Group:
         Returns:
         None, updates group attributes to the new permutation basis.
         """
-        out = self.calculate_orbit(point)
+        orbit = self.calculate_orbit(point)
 
         if not_None(self.elements):
             del self.elements
-            self.generators = out[1]
+            self.generators = orbit.generators
             self.calculate_elements(store_data=True)
 
         else:
-            self.generators = out[1]
+            self.generators = orbit.generators
 
     # Method for filtering out redundant generators
     @staticmethod
@@ -749,12 +719,12 @@ class Orbit:
         check_type('permutations', permutations, ArrayType)
 
         for perm in permutations:
-            check_type(perm, PermutationGroupElement)
+            check_type("permutation element", perm, PermutationGroupElement)
 
         check_type('transporters', transporters, dict)
 
-        for p in points:
-            check_type('transporter elements',
+        for p in transporters.keys():
+            check_type('transporter element',
                        transporters[p], PointerGroupElement)
 
         check_type('stabilizers', stabilizers, list)
@@ -771,8 +741,8 @@ class Orbit:
         self.__transporter_pointers = transporters
         self.__stabilizers = stabilizers
 
-    @classmethod
-    def from_group(cls, group, position):
+    @staticmethod
+    def from_group(group, position):
         """
         Calculate orbit given a group and the first member of the orbit.
 
@@ -781,13 +751,7 @@ class Orbit:
 
         position - first member of the orbit.
         """
-        output = group.calculate_orbit(position, as_pointer=True)
-
-        return cls(group.generators,
-                   output[0],
-                   output[1],
-                   output[2],
-                   output[3])
+        return group.calculate_orbit(position)
 
     @classmethod
     def sort_into_orbits(cls, item_list, group):
