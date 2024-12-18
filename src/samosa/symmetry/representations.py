@@ -1234,7 +1234,9 @@ class SpaceGroupElement(GroupElement):
                                 f"{element.shape[0]}.")
 
             # The space group action is calculated modulo translation period
-            return (self.matrix * element + self.translation) % 1
+            result = (self.matrix * element + self.translation) % 1
+
+            return np.round(result, self.__log_eps_r)
 
         elif isinstance(element, IdentityGroupElement):
             if is_None(element.dim) or element.dim == 3:

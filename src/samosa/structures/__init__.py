@@ -429,7 +429,7 @@ class Lattice:
                               f"{self.wyckoff_list[0].size};"
 
         else:
-            m_list = [str(w.multiplicity) for w in self.wyckoff_list]
+            m_list = [str(w.size) for w in self.wyckoff_list]
             m_list = ", ".join(m_list)
             summary_string += f"\nSites in the unit cell occupy "\
                               f"{len(self.wyckoff_list)} inequivalent "\
