@@ -504,7 +504,7 @@ class MatrixGroupElement(GroupElement):
                                 f"matrices of dimension {self.dim} and "
                                 f"{element.shape[0]}.")
 
-            return self.operator.dot(element)
+            return np.round(self.operator.dot(element), self.__log_eps_r)
 
         elif isinstance(element, IdentityGroupElement):
             if is_None(element.dim) or self.dim == element.dim:
@@ -534,7 +534,7 @@ class MatrixGroupElement(GroupElement):
                                 f"matrices of dimension {element.shape[-1]}"
                                 f"and {self.dim}.")
 
-            return element.dot(self.operator)
+            return np.round(element.dot(self.operator), self.__log_eps_r)
 
         else:
             raise TypeError(f"Cannot multiply objects of type "
