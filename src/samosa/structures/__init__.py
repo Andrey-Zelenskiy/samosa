@@ -31,6 +31,8 @@ from samosa.utils.type_checks import (
 from samosa.utils.errors import custom_format_warning
 
 import warnings
+from samosa.symmetry.group import Group
+
 warnings.formatwarning = custom_format_warning
 
 """
@@ -47,11 +49,13 @@ class Lattice:
     """
 
     # Lattice initializers
-    def __init__(self,
-                 dimension,
-                 space_group_index,
-                 positions=[[0, 0, 0]],
-                 crystal_parameters=None):
+    def __init__(
+        self,
+        dimension,
+        space_group_index,
+        positions=[[0, 0, 0]],
+        crystal_parameters=None,
+    ):
         """
         Initialize all relevant space group information from the lattice
         dimension and space group number.
@@ -78,41 +82,47 @@ class Lattice:
                              initializes parameters from user input.
         """
         # Type checks
-        check_type('dimension', dimension, int)
-        check_type('space_group_index', space_group_index, int)
-        check_type('positions', positions, list)
+        check_type("dimension", dimension, int)
+        check_type("space_group_index", space_group_index, int)
+        check_type("positions", positions, list)
 
         input_positions = []
         for p in positions:
-            check_type('vertex position', p, ArrayType)
+            check_type("vertex position", p, ArrayType)
 
             p = np.array(p) % 1
 
             if not _array_in_list(p, input_positions):
                 input_positions += [p]
 
-        check_type('crystal_parameters', crystal_parameters, NoneType, dict)
+        check_type("crystal_parameters", crystal_parameters, NoneType, dict)
 
         # Initialize space group database container
         database = SpaceGroupDatabase()
 
         # Initialize symmetry properties
-        sg_info = space_group(dimension, space_group_index, database,
-                              return_info=True)
+        sg_info = space_group(
+            dimension, space_group_index, database, return_info=True
+        )
 
         self.__dimension = dimension
         self.__space_group_index = space_group_index
-        self.__space_group = sg_info['space_group']
-        self.__point_group_symbol = sg_info['point_group_symbol']
-        self.__lattice_type = sg_info['lattice_type']
-        self.__symmorphic = sg_info['symmorphic']
+        self.__space_group = sg_info["space_group"]
+        self.__point_group_symbol = sg_info["point_group_symbol"]
+        self.__lattice_type = sg_info["lattice_type"]
+        self.__symmorphic = sg_info["symmorphic"]
 
         # Initialize structural properties
         self.__initialize_crystal_parameters(crystal_parameters, database)
 
         # Group sites into Wyckoff classes
-        self.__wyckoff_list = Orbit.sort_into_orbits(input_positions,
-                                                     self.space_group)
+        self.__wyckoff_list = Orbit.sort_into_orbits(
+            input_positions, self.space_group
+        )
+
+        # Calculate nearest-neighbours
+        self.__nearest_neighbours = {}
+        self.__calculate_neighbours()
 
     def __initialize_crystal_parameters(self, parameters, database):
         """
@@ -140,21 +150,21 @@ class Lattice:
             parameters = {}
 
             # Normalize dimensions with respect to x-direction
-            parameters['a'] = 1.0
+            parameters["a"] = 1.0
 
-            for p in ['b', 'c']:
+            for p in ["b", "c"]:
                 # Initialize random dimension values between 0 and 5
                 parameters[p] = np.random.rand() * 5.0
 
-            for p in ['alpha', 'beta', 'gamma']:
+            for p in ["alpha", "beta", "gamma"]:
                 # Initialize random angle values between 0 and pi
                 parameters[p] = np.random.rand() * 180
 
         # Determine constraints on the physical crystal parameters from the
         # lattice type
         reference = database.lattice_reference[self.lattice_type]
-        self.__unconstrained_parameters = reference['unconstrained_parameters']
-        self.__constrained_parameters = reference['constrained_parameters']
+        self.__unconstrained_parameters = reference["unconstrained_parameters"]
+        self.__constrained_parameters = reference["constrained_parameters"]
 
         self.__crystal_parameters = None
         self.set_crystal_parameters(parameters)
@@ -173,36 +183,35 @@ class Lattice:
         """
         # Define space groups for the allowed lattice names/point group
         # combinations
-        allowed_names = {'chain': {'C1': (1, 1),
-                                   'Cs': (1, 2)},
-                         'square': {'C4': (2, 10),
-                                    'C4v': (2, 11)},
-                         'hexagonal': {'C6': (2, 16),
-                                       'C6v': (2, 17)},
-                         'cubic': {'O': (3, 207),
-                                   'Oh': (3, 221)},
-                         'bcc': {'O': (3, 211),
-                                 'Oh': (3, 229)},
-                         'fcc': {'O': (3, 209),
-                                 'Oh': (3, 225)}
-                         }
+        allowed_names = {
+            "chain": {"C1": (1, 1), "Cs": (1, 2)},
+            "square": {"C4": (2, 10), "C4v": (2, 11)},
+            "hexagonal": {"C6": (2, 16), "C6v": (2, 17)},
+            "cubic": {"O": (3, 207), "Oh": (3, 221)},
+            "bcc": {"O": (3, 211), "Oh": (3, 229)},
+            "fcc": {"O": (3, 209), "Oh": (3, 225)},
+        }
 
         # Type checks
-        check_type('name', name, str)
-        check_type('point_group', point_group, str)
+        check_type("name", name, str)
+        check_type("point_group", point_group, str)
 
         if name not in allowed_names.keys():
             names_str = ", ".join(allowed_names.keys())
-            raise ValueError(f"Lattice name must be one of {names_str}, not "
-                             f"{name}. Please choose a valid name or use the "
-                             f"default initializer.")
+            raise ValueError(
+                f"Lattice name must be one of {names_str}, not "
+                f"{name}. Please choose a valid name or use the "
+                f"default initializer."
+            )
 
         if point_group not in allowed_names[name].keys():
             point_groups_str = ", ".join(allowed_names[name].keys())
-            raise ValueError(f"Point group for lattice '{name}' must be one "
-                             f"of {point_groups_str}, not {point_group}. "
-                             f"Please choose a valid point group or use the "
-                             f"default initializer.")
+            raise ValueError(
+                f"Point group for lattice '{name}' must be one "
+                f"of {point_groups_str}, not {point_group}. "
+                f"Please choose a valid point group or use the "
+                f"default initializer."
+            )
 
         # Initialize the Lattice object
         dimension, space_group_index = allowed_names[name][point_group]
@@ -226,13 +235,15 @@ class Lattice:
                 self.__crystal_parameters[p] = parameters[p]
 
         except KeyError:
-            raise Exception(f'{self.lattice_type} lattice type requires '
-                            f'definition of {self.unconstrained_parameters} '
-                            f'crystal parameters.')
+            raise Exception(
+                f"{self.lattice_type} lattice type requires "
+                f"definition of {self.unconstrained_parameters} "
+                f"crystal parameters."
+            )
 
         for p in self.constrained_parameters.keys():
             p_val = self.constrained_parameters[p]
-            if p in ['b', 'c']:
+            if p in ["b", "c"]:
                 self.__crystal_parameters[p] = self.crystal_parameters[p_val]
 
             else:
@@ -270,28 +281,82 @@ class Lattice:
         c_z = sqrt(c^2 - c_x^2 - c_y^2).
         """
 
-        a = self.crystal_parameters['a']
+        a = self.crystal_parameters["a"]
 
         self.__basis_vectors = [a * np.array([1, 0, 0])]
 
         if self.dimension > 1:
-            b = self.crystal_parameters['b']
-            gamma = self.crystal_parameters['gamma'] / 180 * np.pi
+            b = self.crystal_parameters["b"]
+            gamma = self.crystal_parameters["gamma"] / 180 * np.pi
 
-            self.__basis_vectors += [b * np.array([np.cos(gamma),
-                                                   np.sin(gamma),
-                                                   0])]
+            self.__basis_vectors += [
+                b * np.array([np.cos(gamma), np.sin(gamma), 0])
+            ]
 
         if self.dimension == 3:
-            c = self.crystal_parameters['c']
-            alpha = self.crystal_parameters['alpha'] / 180 * np.pi
-            beta = self.crystal_parameters['beta'] / 180 * np.pi
+            c = self.crystal_parameters["c"]
+            alpha = self.crystal_parameters["alpha"] / 180 * np.pi
+            beta = self.crystal_parameters["beta"] / 180 * np.pi
 
             cx = c * np.cos(beta)
-            cy = c * (np.cos(alpha) - np.cos(beta) *
-                      np.cos(gamma)) / np.sin(gamma)
-            cz = np.sqrt(c**2 - cx**2 - cy**2)
+            cy = (
+                c
+                * (np.cos(alpha) - np.cos(beta) * np.cos(gamma))
+                / np.sin(gamma)
+            )
+            cz = np.sqrt(c ** 2 - cx ** 2 - cy ** 2)
             self.__basis_vectors += [np.array([cx, cy, cz])]
+
+    # TODO: Add a new site to the unit cell
+
+    def __calculate_neighbours(self):
+        """
+        Generates a dictionary with nearest-neighbours for each site in the
+        unit cell.
+        """
+        positions = self.unit_cell
+
+        # Portion of the lattice for nearest-neighbour search
+        n_sites = len(positions)
+
+        if self.dimension == 1:
+            displacements = np.array([0, -1, 1])
+
+        elif self.dimension == 2:
+            displacements = (
+                np.array(np.meshgrid([0, -1, 1], [0, -1, 1])).reshape(2, 9).T
+            )
+
+        elif self.dimension == 3:
+            displacements = (
+                np.array(np.meshgrid([0, -1, 1], [0, -1, 1], [0, -1, 1]))
+                .reshape(3, 27)
+                .T
+            )
+
+        search_lattice = np.zeros(3 ** self.dimension, n_sites, 3)
+
+        for k, displacement in enumerate(displacements):
+            shift = np.zeros(3)
+            for i in range(self.dimension):
+                shift += displacement[i] * self.basis_vectors[i]
+            search_lattice[k] = positions + shift
+
+        # Calculate nearest neighbours for all sites in the unit cell
+        for site, position in enumerate(positions):
+            # Calculate distances between sites
+            distances = np.linalg.norm(
+                search_lattice - position.reshape(1, 1, 3), axis=-1
+            )
+            distances[distances == 0.0] = np.NaN
+
+            # Select the nearest neighbours
+            d_ind, n_ind = np.where(distances == np.nanmin(distances))
+            self.__nearest_neighbours[site] = [n_ind, displacement[d_ind]]
+
+    # TODO: Method for generating a lattice array
+
+    # TODO: Method for plotting/visualizing a lattice structure
 
     # Lattice properties
     @property
@@ -373,6 +438,30 @@ class Lattice:
         """
         return self.__wyckoff_list
 
+    @property
+    def unit_cell(self):
+        """
+        Returns positions of all sites in the unit cell.
+        """
+        positions = []
+        for collection in self.wyckoff_list:
+            for point in collection.points:
+                position = np.zeros(3)
+                for i in range(self.dimension):
+                    position += point[i] * self.basis_vectors[i]
+
+                positions += [position]
+
+        return np.array(positions)
+
+    @property
+    def nearest_neighbours(self):
+        """
+        Returns positions/indices of the nearest-neighbours of sites in the
+        unit cell
+        """
+        return self.__nearest_neighbours
+
     # Output summary functions
     def symmetry_info(self, print_info=True):
         """
@@ -388,11 +477,13 @@ class Lattice:
 
         summary_string += f"Lattice type: {self.lattice_type};\n"
 
-        summary_string += f"Crystallographic point group: "\
-                          f"{self.point_group_symbol};\n"
+        summary_string += (
+            f"Crystallographic point group: " f"{self.point_group_symbol};\n"
+        )
 
-        summary_string += f"Space group index (ITC vol.A): "\
-                          f"{self.space_group_index}."
+        summary_string += (
+            f"Space group index (ITC vol.A): " f"{self.space_group_index}."
+        )
 
         if print_info:
             print(summary_string)
@@ -423,18 +514,22 @@ class Lattice:
             summary_string += f"{p} = {self.crystal_parameters[p]:1.4f},\n"
 
         if len(self.wyckoff_list) == 1:
-            summary_string += f"\nSites in the unit cell occupy "\
-                              f"a single Wyckoff site, which has "\
-                              f"multiplicity "\
-                              f"{self.wyckoff_list[0].size};"
+            summary_string += (
+                f"\nSites in the unit cell occupy "
+                f"a single Wyckoff site, which has "
+                f"multiplicity "
+                f"{self.wyckoff_list[0].size};"
+            )
 
         else:
             m_list = [str(w.size) for w in self.wyckoff_list]
             m_list = ", ".join(m_list)
-            summary_string += f"\nSites in the unit cell occupy "\
-                              f"{len(self.wyckoff_list)} inequivalent "\
-                              f"Wyckoff sites, and have multiplicities "\
-                              f"{m_list};"
+            summary_string += (
+                f"\nSites in the unit cell occupy "
+                f"{len(self.wyckoff_list)} inequivalent "
+                f"Wyckoff sites, and have multiplicities "
+                f"{m_list};"
+            )
 
         if print_info:
             print(summary_string)
@@ -462,8 +557,10 @@ class Lattice:
         Provedes useful print output.
         """
         cls = self.__class__.__name__
-        return f"{cls}(dimension={self.dimension}, "\
-               f"space_group_index={self.space_group_index})"
+        return (
+            f"{cls}(dimension={self.dimension}, "
+            f"space_group_index={self.space_group_index})"
+        )
 
 
 """
@@ -472,85 +569,96 @@ Particle class
 -------------------------------------------------------------------------------
 """
 
+
 class Particle:
     """
     Defines a container for storing all relevant structural information,
-    symmetry, and interactions about a polyhedral particle. 
+    symmetry, and interactions about a polyhedral particle.
     """
 
     # Particle intializers
-    def __init__(self, 
-                 symmetry_group, 
-                 face_positions, 
-                 calculate_faces=False):
+    def __init__(self, symmetry_group, face_positions, calculate_faces=False):
         """
-        Constructs a particle from point group symmetry and face coordinates 
-        that match the basis of the group operators.  
+        Constructs a particle from point group symmetry and face coordinates
+        that match the basis of the group operators.
         (not necessary to have all faces)
 
         Arguments:
         symmetry_group - Group, point group of the particle shape;
 
-        face_positions - list, face coordinates written in the basis of the 
+        face_positions - list, face coordinates written in the basis of the
                          symmetry_group.
 
         """
         # Type checks
-        check_type('symmetry_group', symmetry_group, Group)
-        check_type('face_positions', face_positions, list)
+        check_type("symmetry_group", symmetry_group, Group)
+        check_type("face_positions", face_positions, list)
 
         # Calculate the positions of the faces and store the symmetry
         # properties
-        self.__face_groups = Orbit.sort_into_orbits(face_positions, 
-                                                    symmetry_group)
+        self.__face_groups = Orbit.sort_into_orbits(
+            face_positions, symmetry_group
+        )
 
-        # Place patches on the particle
-
+        # TODO: Place patches on the particle:
+        # Either have to specify subgroup symmetry, or precise locations of the
+        # patches.
 
     @classmethod
     def from_lattice(cls, lattice):
         """
         Shortcut to initialize a Particle object from a Lattice object.
-        
+
         Arguments:
         lattice - Lattice, periodic structure, for which the nearest-neighbour
                   connections define the shape of the particle.
         """
         # Type checks
-        check_type('lattice', lattice, Lattice)
-        
+        check_type("lattice", lattice, Lattice)
+
         # Calculate the list of positions of the nearest-neighbours
         face_positions = lattice.nearest_neighbours
 
         # Calculate the point group of the unit cell
         symmetry_group = lattice.point_group
-        
+
         return cls(face_positions, symmetry_group)
 
-    @clssmethod
+    @classmethod
     def simplex(cls, simplex_dimension):
         """
-        Shortcut to initialize a Particle object from a simplex of some 
+        Shortcut to initialize a Particle object from a simplex of some
         dimensionality.
 
         Arguments:
         simplex_dimension - int, dimension of the simplex particle.
         """
         # Type checks
-        check_type('simplex_dimension', simplex_dimension, int)
+        check_type("simplex_dimension", simplex_dimension, int)
 
         pass
-        
-    # Particle methods
-    
 
-    # Particle properties 
+    # Particle methods
+
+    # TODO: initialize couplings (either randomly or from input)
+
+    # TODO: method to return the geometric structure of the particle:
+    # vertex and faces positions, patch locations and colors...
+
+    # TODO: method to plot an array of particles with given orientations
+
+    # Particle properties
     @property
-    def face_groups():
+    def face_groups(self):
         """
         A list of independent orbits of particle faces.
         """
         return self.__face_groups
 
+    # TODO: particle symmetry
+
+    # TODO: patch coupling matrix
+
+    # TODO: orientation coupling matrix
 
     # Output summary functions
