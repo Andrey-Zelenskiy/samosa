@@ -16,17 +16,20 @@ ArrayType = (np.ndarray, list, tuple)
 MutableArrayType = (np.ndarray, list)
 NoneType = type(None)
 
+
 def is_None(var):
     """
     Checks if var is of NoneType, returns True if it is.
     """
     return isinstance(var, NoneType)
 
+
 def not_None(var):
     """
     Checks if var is of NoneType, returns True if it isn't.
     """
     return not isinstance(var, NoneType)
+
 
 def check_type(var_name, var, *var_type):
     """
@@ -45,8 +48,11 @@ def check_type(var_name, var, *var_type):
     if not isinstance(var, var_type):
         var_type_print = [str(t.__name__) for t in var_type]
         var_type_print = ", ".join(var_type_print)
-        raise TypeError(f"{var_name} must be of type {var_type_print}, not "
-                        f"{type(var).__name__}")
+        raise TypeError(
+            f"{var_name} must be of type {var_type_print}, not "
+            f"{type(var).__name__}"
+        )
+
 
 def check_len(var_name, var, var_len):
     """
@@ -63,8 +69,10 @@ def check_len(var_name, var, var_len):
     """
 
     if len(var) != var_len:
-        raise Exception(f"{var_name} must be of length {var_len}, not "
-                        f"{len(var)}")
+        raise Exception(
+            f"{var_name} must be of length {var_len}, not " f"{len(var)}"
+        )
+
 
 def check_shape(var_name, var, *var_shape):
     """
@@ -81,8 +89,10 @@ def check_shape(var_name, var, *var_shape):
     """
 
     if var.shape != var_shape:
-        raise Exception(f"{var_name} must have shape {var_shape}, not "
-                        f"{var.shape}")
+        raise Exception(
+            f"{var_name} must have shape {var_shape}, not " f"{var.shape}"
+        )
+
 
 def check_in_list(var_name, var, var_list):
     """
@@ -100,4 +110,3 @@ def check_in_list(var_name, var, var_list):
 
     if var not in var_list:
         raise Exception(f"{var_name} must be one of {var_list}, not {var}")
-

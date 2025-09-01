@@ -53,9 +53,9 @@ def operator_C(axis, angle, basis=None):
     rotation - np.2darray[3][3], 3D proper rotation matrix.
     """
 
-    check_type('axis', axis, ArrayType)
-    check_len('axis', axis, 3)
-    check_type('angle', angle, float, int, tuple)
+    check_type("axis", axis, ArrayType)
+    check_len("axis", axis, 3)
+    check_type("angle", angle, float, int, tuple)
 
     axis = _normalize_vector(axis)
 
@@ -64,9 +64,9 @@ def operator_C(axis, angle, basis=None):
         angle = 2 * np.pi / n
 
     elif isinstance(angle, tuple):
-        check_len('angle = (k, n)', angle, 2)
-        check_type('k', angle[0], int)
-        check_type('n', angle[1], int)
+        check_len("angle = (k, n)", angle, 2)
+        check_type("k", angle[0], int)
+        check_type("n", angle[1], int)
 
         k, n = angle
         angle = 2 * np.pi * k / n
@@ -77,17 +77,17 @@ def operator_C(axis, angle, basis=None):
 
     rotation = np.zeros((3, 3))
 
-    rotation[0, 0] = cos_a + axis[0]**2 * (1 - cos_a)
+    rotation[0, 0] = cos_a + axis[0] ** 2 * (1 - cos_a)
     rotation[0, 1] = axis[0] * axis[1] * (1 - cos_a) - axis[2] * sin_a
     rotation[0, 2] = axis[0] * axis[2] * (1 - cos_a) + axis[1] * sin_a
 
     rotation[1, 0] = axis[1] * axis[0] * (1 - cos_a) + axis[2] * sin_a
-    rotation[1, 1] = cos_a + axis[1]**2 * (1 - cos_a)
+    rotation[1, 1] = cos_a + axis[1] ** 2 * (1 - cos_a)
     rotation[1, 2] = axis[1] * axis[2] * (1 - cos_a) - axis[0] * sin_a
 
     rotation[2, 0] = axis[2] * axis[0] * (1 - cos_a) - axis[1] * sin_a
     rotation[2, 1] = axis[2] * axis[1] * (1 - cos_a) + axis[0] * sin_a
-    rotation[2, 2] = cos_a + axis[2]**2 * (1 - cos_a)
+    rotation[2, 2] = cos_a + axis[2] ** 2 * (1 - cos_a)
 
     if not_None(basis):
         basis = basis.T
@@ -117,8 +117,8 @@ def operator_M(axis, basis=None):
     reflection_matrix - np.2darray[3][3], 3D reflection matrix.
     """
 
-    check_type('axis', axis, ArrayType)
-    check_len('axis', axis, 3)
+    check_type("axis", axis, ArrayType)
+    check_len("axis", axis, 3)
 
     axis = _normalize_vector(axis)
 
@@ -149,9 +149,9 @@ def operator_S(axis, angle, basis=None):
     rotoinversion - np.2darray[3][3], 3D improper rotation matrix.
     """
 
-    check_type('axis', axis, ArrayType)
-    check_len('axis', axis, 3)
-    check_type('angle', angle, float, int, tuple)
+    check_type("axis", axis, ArrayType)
+    check_len("axis", axis, 3)
+    check_type("angle", angle, float, int, tuple)
 
     axis = _normalize_vector(axis)
 
@@ -223,22 +223,24 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
     """
 
     # Type checks
-    check_type('operator', operator, ArrayType)
-    check_type('as_dict', as_dict, bool)
-    check_type('eps', eps, float)
+    check_type("operator", operator, ArrayType)
+    check_type("as_dict", as_dict, bool)
+    check_type("eps", eps, float)
 
     log_eps = (-np.log10(eps)).astype(int)
 
     operator = np.array(operator)
-    check_shape('operator', operator, 3, 3)
+    check_shape("operator", operator, 3, 3)
 
     # Calculate the trace and determinant of the operator matrix
     operator_trace = np.trace(operator)
     operator_det = np.linalg.det(operator)
 
     if abs(abs(operator_det) - 1.0) > eps:
-        raise ValueError("Cannot determine symmetry symbol: operator "
-                         f"{operator} is a non-orthogonal matrix!")
+        raise ValueError(
+            "Cannot determine symmetry symbol: operator "
+            f"{operator} is a non-orthogonal matrix!"
+        )
 
     # Calculate the angle of rotation
     cos_a = np.round(0.5 * (operator_trace / operator_det - 1), log_eps)
@@ -250,9 +252,13 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
 
     # Calculate the axis of rotation
     operator_skew = (operator - operator.T) / operator_det
-    axis = 0.5 * np.array([operator_skew[2, 1] - operator_skew[1, 2],
-                           operator_skew[0, 2] - operator_skew[2, 0],
-                           operator_skew[1, 0] - operator_skew[0, 1]])
+    axis = 0.5 * np.array(
+        [
+            operator_skew[2, 1] - operator_skew[1, 2],
+            operator_skew[0, 2] - operator_skew[2, 0],
+            operator_skew[1, 0] - operator_skew[0, 1],
+        ]
+    )
 
     axis /= np.max(abs(axis)) + eps
 
@@ -264,26 +270,23 @@ def operator_to_symbol(operator, as_dict=False, eps=1e-10):
 
     # Determine if the operation is proper or improper
     if operator_det > 0:
-        operator_type = 'C'
+        operator_type = "C"
 
     else:
         if n > 2:
-            operator_type = 'S'
+            operator_type = "S"
         else:
-            operator_type = 'M'
+            operator_type = "M"
 
     if as_dict:
-        symbol = {'type': operator_type,
-                  'n': n,
-                  'k': k,
-                  'axis': axis}
+        symbol = {"type": operator_type, "n": n, "k": k, "axis": axis}
 
     else:
         axis = "".join(str(a) for a in axis)
-        if operator_type != 'M':
-            symbol = f'{operator_type}{n}^{k}; {axis}'
+        if operator_type != "M":
+            symbol = f"{operator_type}{n}^{k}; {axis}"
         else:
-            symbol = f'{operator_type}; {axis}'
+            symbol = f"{operator_type}; {axis}"
 
     return symbol
 
@@ -302,26 +305,26 @@ def symbol_to_operator(symbol, basis=None):
     operator - np.2darray[3][3], 3D matrix symmetry operation.
     """
     # Type checks
-    check_type('symbol', symbol, str)
-    check_type('basis', basis, NoneType, ArrayType)
+    check_type("symbol", symbol, str)
+    check_type("basis", basis, NoneType, ArrayType)
 
     # Separate the operation and the axis
-    operation, axis = symbol.split(';')
+    operation, axis = symbol.split(";")
     axis = np.array(list(axis), dtype=float)
 
-    if operation == 'M':
+    if operation == "M":
         operator = operator_M(axis, basis)
 
     else:
-        operation, k = operation.split('^')
+        operation, k = operation.split("^")
         operation_type, n = list(operation)
         k = int(k)
         n = int(n)
 
-        if operation_type == 'C':
+        if operation_type == "C":
             operator = operator_C(axis, (k, n), basis)
 
-        elif operation_type == 'S':
+        elif operation_type == "S":
             operator = operator_S(axis, (k, n), basis)
 
         else:

@@ -84,45 +84,49 @@ def point_group(pg_symbol, *axes, basis=None):
         basis = np.array(basis)
 
         if len(basis.shape) != 2:
-            raise TypeError("Basis must consist of 3 vectors of length 3, "
-                            f"but has dimensions {basis.shape}.")
+            raise TypeError(
+                "Basis must consist of 3 vectors of length 3, "
+                f"but has dimensions {basis.shape}."
+            )
 
         if basis.shape[0] != 3 or basis.shape[1] != 3:
-            raise TypeError("Basis must consist of 3 vectors of length 3, "
-                            f"but has dimensions {basis.shape}.")
+            raise TypeError(
+                "Basis must consist of 3 vectors of length 3, "
+                f"but has dimensions {basis.shape}."
+            )
 
     # Test if the point group is polyhedral
-    if pg_type == 'T':
+    if pg_type == "T":
         # Tetrahedral point groups
         if len(pg_symbol) == 1:
             return _T_group(basis)
 
-        elif len(pg_symbol) == 2 and pg_symbol[1] == 'd':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == "d":
             return _Td_group(basis)
 
-        elif len(pg_symbol) == 2 and pg_symbol[1] == 'h':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == "h":
             return _Th_group(basis)
 
         else:
             raise symbol_error
 
-    elif pg_type == 'O':
+    elif pg_type == "O":
         # Octahedral point groups
         if len(pg_symbol) == 1:
             return _O_group(basis)
 
-        elif len(pg_symbol) == 2 and pg_symbol[1] == 'h':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == "h":
             return _Oh_group(basis)
 
         else:
             raise symbol_error
 
-    elif pg_type == 'I':
+    elif pg_type == "I":
         # Icosahedral point groups
         if len(pg_symbol) == 1:
             return _I_group(basis)
 
-        elif len(pg_symbol) == 2 and pg_symbol[1] == 'h':
+        elif len(pg_symbol) == 2 and pg_symbol[1] == "h":
             return _Ih_group(basis)
 
         else:
@@ -134,11 +138,11 @@ def point_group(pg_symbol, *axes, basis=None):
             raise symbol_error
 
         # Convert Cs and Ci symbols to C1h and S2 respectively
-        if pg_symbol == 'Cs':
-            pg_symbol = 'C1h'
+        if pg_symbol == "Cs":
+            pg_symbol = "C1h"
 
-        elif pg_symbol == 'Ci':
-            pg_symbol = 'S2'
+        elif pg_symbol == "Ci":
+            pg_symbol = "S2"
 
         # If given, assign the rotation axes
         if len(axes) == 0:
@@ -148,7 +152,7 @@ def point_group(pg_symbol, *axes, basis=None):
             axes = [a for a in axes]
 
         # Define the order of the primary rotation
-        n_str = pg_symbol.lstrip('CSD').rstrip('vdh')
+        n_str = pg_symbol.lstrip("CSD").rstrip("vdh")
         try:
             n = int(n_str)
             if n < 1:
@@ -157,39 +161,39 @@ def point_group(pg_symbol, *axes, basis=None):
             raise symbol_error
 
         # Determine the secondary point group characteristic
-        pg_symbol_tail = pg_symbol[(len(n_str) + 1):]
+        pg_symbol_tail = pg_symbol[(len(n_str) + 1) :]
 
-        if pg_type == 'C':
+        if pg_type == "C":
             # Cyclic proper rotation point groups
-            if pg_symbol_tail == '':
+            if pg_symbol_tail == "":
                 return _Cn_group(n, axes, basis)
 
-            elif pg_symbol_tail == 'v':
+            elif pg_symbol_tail == "v":
                 return _Cnv_group(n, axes, basis)
 
-            elif pg_symbol_tail == 'h':
+            elif pg_symbol_tail == "h":
                 return _Cnh_group(n, axes, basis)
 
             else:
                 raise symbol_error
 
-        elif pg_type == 'S':
+        elif pg_type == "S":
             # Cyclic improper rotation point groups
-            if pg_symbol_tail == '':
+            if pg_symbol_tail == "":
                 return _Sn_group(n, axes, basis)
 
             else:
                 raise symbol_error
 
-        elif pg_type == 'D':
+        elif pg_type == "D":
             # Dihedral point groups
-            if pg_symbol_tail == '':
+            if pg_symbol_tail == "":
                 return _Dn_group(n, axes, basis)
 
-            elif pg_symbol_tail == 'd':
+            elif pg_symbol_tail == "d":
                 return _Dnd_group(n, axes, basis)
 
-            elif pg_symbol_tail == 'h':
+            elif pg_symbol_tail == "h":
                 return _Dnh_group(n, axes, basis)
 
             else:
@@ -225,9 +229,9 @@ def space_group(dimension, sg_index, database=None, return_info=False):
                          'symmorphic' : bool], space group information.
     """
     # Type checks
-    check_type('dimension', dimension, int)
-    check_type('sg_index', sg_index, int)
-    check_type('database', database, SpaceGroupDatabase, NoneType)
+    check_type("dimension", dimension, int)
+    check_type("sg_index", sg_index, int)
+    check_type("database", database, SpaceGroupDatabase, NoneType)
 
     if is_None(database):
         database = SpaceGroupDatabase()
@@ -251,16 +255,17 @@ def space_group(dimension, sg_index, database=None, return_info=False):
         symmorphic *= G.symmorphic
         generators += [G]
 
-    space_group = Group(generators,
-                        name=str(sg_index),
-                        order=order,
-                        filter_generators=True)
+    space_group = Group(
+        generators, name=str(sg_index), order=order, filter_generators=True
+    )
 
     if return_info:
-        info = {'space_group': space_group,
-                'point_group_symbol': point_group_symbol,
-                'lattice_type': lattice_type,
-                'symmorphic': symmorphic}
+        info = {
+            "space_group": space_group,
+            "point_group_symbol": point_group_symbol,
+            "lattice_type": lattice_type,
+            "symmorphic": symmorphic,
+        }
         return info
 
     else:
@@ -283,8 +288,8 @@ def symmetric_group(n, as_matrices=False):
     """
 
     # Type checks
-    check_type('symmetric group index', n, int, np.int64)
-    check_type('as_matrices', as_matrices, bool)
+    check_type("symmetric group index", n, int, np.int64)
+    check_type("as_matrices", as_matrices, bool)
 
     # Initialize generators of the symmetric group
     g1 = tuple(i % n + 1 for i in range(1, n + 1))
@@ -307,4 +312,4 @@ def symmetric_group(n, as_matrices=False):
     else:
         generators = [G1]
 
-    return Group(generators, f'S{n}')
+    return Group(generators, f"S{n}")

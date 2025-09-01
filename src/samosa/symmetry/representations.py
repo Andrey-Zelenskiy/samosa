@@ -33,6 +33,7 @@ from samosa.utils.array_checks import _array_equal, _check_orthogonal
 from samosa.utils.math import _mod
 
 import warnings
+
 warnings.formatwarning = custom_format_warning
 """
 -------------------------------------------------------------------------------
@@ -63,7 +64,7 @@ class GroupElement:
         if not_None(self.dim):
             raise Exception("dim cannot be modified!")
         else:
-            check_type('dim', val, int, np.int64, NoneType)
+            check_type("dim", val, int, np.int64, NoneType)
             self.__dim = val
 
     @dim.deleter
@@ -83,7 +84,7 @@ class GroupElement:
         if not_None(self.__is_identity):
             raise Exception("is_identity cannot be modified!")
         else:
-            check_type('is_identity', val, bool, np.bool_, NoneType)
+            check_type("is_identity", val, bool, np.bool_, NoneType)
             self.__is_identity = val
 
     @is_identity.deleter
@@ -145,9 +146,11 @@ class IdentityGroupElement(GroupElement):
         Returns the dimension of the identity.
         """
         if is_None(self.dim):
-            raise ValueError("Cannot calculate trace for an "
-                             "IdentityGroupElement with unknown "
-                             "dimensionality")
+            raise ValueError(
+                "Cannot calculate trace for an "
+                "IdentityGroupElement with unknown "
+                "dimensionality"
+            )
         return self.dim
 
     @property
@@ -250,13 +253,15 @@ class MatrixGroupElement(GroupElement):
         self.__sign = None
 
         # Type checks
-        check_type('operator', operator, ArrayType, IdentityGroupElement)
+        check_type("operator", operator, ArrayType, IdentityGroupElement)
 
         if isinstance(operator, IdentityGroupElement):
             if operator.dim is None:
-                raise ValueError("Cannot initialize MatrixGroupElement "
-                                 "from IdentityGroupElement with unknown "
-                                 "dimension.")
+                raise ValueError(
+                    "Cannot initialize MatrixGroupElement "
+                    "from IdentityGroupElement with unknown "
+                    "dimension."
+                )
 
             self.dim = operator.dim
             self.is_identity = True
@@ -271,21 +276,23 @@ class MatrixGroupElement(GroupElement):
             operator = np.round(np.array(operator), self.__log_eps_r)
             self.dim = len(operator)
 
-            check_shape('operator', operator, self.dim, self.dim)
+            check_shape("operator", operator, self.dim, self.dim)
 
             self.__operator = operator
-            self.is_identity = _array_equal(self.operator,
-                                            np.eye(self.dim),
-                                            self.__eps_r)
+            self.is_identity = _array_equal(
+                self.operator, np.eye(self.dim), self.__eps_r
+            )
 
     @classmethod
-    def input_args(cls,
-                   operator,
-                   cycle_order=None,
-                   orthogonal_basis=None,
-                   operator_inverse=None,
-                   trace=None,
-                   sign=None):
+    def input_args(
+        cls,
+        operator,
+        cycle_order=None,
+        orthogonal_basis=None,
+        operator_inverse=None,
+        trace=None,
+        sign=None,
+    ):
         """
         Initializes the properties of the MatrixGroupElement from user input.
 
@@ -320,9 +327,11 @@ class MatrixGroupElement(GroupElement):
         element = cls(operator)
 
         if isinstance(operator, IdentityGroupElement):
-            raise Exception("Please use "
-                            "MatrixGroupElement(IdentityGroupElement(dim)) "
-                            "as the initializer.")
+            raise Exception(
+                "Please use "
+                "MatrixGroupElement(IdentityGroupElement(dim)) "
+                "as the initializer."
+            )
 
         element.args_calculated = False
 
@@ -349,8 +358,9 @@ class MatrixGroupElement(GroupElement):
         (n for which operator^n = identity).
         """
         if is_None(self.__cycle_order):
-            self.__cycle_order = self.get_cycle_order(self.operator,
-                                                      self.__eps_r)
+            self.__cycle_order = self.get_cycle_order(
+                self.operator, self.__eps_r
+            )
 
         return self.__cycle_order
 
@@ -359,7 +369,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("cycle_order cannot be modified!")
         else:
-            check_type('cycle_order', val, int, np.int64, NoneType)
+            check_type("cycle_order", val, int, np.int64, NoneType)
             self.__cycle_order = val
 
     @cycle_order.deleter
@@ -373,8 +383,9 @@ class MatrixGroupElement(GroupElement):
         basis, otherwise returns False.
         """
         if is_None(self.__orthogonal_basis):
-            self.__orthogonal_basis = _check_orthogonal(self.operator,
-                                                        self.__eps_r)
+            self.__orthogonal_basis = _check_orthogonal(
+                self.operator, self.__eps_r
+            )
 
         return self.__orthogonal_basis
 
@@ -383,7 +394,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("orthogonal_basis cannot be modified!")
         else:
-            check_type('orthogonal_basis', val, bool, np.bool_, NoneType)
+            check_type("orthogonal_basis", val, bool, np.bool_, NoneType)
             self.__orthogonal_basis = val
 
     @orthogonal_basis.deleter
@@ -410,7 +421,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("operator_inverse cannot be modified!")
 
-        check_type('operator_inverse', val, ArrayType, NoneType)
+        check_type("operator_inverse", val, ArrayType, NoneType)
 
         if is_None(val):
             self.__operator_inverse = val
@@ -418,14 +429,16 @@ class MatrixGroupElement(GroupElement):
         else:
             operator_inverse = np.round(np.array(val), self.__log_eps_r)
 
-            check_shape('operator_inv', operator_inverse, self.dim, self.dim)
+            check_shape("operator_inv", operator_inverse, self.dim, self.dim)
 
             id_test = operator_inverse.dot(self.operator) - np.eye(self.dim)
 
             if np.max(np.abs(id_test)) > self.__eps_r:
-                raise ValueError("Proposed inverse does not produce "
-                                 "identity under multiplication with the "
-                                 "operator.")
+                raise ValueError(
+                    "Proposed inverse does not produce "
+                    "identity under multiplication with the "
+                    "operator."
+                )
 
             self.__operator_inverse = operator_inverse
 
@@ -448,7 +461,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("trace cannot be modified!")
         else:
-            check_type('trace', val, float, int, np.int64, NoneType)
+            check_type("trace", val, float, int, np.int64, NoneType)
             self.__trace = val
 
     @trace.deleter
@@ -470,7 +483,7 @@ class MatrixGroupElement(GroupElement):
         if self.args_calculated:
             raise Exception("sign cannot be modified!")
         else:
-            check_type('sign', val, int, np.int64, NoneType)
+            check_type("sign", val, int, np.int64, NoneType)
             self.__sign = val
 
     @sign.deleter
@@ -486,9 +499,11 @@ class MatrixGroupElement(GroupElement):
         if isinstance(element, MatrixGroupElement):
 
             if element.dim != self.dim:
-                raise TypeError(f"Cannot perform multiplication between "
-                                f"matrices of dimension {self.dim} and "
-                                f"{element.dim}.")
+                raise TypeError(
+                    f"Cannot perform multiplication between "
+                    f"matrices of dimension {self.dim} and "
+                    f"{element.dim}."
+                )
 
             product = self.operator.dot(element.operator)
 
@@ -500,9 +515,11 @@ class MatrixGroupElement(GroupElement):
             element = np.array(element)
 
             if element.shape[0] != self.dim:
-                raise TypeError(f"Cannot perform multiplication between "
-                                f"matrices of dimension {self.dim} and "
-                                f"{element.shape[0]}.")
+                raise TypeError(
+                    f"Cannot perform multiplication between "
+                    f"matrices of dimension {self.dim} and "
+                    f"{element.shape[0]}."
+                )
 
             return np.round(self.operator.dot(element), self.__log_eps_r)
 
@@ -511,13 +528,17 @@ class MatrixGroupElement(GroupElement):
                 return self
 
             else:
-                raise TypeError(f"IdentityGroupElement must have dimension "
-                                f"{self.dim} or None, not {element.dim}.")
+                raise TypeError(
+                    f"IdentityGroupElement must have dimension "
+                    f"{self.dim} or None, not {element.dim}."
+                )
 
         else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{self.__class__.__name__} and "
-                            f"{type(element).__name__}.")
+            raise TypeError(
+                f"Cannot multiply objects of type "
+                f"{self.__class__.__name__} and "
+                f"{type(element).__name__}."
+            )
 
     def __rmul__(self, element):
         """
@@ -530,16 +551,20 @@ class MatrixGroupElement(GroupElement):
             element = np.array(element)
 
             if element.shape[-1] != self.dim:
-                raise TypeError(f"Cannot perform multiplication between "
-                                f"matrices of dimension {element.shape[-1]}"
-                                f"and {self.dim}.")
+                raise TypeError(
+                    f"Cannot perform multiplication between "
+                    f"matrices of dimension {element.shape[-1]}"
+                    f"and {self.dim}."
+                )
 
             return np.round(element.dot(self.operator), self.__log_eps_r)
 
         else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{type(element).__name__} and "
-                            f"{self.__class__.__name__}.")
+            raise TypeError(
+                f"Cannot multiply objects of type "
+                f"{type(element).__name__} and "
+                f"{self.__class__.__name__}."
+            )
 
     def __eq__(self, element):
         """
@@ -557,9 +582,11 @@ class MatrixGroupElement(GroupElement):
 
         # Any other comparison yields False
         else:
-            warnings.warn(f"Comparison of "
-                          f"{self.__class__.__name__} with "
-                          f"{type(element).__name__} yields False by default.")
+            warnings.warn(
+                f"Comparison of "
+                f"{self.__class__.__name__} with "
+                f"{type(element).__name__} yields False by default."
+            )
             return False
 
     def __hash__(self):
@@ -597,8 +624,10 @@ class MatrixGroupElement(GroupElement):
         """
         cls = self.__class__.__name__
         operator_p = np.round(self.operator, self.__log_eps_p)
-        return f"{cls}(operator={operator_p!r}, "\
-               f"args_calculated={self.args_calculated})"
+        return (
+            f"{cls}(operator={operator_p!r}, "
+            f"args_calculated={self.args_calculated})"
+        )
 
 
 """
@@ -639,14 +668,21 @@ class PermutationGroupElement(GroupElement):
         self.__sign = None
 
         # Type checks
-        check_type('permutation', permutation, dict, ArrayType,
-                   IdentityGroupElement)
+        check_type(
+            "permutation",
+            permutation,
+            dict,
+            ArrayType,
+            IdentityGroupElement,
+        )
 
         if isinstance(permutation, IdentityGroupElement):
             if permutation.dim is None:
-                raise ValueError("Cannot initialize PermutationGroupElement "
-                                 "from IdentityGroupElement with unknown "
-                                 "dimension.")
+                raise ValueError(
+                    "Cannot initialize PermutationGroupElement "
+                    "from IdentityGroupElement with unknown "
+                    "dimension."
+                )
 
             self.dim = permutation.dim
             self.is_identity = True
@@ -658,19 +694,23 @@ class PermutationGroupElement(GroupElement):
 
         elif isinstance(permutation, dict):
             if min(permutation.keys()) < 1:
-                raise ValueError("Permutation values must not be smaller "
-                                 "than 1.")
+                raise ValueError(
+                    "Permutation values must not be smaller " "than 1."
+                )
 
             self.dim = max(permutation.keys())
 
             try:
-                self.__permutation = \
-                    tuple(permutation[n + 1] for n in range(self.dim))
+                self.__permutation = tuple(
+                    permutation[n + 1] for n in range(self.dim)
+                )
 
             except KeyError:
-                raise TypeError("Permutation dictionary must contain "
-                                "transformations of all points in a closed "
-                                "set.")
+                raise TypeError(
+                    "Permutation dictionary must contain "
+                    "transformations of all points in a closed "
+                    "set."
+                )
 
             test_id = self.permutation == tuple(i + 1 for i in range(self.dim))
             self.is_identity = test_id
@@ -678,11 +718,12 @@ class PermutationGroupElement(GroupElement):
         else:
             # Type check
             for n in permutation:
-                check_type('permutation values', n, int, np.int64)
+                check_type("permutation values", n, int, np.int64)
 
             if min(permutation) < 1:
-                raise ValueError("Permutation values must not be smaller "
-                                 "than 1.")
+                raise ValueError(
+                    "Permutation values must not be smaller " "than 1."
+                )
 
             self.__permutation = tuple(permutation)
             self.dim = len(permutation)
@@ -704,8 +745,9 @@ class PermutationGroupElement(GroupElement):
         Returns the permutation in cycle representation.
         """
         if is_None(self.__permutation_cycles):
-            self.__permutation_cycles = \
-                self.get_permutation_cycles(self.permutation)
+            self.__permutation_cycles = self.get_permutation_cycles(
+                self.permutation
+            )
 
         return self.__permutation_cycles
 
@@ -715,8 +757,9 @@ class PermutationGroupElement(GroupElement):
         Returns the permutation in dictionary-map (int : int) representation.
         """
         if is_None(self.__permutation_dict):
-            self.__permutation_dict = \
-                self.get_permutation_dict(self.permutation)
+            self.__permutation_dict = self.get_permutation_dict(
+                self.permutation
+            )
 
         return self.__permutation_dict
 
@@ -729,11 +772,13 @@ class PermutationGroupElement(GroupElement):
             permutation_matrix = self.get_permutation_matrix(self.permutation)
 
             order = self.cycle_order
-            matrix = MatrixGroupElement.input_args(permutation_matrix,
-                                                   cycle_order=order,
-                                                   orthogonal_basis=True,
-                                                   trace=self.trace,
-                                                   sign=self.sign)
+            matrix = MatrixGroupElement.input_args(
+                permutation_matrix,
+                cycle_order=order,
+                orthogonal_basis=True,
+                trace=self.trace,
+                sign=self.sign,
+            )
             self.__permutation_matrix = matrix
 
         return self.__permutation_matrix
@@ -800,12 +845,15 @@ class PermutationGroupElement(GroupElement):
         if isinstance(element, PermutationGroupElement):
 
             if element.dim != self.dim:
-                raise TypeError(f"Cannot perform multiplication between "
-                                f"permutations of dimension "
-                                f"{self.dim} and {element.dim}.")
+                raise TypeError(
+                    f"Cannot perform multiplication between "
+                    f"permutations of dimension "
+                    f"{self.dim} and {element.dim}."
+                )
 
-            product = tuple(self.permutation[p - 1]
-                            for p in element.permutation)
+            product = tuple(
+                self.permutation[p - 1] for p in element.permutation
+            )
 
             return PermutationGroupElement(product)
 
@@ -813,8 +861,10 @@ class PermutationGroupElement(GroupElement):
         elif isinstance(element, ArrayType):
 
             if len(element) < self.dim:
-                raise Exception(f"Array must be of length at least {self.dim} "
-                                f"in order to permute its elements.")
+                raise Exception(
+                    f"Array must be of length at least {self.dim} "
+                    f"in order to permute its elements."
+                )
 
             new_element = np.array(element)
 
@@ -828,7 +878,7 @@ class PermutationGroupElement(GroupElement):
                 return type(element)(new_element)
 
         # Left action on int
-        elif isinstance(element, int):
+        elif isinstance(element, int) or isinstance(element, np.int64):
             if element > 0 and element <= self.dim:
                 return self.permutation[element - 1]
             else:
@@ -839,21 +889,27 @@ class PermutationGroupElement(GroupElement):
                 return self
 
             else:
-                raise TypeError(f"IdentityGroupElement must have dimension "
-                                f"{self.dim} or None, not {element.dim}.")
+                raise TypeError(
+                    f"IdentityGroupElement must have dimension "
+                    f"{self.dim} or None, not {element.dim}."
+                )
 
         else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{self.__class__.__name__} and "
-                            f"{type(element).__name__}.")
+            raise TypeError(
+                f"Cannot multiply objects of type "
+                f"{self.__class__.__name__} and "
+                f"{type(element).__name__}."
+            )
 
     def __rmul__(self, element):
         """
         Right permutation action is only defined for Identity.
         """
-        raise TypeError(f"Cannot multiply objects of type "
-                        f"{type(element).__name__} and "
-                        f"{self.__class__.__name__}.")
+        raise TypeError(
+            f"Cannot multiply objects of type "
+            f"{type(element).__name__} and "
+            f"{self.__class__.__name__}."
+        )
 
     def __eq__(self, element):
         """
@@ -869,9 +925,11 @@ class PermutationGroupElement(GroupElement):
 
         # Any other comparison yields False
         else:
-            warnings.warn(f"Comparison of "
-                          f"{self.__class__.__name__} with "
-                          f"{type(element).__name__} yields False by default.")
+            warnings.warn(
+                f"Comparison of "
+                f"{self.__class__.__name__} with "
+                f"{type(element).__name__} yields False by default."
+            )
             return False
 
     def __hash__(self):
@@ -887,8 +945,9 @@ class PermutationGroupElement(GroupElement):
         permutation indices.
         """
         # Type checks
-        check_type('basis_permutation', basis_permutation,
-                   PermutationGroupElement)
+        check_type(
+            "basis_permutation", basis_permutation, PermutationGroupElement
+        )
 
         return basis_permutation.inv * self * basis_permutation
 
@@ -898,9 +957,9 @@ class PermutationGroupElement(GroupElement):
         Returns the permutation in cycle representation.
         """
         # Type check
-        check_type('permutation', permutation, tuple)
+        check_type("permutation", permutation, tuple)
         for n in permutation:
-            check_type('permutation values', n, int, np.int64)
+            check_type("permutation values", n, int, np.int64)
 
         permutation_list = list(permutation)
         permutation_cycles = []
@@ -926,9 +985,9 @@ class PermutationGroupElement(GroupElement):
         Returns the permutation in a dictionary-map (int : int) representation.
         """
         # Type check
-        check_type('permutation', permutation, tuple)
+        check_type("permutation", permutation, tuple)
         for n in permutation:
-            check_type('permutation values', n, int, np.int64)
+            check_type("permutation values", n, int, np.int64)
 
         permutation_dict = {}
         for n in range(len(permutation)):
@@ -943,9 +1002,9 @@ class PermutationGroupElement(GroupElement):
         Returns the permutation in a matrix representation.
         """
         # Type check
-        check_type('permutation', permutation, tuple)
+        check_type("permutation", permutation, tuple)
         for n in permutation:
-            check_type('permutation values', n, int, np.int64)
+            check_type("permutation values", n, int, np.int64)
 
         dim = len(permutation)
 
@@ -962,11 +1021,11 @@ class PermutationGroupElement(GroupElement):
         multiple of the permutation cycle lengths.
         """
         # Type checks
-        check_type('permutation_cycles', permutation_cycles, list)
+        check_type("permutation_cycles", permutation_cycles, list)
         for cycle in permutation_cycles:
-            check_type('cycle', cycle, tuple)
+            check_type("cycle", cycle, tuple)
             for n in cycle:
-                check_type('permutation value', n, int, np.int64)
+                check_type("permutation value", n, int, np.int64)
 
         cycle_len = [len(n) for n in permutation_cycles]
 
@@ -1032,46 +1091,50 @@ class SpaceGroupElement(GroupElement):
         self.__operator_inverse = None
 
         # Type checks
-        check_type('matrix',
-                   matrix,
-                   ArrayType,
-                   MatrixGroupElement,
-                   IdentityGroupElement)
+        check_type(
+            "matrix",
+            matrix,
+            ArrayType,
+            MatrixGroupElement,
+            IdentityGroupElement,
+        )
 
-        check_type('translation',
-                   translation,
-                   ArrayType)
+        check_type("translation", translation, ArrayType)
 
         # Initialize point group operator
         if isinstance(matrix, IdentityGroupElement):
             if matrix.dim != 3:
-                raise ValueError("IdentityGroupElement must have dimension 3, "
-                                 f"not {matrix.dim}.")
+                raise ValueError(
+                    "IdentityGroupElement must have dimension 3, "
+                    f"not {matrix.dim}."
+                )
 
             self.__matrix = MatrixGroupElement(matrix)
 
         elif isinstance(matrix, ArrayType):
-            check_shape('matrix', np.array(matrix), 3, 3)
-            n = operator_to_symbol(matrix, as_dict=True)['n']
+            check_shape("matrix", np.array(matrix), 3, 3)
+            n = operator_to_symbol(matrix, as_dict=True)["n"]
 
-            self.__matrix = MatrixGroupElement.input_args(matrix,
-                                                          cycle_order=n)
+            self.__matrix = MatrixGroupElement.input_args(matrix, cycle_order=n)
 
         else:
             if matrix.dim != 3:
-                raise ValueError(f"matrix must have dimension 3, not "
-                                 f"{matrix.dim}.")
+                raise ValueError(
+                    f"matrix must have dimension 3, not " f"{matrix.dim}."
+                )
 
             self.__matrix = matrix
 
         # Initialize translation operator
-        check_shape('translation', np.array(translation), 3)
+        check_shape("translation", np.array(translation), 3)
 
         for t in translation:
             if t > 1:
-                raise ValueError(f"Elements of the space group translation "
-                                 f"vector should be between 0 and 1, not "
-                                 f"{translation}.")
+                raise ValueError(
+                    f"Elements of the space group translation "
+                    f"vector should be between 0 and 1, not "
+                    f"{translation}."
+                )
 
         self.__translation = translation
 
@@ -1092,9 +1155,9 @@ class SpaceGroupElement(GroupElement):
         """
 
         # Type checks
-        check_type('operator', operator, ArrayType)
+        check_type("operator", operator, ArrayType)
         operator = np.array(operator)
-        check_shape('operator', np.array(operator), 3, 4)
+        check_shape("operator", np.array(operator), 3, 4)
 
         # Extract point group matrix and translation vector operators
         matrix = operator[:, :-1]
@@ -1137,9 +1200,9 @@ class SpaceGroupElement(GroupElement):
             if self.symmorphic:
                 self.__cycle_order = self.matrix.cycle_order
             else:
-                self.__cycle_order = self.get_cycle_order(self.matrix,
-                                                          self.translation,
-                                                          self.__eps_r)
+                self.__cycle_order = self.get_cycle_order(
+                    self.matrix, self.translation, self.__eps_r
+                )
 
         return self.__cycle_order
 
@@ -1174,8 +1237,9 @@ class SpaceGroupElement(GroupElement):
             # Calculate the fractional translation of the space group inverse
             translation_inv = (-(matrix_inv * self.translation)) % 1
 
-            self.__operator_inverse = SpaceGroupElement(matrix_inv,
-                                                        translation_inv)
+            self.__operator_inverse = SpaceGroupElement(
+                matrix_inv, translation_inv
+            )
 
         return self.__operator_inverse
 
@@ -1230,8 +1294,10 @@ class SpaceGroupElement(GroupElement):
             element = np.array(element)
 
             if element.shape[0] != 3:
-                raise TypeError(f"Array must have leading dimension 3, not "
-                                f"{element.shape[0]}.")
+                raise TypeError(
+                    f"Array must have leading dimension 3, not "
+                    f"{element.shape[0]}."
+                )
 
             # The space group action is calculated modulo translation period
             result = (self.matrix * element + self.translation) % 1
@@ -1243,21 +1309,27 @@ class SpaceGroupElement(GroupElement):
                 return self
 
             else:
-                raise TypeError(f"IdentityGroupElement must have dimension "
-                                f"3 or None, not {element.dim}.")
+                raise TypeError(
+                    f"IdentityGroupElement must have dimension "
+                    f"3 or None, not {element.dim}."
+                )
 
         else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{self.__class__.__name__} and "
-                            f"{type(element).__name__}.")
+            raise TypeError(
+                f"Cannot multiply objects of type "
+                f"{self.__class__.__name__} and "
+                f"{type(element).__name__}."
+            )
 
     def __rmul__(self, element):
         """
         Right group element action is not defined.
         """
-        raise TypeError(f"Cannot multiply objects of type "
-                        f"{type(element).__name__} and "
-                        f"{self.__class__.__name__}.")
+        raise TypeError(
+            f"Cannot multiply objects of type "
+            f"{type(element).__name__} and "
+            f"{self.__class__.__name__}."
+        )
 
     def __eq__(self, element):
         """
@@ -1268,9 +1340,9 @@ class SpaceGroupElement(GroupElement):
         # Comparison of two SpaceGroupElements
         if isinstance(element, SpaceGroupElement):
             eq_matrix = self.matrix == element.matrix
-            eq_translation = _array_equal(self.translation,
-                                          element.translation,
-                                          self.__eps_r)
+            eq_translation = _array_equal(
+                self.translation, element.translation, self.__eps_r
+            )
 
             return eq_matrix and eq_translation
 
@@ -1280,9 +1352,11 @@ class SpaceGroupElement(GroupElement):
 
         # Any other comparison yields False
         else:
-            warnings.warn(f"Comparison of "
-                          f"{self.__class__.__name__} with "
-                          f"{type(element).__name__} yields False by default.")
+            warnings.warn(
+                f"Comparison of "
+                f"{self.__class__.__name__} with "
+                f"{type(element).__name__} yields False by default."
+            )
             return False
 
     def __hash__(self):
@@ -1325,8 +1399,9 @@ class SpaceGroupElement(GroupElement):
         """
         User-friendly output of the group element.
         """
-        return f"{self.matrix}, "\
-               f"{np.round(self.translation, self.__log_eps_p)}"
+        return (
+            f"{self.matrix}, " f"{np.round(self.translation, self.__log_eps_p)}"
+        )
 
     def __repr__(self):
         """
@@ -1334,8 +1409,7 @@ class SpaceGroupElement(GroupElement):
         """
         cls = self.__class__.__name__
         translation_p = np.round(self.translation, self.__log_eps_p)
-        return f"{cls}(matrix={self.matrix}, "\
-               f"translation={translation_p!r})"
+        return f"{cls}(matrix={self.matrix}, " f"translation={translation_p!r})"
 
 
 """
@@ -1376,12 +1450,9 @@ class PointerGroupElement(GroupElement):
     """
 
     # Object initialization
-    def __init__(self,
-                 pointer,
-                 dim,
-                 n_generators,
-                 generator_cycles,
-                 skip_checks=False):
+    def __init__(
+        self, pointer, dim, n_generators, generator_cycles, skip_checks=False
+    ):
         """
         Initializes a group element in the pointer representation.
 
@@ -1409,16 +1480,16 @@ class PointerGroupElement(GroupElement):
         self.__pointer_inverse = None
 
         # Type checks
-        check_type('pointer', pointer, list, IdentityGroupElement)
+        check_type("pointer", pointer, list, IdentityGroupElement)
 
         if not skip_checks:
-            check_type('dim', dim, int, np.int64)
-            check_type('n_generators', n_generators, int, np.int64)
-            check_type('generator_cycles', generator_cycles, list)
-            check_len('generator_cycles', generator_cycles, n_generators)
+            check_type("dim", dim, int, np.int64)
+            check_type("n_generators", n_generators, int, np.int64)
+            check_type("generator_cycles", generator_cycles, list)
+            check_len("generator_cycles", generator_cycles, n_generators)
 
             for c in generator_cycles:
-                check_type('generator cycle orders', c, int)
+                check_type("generator cycle orders", c, int)
 
         # Initialize generator data
         self.__dim = dim
@@ -1433,16 +1504,18 @@ class PointerGroupElement(GroupElement):
         else:
             # Test the validity of the pointer
             for p in pointer:
-                check_type('pointer components', p, tuple)
-                check_type('pointer components', p[0], int, np.int64)
-                check_type('pointer components', p[1], int, np.int64)
-                check_len('pointer components', p, 2)
+                check_type("pointer components", p, tuple)
+                check_type("pointer components", p[0], int, np.int64)
+                check_type("pointer components", p[1], int, np.int64)
+                check_len("pointer components", p, 2)
 
             for i, p in enumerate(pointer):
                 if p[0] >= self.n_generators:
-                    raise ValueError(f"Pointer value {p[0]} exceeds "
-                                     f"the number of generators "
-                                     f"{self.n_generators}.")
+                    raise ValueError(
+                        f"Pointer value {p[0]} exceeds "
+                        f"the number of generators "
+                        f"{self.n_generators}."
+                    )
 
             self.__pointer = self.simplify(pointer, self.generator_cycles)
             # WARNING: identity test below only accounts for trivial identity
@@ -1462,16 +1535,18 @@ class PointerGroupElement(GroupElement):
                           generators.
         """
         # Type checks
-        check_type('generator_list', generator_list, list)
+        check_type("generator_list", generator_list, list)
 
         for g in generator_list:
             if not issubclass(g.__class__, GroupElement):
-                raise Exception("All generators must inherit from "
-                                "GroupElement class.")
+                raise Exception(
+                    "All generators must inherit from " "GroupElement class."
+                )
 
             if isinstance(g, PointerGroupElement):
-                raise Exception("PointerGroupElement is not a valid "
-                                "generator type.")
+                raise Exception(
+                    "PointerGroupElement is not a valid " "generator type."
+                )
 
         dim = generator_list[0].dim
         n_generators = len(generator_list)
@@ -1493,7 +1568,7 @@ class PointerGroupElement(GroupElement):
                           inherited.
         """
         # Type checks
-        check_type('element', element, PointerGroupElement)
+        check_type("element", element, PointerGroupElement)
 
         dim = element.dim
         n_generators = element.n_generators
@@ -1532,8 +1607,9 @@ class PointerGroupElement(GroupElement):
         if is_None(self.__pointer_inverse):
             pointer_inverse = []
             for p in self.pointer[::-1]:
-                pointer_inverse += [(p[0],
-                                     _mod(-p[1], self.generator_cycles[p[0]]))]
+                pointer_inverse += [
+                    (p[0], _mod(-p[1], self.generator_cycles[p[0]]))
+                ]
 
             self.__pointer_inverse = pointer_inverse
 
@@ -1552,8 +1628,10 @@ class PointerGroupElement(GroupElement):
             test_cycles = self.generator_cycles != element.generator_cycles
 
             if test_dim or test_n or test_cycles:
-                raise Exception(f"PointerGroupElements {self} and {element} "
-                                f"have different generator data!")
+                raise Exception(
+                    f"PointerGroupElements {self} and {element} "
+                    f"have different generator data!"
+                )
 
             # Special case where self or element correspond to the identity,
             # represented by an empty pointer []
@@ -1581,9 +1659,9 @@ class PointerGroupElement(GroupElement):
                     else:
                         g_extend = [(g_right[0], g_power_new)]
 
-                    new_pointer = self.pointer[:-1]\
-                        + g_extend\
-                        + element.pointer[1:]
+                    new_pointer = (
+                        self.pointer[:-1] + g_extend + element.pointer[1:]
+                    )
 
                 # If g_lef and g_right are different generators, simply append
                 # the pointers
@@ -1630,14 +1708,18 @@ class PointerGroupElement(GroupElement):
                 return self
 
             else:
-                raise TypeError(f"IdentityGroupElement must have dimension "
-                                f"{self.dim} or None, not {element.dim}.")
+                raise TypeError(
+                    f"IdentityGroupElement must have dimension "
+                    f"{self.dim} or None, not {element.dim}."
+                )
 
         # Left multiplication by other types is not defined
         else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{self.__class__.__name__} and "
-                            f"{type(element).__name__}.")
+            raise TypeError(
+                f"Cannot multiply objects of type "
+                f"{self.__class__.__name__} and "
+                f"{type(element).__name__}."
+            )
 
     def __rmul__(self, element):
         """
@@ -1678,9 +1760,11 @@ class PointerGroupElement(GroupElement):
 
         # Right multiplication by other types is not defined
         else:
-            raise TypeError(f"Cannot multiply objects of type "
-                            f"{type(element).__name__} and "
-                            f"{self.__class__.__name__}.")
+            raise TypeError(
+                f"Cannot multiply objects of type "
+                f"{type(element).__name__} and "
+                f"{self.__class__.__name__}."
+            )
 
     def __eq__(self, element):
         """
@@ -1708,9 +1792,11 @@ class PointerGroupElement(GroupElement):
 
         # Any other comparison yields False
         else:
-            warnings.warn(f"Comparison of "
-                          f"{self.__class__.__name__} with "
-                          f"{type(element).__name__} yields False by default.")
+            warnings.warn(
+                f"Comparison of "
+                f"{self.__class__.__name__} with "
+                f"{type(element).__name__} yields False by default."
+            )
             return False
 
     # Supplementary functions
@@ -1732,8 +1818,9 @@ class PointerGroupElement(GroupElement):
 
                 else:
                     if p[0] == new_pointer[counter][0]:
-                        new_power = _mod(p[1] + new_pointer[counter][1],
-                                         cycles[p[0]])
+                        new_power = _mod(
+                            p[1] + new_pointer[counter][1], cycles[p[0]]
+                        )
 
                         if new_power == 0:
                             new_pointer = new_pointer[:counter]
@@ -1761,28 +1848,39 @@ class PointerGroupElement(GroupElement):
         """
         if not skip_checks:
             # Type checks
-            check_type('generator_list', generator_list, list)
-            check_len('generator_list', generator_list, self.n_generators)
+            check_type("generator_list", generator_list, list)
+            check_len("generator_list", generator_list, self.n_generators)
 
             for i, g in enumerate(generator_list):
                 if not issubclass(g.__class__, GroupElement):
-                    raise Exception("All generators must inherit from "
-                                    "GroupElement class.")
+                    raise Exception(
+                        "All generators must inherit from "
+                        "GroupElement class."
+                    )
 
                 if isinstance(g, PointerGroupElement):
-                    raise Exception("PointerGroupElement is not a valid "
-                                    "generator type.")
+                    raise Exception(
+                        "PointerGroupElement is not a valid " "generator type."
+                    )
 
                 if g.dim != self.dim:
-                    raise Exception("Generator dimension does not match the "
-                                    "dimension of the PointerGroupElement.")
+                    raise Exception(
+                        "Generator dimension does not match the "
+                        "dimension of the PointerGroupElement."
+                    )
 
                 if g.cycle_order != self.generator_cycles[i]:
-                    raise Exception("Generator cycle order does not match "
-                                    "generator_cycles data in "
-                                    "PointerGroupElement.")
+                    raise Exception(
+                        "Generator cycle order does not match "
+                        "generator_cycles data in "
+                        "PointerGroupElement."
+                    )
 
-        element = IdentityGroupElement(self.dim)
+        dim = self.dim
+        if is_None(dim):
+            dim = generator_list[0].dim
+
+        element = IdentityGroupElement(dim)
         for p in self.pointer:
             for i in range(p[1]):
                 element = element * generator_list[p[0]]
@@ -1802,6 +1900,8 @@ class PointerGroupElement(GroupElement):
         Provedes useful print output.
         """
         cls = self.__class__.__name__
-        return f"{cls}(pointer = {self.pointer!r}, dim = {self.dim}, " +\
-               f"n_generators = {self.n_generators}, " +\
-               f"generator_cycles = {self.generator_cycles})"
+        return (
+            f"{cls}(pointer = {self.pointer!r}, dim = {self.dim}, "
+            + f"n_generators = {self.n_generators}, "
+            + f"generator_cycles = {self.generator_cycles})"
+        )
