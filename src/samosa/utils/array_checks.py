@@ -11,6 +11,7 @@ This script defines useful methods for testing various array properties.
 
 import numpy as np
 
+
 def _array_equal(a1, a2, eps=1e-10):
     """
     Returns True if elements of array 1 are the same as elements of array 2
@@ -26,13 +27,14 @@ def _array_equal(a1, a2, eps=1e-10):
     """
     return np.isclose(a1, a2, eps).all()
 
+
 def _array_in_list(a, a_list, eps=1e-10):
     """
     Determines if a np.ndarray is included in a list of np.ndarrays.
 
     Arguments:
     a      - ArrayType, array of interest;
-    
+
     a_list - list, list of arrays;
 
     eps    - float, (default=1e-10) numerical precision for element comparison.
@@ -40,7 +42,8 @@ def _array_in_list(a, a_list, eps=1e-10):
     Returns:
     bool, result of the search test.
     """
-    return any(_array_equal(a,p,eps) for p in a_list)
+    return any(_array_equal(a, p, eps) for p in a_list)
+
 
 def _element_in_list(g, g_list):
     """
@@ -48,7 +51,7 @@ def _element_in_list(g, g_list):
 
     Arguments:
     g      - object interest;
-    
+
     g_list - list of objects.
 
     Returns:
@@ -56,13 +59,14 @@ def _element_in_list(g, g_list):
     """
     return any(g == p for p in g_list)
 
+
 def _check_orthogonal(operator, eps=1e-10):
     """
     Checks if a matrix operator (square) is orthogonal.
 
     Arguments:
     operator - ArrayType, square matrix of interest;
-    
+
     eps    - float, (default=1e-10) numerical precision for element comparison.
 
     Returns:

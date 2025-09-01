@@ -13,6 +13,7 @@ import numpy as np
 
 from samosa.utils.type_checks import not_None
 
+
 def _mod(a, n):
     """
     If n is not None, return a % n, otherwise return a.
@@ -21,6 +22,7 @@ def _mod(a, n):
         return a % n
     else:
         return a
+
 
 def _normalize_vector(v, eps=1e-10):
     """
@@ -44,4 +46,3 @@ def _normalize_vector(v, eps=1e-10):
         v /= v_norm
 
     return v
-
