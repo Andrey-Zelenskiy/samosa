@@ -78,3 +78,22 @@ def _check_orthogonal(operator, eps=1e-10):
     diff = np.max(np.abs(operator.dot(operator.T) - np.eye(len(operator))))
 
     return diff < eps
+
+
+def _locate_point_in_array(point, array):
+    """
+    Utility function for finding an array element in a parent array.
+
+    Arguments:
+    point - float array, target element;
+
+    array - float array, parent array;
+
+    Returns:
+    index - int, index of the element in the parent array;
+    """
+    # Calculate the 0-distances between the array points and the point of
+    # interest
+    distance = np.sum(np.abs(np.array(point) - np.array(array)), axis=1)
+
+    return np.where(np.isclose(distance, 0))[0][0]
