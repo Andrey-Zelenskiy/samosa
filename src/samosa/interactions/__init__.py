@@ -104,7 +104,7 @@ class InteractionMap:
         self.__group = group
 
         # Sample face-pair interaction matrix
-        self.sample_j_matrix(j_mean, j_std)
+        self.sample_face_coupling_matrix(j_mean, j_std)
 
     @classmethod
     def from_lattice(cls, lattice):
@@ -133,7 +133,7 @@ class InteractionMap:
                 cubic, bcc, and fcc."
             )
 
-    def new_j_matrix(self, j_matrix):
+    def new_face_coupling_matrix(self, matrix):
         """
         Sets the face-pair coupling matrix to the input array.
 
@@ -142,15 +142,15 @@ class InteractionMap:
                    matrix.
         """
         # Check that the input matrix has correct size
-        check_shape("j_matrix", j_matrix, self.n_faces, self.n_faces)
+        check_shape("matrix", matrix, self.n_faces, self.n_faces)
 
         # Check that the input matrix is symmetric
-        if np.sum(np.abs(j_matrix - j_matrix.T)) >= 1e-10:
-            raise ValueError("j_matrix must be symmetric!")
+        if np.sum(np.abs(matrix - matrix.T)) >= 1e-10:
+            raise ValueError("matrix must be symmetric!")
 
-        self.__j_matrix = j_matrix
+        self.__j_matrix = matrix
 
-    def sample_j_matrix(self, j_mean, j_std):
+    def sample_face_coupling_matrix(self, j_mean, j_std):
         """
         Samples a symmetric matrix of size (n_faces, n_faces) from a normal
         distribution with mean j_mean and standard deviation j_std.
