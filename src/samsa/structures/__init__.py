@@ -12,6 +12,8 @@ symmetry analysis.
 
 import numpy as np
 
+from scipy.spatial import Voronoi
+
 from samsa.symmetry import space_group
 
 from samsa.symmetry.group import Orbit
@@ -111,13 +113,16 @@ class Lattice:
         self.__lattice_type = sg_info["lattice_type"]
         self.__symmorphic = sg_info["symmorphic"]
 
-        # Initialize structural properties
-        self.__initialize_crystal_parameters(crystal_parameters, database)
-
         # Group sites into Wyckoff classes
         self.__wyckoff_list = Orbit.sort_into_orbits(
             input_positions, self.space_group
         )
+
+        # Initialize structural properties
+        self.__initialize_crystal_parameters(crystal_parameters, database)
+
+        # Compute nearest-neighbours and Voronoi cells for the sites
+        self.__get_neighbour_cells()
 
     def __initialize_crystal_parameters(self, parameters, database):
         """
@@ -163,6 +168,101 @@ class Lattice:
 
         self.__crystal_parameters = None
         self.set_crystal_parameters(parameters)
+
+    def __get_neighbour_cells(self):
+        """
+        Calculates neighbour and Voronoi cell dictionaries for each unique
+        site in the unit cell
+        """
+        # Construct a cluster to robustly locate nearest-neigbours
+        # List of sites in reduced coordinates + representative Wyckoff sites
+        site_list = []
+        representatives = []
+
+        # Construct the unit cell
+        n_sites = 0
+        for orbit in self.wyckoff_list:
+            representatives += [n_sites]
+            n_sites += orbit.size
+
+            for s in orbit.points:
+                # Store both
+                site_list += [np.array(s)]
+
+        # Compute positions of the sites in the unit cell
+        site_positions = [self.basis_vectors.dot(s) for s in site_list]
+
+        # Replicate unit cells to create a lattice cluster
+        if self.dimension == 1:
+            i_min = -2
+            i_max = 3
+            j_min = 0
+            j_max = 1
+            k_min = 0
+            k_max = 1
+
+        elif self.dimension == 2:
+            i_min = -2
+            i_max = 3
+            j_min = -2
+            j_max = 3
+            k_min = 0
+            k_max = 1
+
+        else:
+            i_min = -2
+            i_max = 3
+            j_min = -2
+            j_max = 3
+            k_min = -2
+            k_max = 3
+
+        for i in range(i_min, i_max):
+            for j in range(j_min, j_max):
+                for k in range(k_min, k_max):
+                    if i == j == k == 0:
+                        continue
+                    t = np.array([i, j, k])
+                    site_list_ijk = [s + t for s in site_list[:n_sites]]
+                    site_list += site_list_ijk
+
+                    t_vector = self.basis_vectors.dot(t)
+                    site_positions_ijk = [
+                        s + t_vector for s in site_positions[:n_sites]
+                    ]
+                    site_positions += site_positions_ijk
+
+        site_list = np.array(site_list)
+        site_positions = np.array(site_positions)
+
+        # Create voronoi cells for the whole cluster, to search for nearest
+        # neighbours
+        vor_cluster = Voronoi(site_positions)
+
+        # For each distinct wyckoff representative, compute nearest-neighbours
+        # and the Voronoi cell
+        self.__neighbour_dict = {}
+        self.__vor_dict = {}
+
+        for r in representatives:
+            r_neighbours = [r]
+
+            for pair in vor_cluster.ridge_points:
+                if r == pair[0]:
+                    r_neighbours += [pair[1]]
+
+                elif r == pair[1]:
+                    r_neighbours += [pair[0]]
+
+            r_neighbours = np.array(r_neighbours)
+
+            self.__neighbour_dict[tuple(site_list[r])] = site_list[
+                r_neighbours[1:]
+            ]
+
+            vor_r = Voronoi(site_positions[r_neighbours])
+
+            self.__vor_dict[tuple(site_list[r])] = vor_r
 
     @classmethod
     def initialize_simple(cls, name, point_group):
@@ -302,6 +402,9 @@ class Lattice:
             cz = np.sqrt(c ** 2 - cx ** 2 - cy ** 2)
             self.__basis_vectors += [np.array([cx, cy, cz])]
 
+        # Re-calculate neighbours and Voronoi cells
+        self.__get_neighbour_cells()
+
     # Lattice properties
     @property
     def dimension(self):
@@ -372,7 +475,7 @@ class Lattice:
         """
         Lattice basis vectors.
         """
-        return self.__basis_vectors
+        return np.array(self.__basis_vectors)
 
     @property
     def wyckoff_list(self):
@@ -381,6 +484,21 @@ class Lattice:
         Wyckoff classes.
         """
         return self.__wyckoff_list
+
+    @property
+    def site_neighbours(self):
+        """
+        A dictionary with nearest-neighbours for each representative Wyckoff
+        site
+        """
+        return self.__neighbour_dict
+
+    @property
+    def site_voronoi(self):
+        """
+        A dictionary with Voronoi cells for each representative Wyckoff site
+        """
+        return self.__vor_dict
 
     # Output summary functions
     def symmetry_info(self, print_info=True):
