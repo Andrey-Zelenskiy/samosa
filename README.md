@@ -1,6 +1,6 @@
-# `samosa`: Symmetry Analysis MOdule for Self-Assembly
+# `samsa`: Symmetry Analysis Module for Self-Assembly
 
-**samosa** is a Python library that provides essential tools for symmetry
+**samsa** is a Python library that provides essential tools for symmetry
 analysis of discrete geomentric objects.
 Most features are designed to complement computer simulations of lattice
 models, including, but not limited to self-assembly of anisotropic particles.
@@ -20,4 +20,4 @@ Contributions are welcome via pull requests.
 
 ## Licence
 
-**samosa** is availble under the [3-Clause BSD license](LICENSE).
+**samsa** is availble under the [3-Clause BSD license](LICENSE).
